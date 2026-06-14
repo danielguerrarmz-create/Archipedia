@@ -1,18 +1,28 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
+  BackgroundVariant,
   Controls,
+  ControlButton,
   MiniMap,
   NodeTypes,
+  EdgeTypes,
   Connection,
   Node,
   NodeMouseHandler,
   ReactFlowInstance,
   Edge,
   EdgeMouseHandler,
+  useStore,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import '../../styles/canvas.css';
 import { useCanvasStore } from '../../stores/canvasStore';
+import { arePortsCompatible } from '../../lib/NodeRegistry';
+import { AnEdge } from './AnEdge';
+import { Palette } from './Palette';
+import { EmptyCanvas } from './EmptyCanvas';
+import { consumePendingCanvasSeed } from '../../lib/canvasTemplates';
 import { PrecedentNode } from '../Nodes/PrecedentNode';
 import { TextNode } from '../Nodes/TextNode';
 import { ImageNode } from '../Nodes/ImageNode';
@@ -65,6 +75,16 @@ const nodeTypes: NodeTypes = {
   default: TextNode,
 };
 
+const edgeTypes: EdgeTypes = {
+  anEdge: AnEdge,
+};
+
+/** A mono zoom readout that reflects the live react-flow zoom. */
+const ZoomReadout: React.FC = () => {
+  const zoom = useStore((s) => s.transform[2]);
+  return <div className="an-zoom-readout">{Math.round(zoom * 100)}%</div>;
+};
+
 interface NodeCanvasProps {
   initialPrecedents?: SearchResult[];
   onOpenTemplates?: () => void;
@@ -78,6 +98,7 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   // Expose templates dialog to parent
   useEffect(() => {
@@ -124,6 +145,19 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
       addNodes([precedentNode]);
     }
   }, [initialPrecedents, nodes.length, addNodes]);
+
+  // "Open in canvas" hand-off: a Precedent seed stashed by openProjectInCanvas().
+  useEffect(() => {
+    if (nodes.length !== 0) return;
+    const seed = consumePendingCanvasSeed();
+    if (seed && seed.length > 0) {
+      const node = createPrecedentNode({ x: 120, y: 200 }, seed);
+      (node as any).selected = true;
+      addNodes([node]);
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConnect = useCallback(
     (connection: Connection) => {
@@ -280,7 +314,6 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
     setShowMultiplyDialog(true);
   }, []);
 
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
@@ -509,49 +542,88 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
     [selectedNodeForMultiply, addNodes]
   );
 
-  // Custom edge styles based on hover and selection
+  // All edges adopt the custom AnEdge; styling is driven by class/state inside it.
   const styledEdges = useMemo(() => {
     return edges.map((edge) => {
       const edgeId = edge.id || `${edge.source}-${edge.sourceHandle || ''}-${edge.target}-${edge.targetHandle || ''}`;
-      const isHovered = hoveredEdgeId === edgeId;
       const isSelected = selectedEdgeId === edgeId;
-      const strokeColor = isSelected || isHovered ? '#FF0000' : '#CCCCCC';
-      const strokeWidth = isSelected ? 3 : isHovered ? 2.5 : 2;
+      const srcNode = nodes.find((n) => n.id === edge.source);
+      const running = (srcNode?.data as any)?.executionStatus === 'running';
 
       return {
         ...edge,
         id: edgeId,
-        style: {
-          ...edge.style,
-          stroke: strokeColor,
-          strokeWidth,
-        },
+        type: 'anEdge',
+        data: { ...(edge.data || {}), running },
         selected: isSelected,
       };
     });
-  }, [edges, hoveredEdgeId, selectedEdgeId]);
+  }, [edges, selectedEdgeId, nodes]);
 
   const defaultEdgeOptions = useMemo(
     () => ({
-      style: { strokeWidth: 2, stroke: '#CCCCCC' },
-      type: 'smoothstep',
+      type: 'anEdge',
       animated: false,
     }),
     []
+  );
+
+  // Type-aware connection validation wired into react-flow.
+  const isValidConnection = useCallback(
+    (connection: Connection): boolean => {
+      if (!connection.source || !connection.target) return false;
+      if (connection.source === connection.target) return false;
+      const src = nodes.find((n) => n.id === connection.source);
+      const tgt = nodes.find((n) => n.id === connection.target);
+      if (!src || !tgt) return false;
+      // If either port id is unknown to the registry, fall back to permissive.
+      return arePortsCompatible(
+        (src.data as any).type,
+        connection.sourceHandle || 'output',
+        (tgt.data as any).type,
+        connection.targetHandle || 'input'
+      );
+    },
+    [nodes]
+  );
+
+  // Stable per-canvas index so each node can show a P·NN stamp.
+  const nodeIndexById = useMemo(() => {
+    const m: Record<string, number> = {};
+    nodes.forEach((n, i) => { m[n.id] = i; });
+    return m;
+  }, [nodes]);
+
+  // EmptyCanvas hands us a pre-wired starter graph; stamp it + fit.
+  const handleSeedTemplate = useCallback(
+    (seed: { nodes: Node<NodeData>[]; edges: Array<Partial<Connection>> }) => {
+      addNodes(seed.nodes);
+      seed.edges.forEach((edge) => {
+        onConnect({
+          source: edge.source || null,
+          target: edge.target || null,
+          sourceHandle: edge.sourceHandle || null,
+          targetHandle: edge.targetHandle || null,
+        } as Connection);
+      });
+      requestAnimationFrame(() => {
+        reactFlowInstance?.fitView({ padding: 0.35 });
+      });
+    },
+    [addNodes, onConnect, reactFlowInstance]
   );
 
   return (
     <>
       <div
         ref={reactFlowWrapperRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#F5F1E8',
-        }}
+        className="an-canvas-wrap"
         onDragOver={handleDragOver}
         onDrop={handlePaneDrop}
       >
+        {/* Static concrete grain — never animated */}
+        <div className="an-canvas-grain" aria-hidden />
+
         <ReactFlow
           nodes={nodes.map(node => {
             const nodeData = node.data as any;
@@ -560,6 +632,7 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
             // Selected nodes cannot be dragged (for slider interaction)
             return {
               ...node,
+              data: { ...nodeData, __index: nodeIndexById[node.id] ?? 0 },
               draggable: !selectedNodes.includes(node.id) && !isGrouped ? true : !selectedNodes.includes(node.id),
             };
           })}
@@ -575,14 +648,17 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           onPaneClick={handlePaneClick}
           onPaneContextMenu={handlePaneContextMenu}
           onNodeContextMenu={handleNodeContextMenu}
+          isValidConnection={isValidConnection}
           selectNodesOnDrag={false}
           selectionOnDrag={true}
           onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView
-          minZoom={0.1}
-          maxZoom={2}
+          fitViewOptions={{ padding: 0.35 }}
+          minZoom={0.25}
+          maxZoom={1.5}
           attributionPosition="bottom-left"
           panOnDrag={true}
           panOnScroll={false}
@@ -590,38 +666,60 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
-          connectionLineType={"smoothstep" as any}
-          snapToGrid={false}
-          snapGrid={[20, 20]}
+          connectionLineType={"step" as any}
+          connectionLineStyle={{ stroke: 'var(--signal)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+          snapToGrid={true}
+          snapGrid={[24, 24]}
         >
-          <Background color="#E8E4D9" gap={20} />
-          <Controls />
+          {/* Two-layer modular grid: fine lines + coarser node dots */}
+          <Background
+            id="an-lines"
+            variant={BackgroundVariant.Lines}
+            gap={24}
+            color="rgba(21,22,26,.05)"
+          />
+          <Background
+            id="an-dots"
+            variant={BackgroundVariant.Dots}
+            gap={120}
+            size={1.5}
+            color="rgba(21,22,26,.10)"
+          />
+          <Controls showZoom showFitView showInteractive={false}>
+            <ControlButton title="Zoom level" onClick={() => reactFlowInstance?.fitView({ padding: 0.35 })}>
+              <ZoomReadout />
+            </ControlButton>
+          </Controls>
           <MiniMap
+            pannable
+            zoomable
             nodeColor={(node: Node<NodeData>) => {
-              const colors: Record<string, string> = {
-                precedent: '#FFC800',
-                stackedPrecedent: '#FFC800',
-                text: '#F5F1E8',
-                image: '#64B5FF',
-                'image-gen': '#4CAF50',
-                llm: '#4CAF50',
-                attributeFilter: '#FFC800',
-                scalar: '#32C864',
-                operatorAND: '#FF9F43',
-                operatorOR: '#9D7BE8',
-                operatorNOT: '#FF6B6B',
-                collection: '#9D7BE8',
-              };
-              return colors[node.type || 'default'] || '#CCCCCC';
+              const status = (node.data as any)?.executionStatus;
+              const local = (node.data as any)?.status;
+              const selected = (node as any).selected;
+              if (selected || status === 'running' || local === 'generating' || local === 'validating') {
+                return 'var(--signal)';
+              }
+              return 'var(--ink-400)';
             }}
+            nodeStrokeColor="transparent"
+            maskColor="rgba(21,22,26,0.06)"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid #CCCCCC',
+              backgroundColor: 'var(--concrete-100)',
+              boxShadow: 'var(--raised)',
+              borderRadius: 'var(--radius-lg)',
+              border: 'none',
             }}
           />
         </ReactFlow>
+
+        {/* ONE unified left rail */}
+        <Palette onSeedTemplate={handleSeedTemplate} reactFlowInstance={reactFlowInstance} />
+
+        {/* Empty-state: starter templates */}
+        {nodes.length === 0 && <EmptyCanvas onSeed={handleSeedTemplate} />}
       </div>
-      
+
       {showMultiplyDialog && (
         <MultiplyOutputsDialog
           open={showMultiplyDialog}

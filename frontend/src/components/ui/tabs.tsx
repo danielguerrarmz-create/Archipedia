@@ -5,6 +5,12 @@ import * as TabsPrimitive from "@radix-ui/react-tabs@1.1.3";
 
 import { cn } from "./utils";
 
+/*
+ * Concrete & Signal tabs.
+ * Active = ink-900 + 2px signal underline.
+ * Inactive = ink-500. List has bottom hairline.
+ */
+
 function Tabs({
   className,
   ...props
@@ -12,7 +18,7 @@ function Tabs({
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col gap-0", className)}
       {...props}
     />
   );
@@ -20,15 +26,20 @@ function Tabs({
 
 function TabsList({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
-      className={cn(
-        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-xl p-[3px] flex",
-        className,
-      )}
+      className={cn(className)}
+      style={{
+        display: "inline-flex",
+        alignItems: "flex-end",
+        gap: 0,
+        borderBottom: "1px solid var(--hairline)",
+        ...style,
+      }}
       {...props}
     />
   );
@@ -36,17 +47,52 @@ function TabsList({
 
 function TabsTrigger({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
-      className={cn(
-        "data-[state=active]:bg-card dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className,
-      )}
+      className={cn("an-tab-trigger", className)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        padding: "8px 16px",
+        fontFamily: "var(--font-body)",
+        fontSize: "14px",
+        fontWeight: 500,
+        color: "var(--ink-500)",
+        background: "transparent",
+        border: "none",
+        borderBottom: "2px solid transparent",
+        marginBottom: "-1px",
+        cursor: "pointer",
+        outline: "none",
+        transition: "color var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press)",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
       {...props}
-    />
+    >
+      <style>{`
+        .an-tab-trigger[data-state="active"] {
+          color: var(--ink-900) !important;
+          border-bottom-color: var(--signal) !important;
+          font-weight: 600;
+        }
+        .an-tab-trigger:hover:not([data-state="active"]) {
+          color: var(--ink-700) !important;
+        }
+        .an-tab-trigger:focus-visible {
+          box-shadow: 0 0 0 3px var(--focus-ring);
+          border-radius: var(--radius-sm);
+        }
+        .an-tab-trigger[disabled] { opacity: 0.5; pointer-events: none; }
+      `}</style>
+      {props.children}
+    </TabsPrimitive.Trigger>
   );
 }
 

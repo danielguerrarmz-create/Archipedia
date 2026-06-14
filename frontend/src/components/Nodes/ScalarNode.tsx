@@ -122,16 +122,14 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
       style={{
         width: '400px',
         minHeight: '500px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #4A90E2' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #4A90E2, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         position: 'relative',
       }}
     >
@@ -167,9 +165,9 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#4A90E2',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -208,9 +206,9 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#4A90E2',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -222,7 +220,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
         style={{
           padding: '12px 16px',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: '#4A90E2',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -425,7 +423,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
                     style={{
                       width: '100%',
                       height: '2px',
-                      backgroundColor: '#32C864',
+                      backgroundColor: 'var(--concrete-200)',
                       borderRadius: '1px',
                       marginBottom: '4px',
                     }}
@@ -564,7 +562,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
                       style={{
                         flex: 1,
                         padding: '6px',
-                        backgroundColor: '#32C864',
+                        backgroundColor: 'var(--concrete-200)',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',
@@ -635,7 +633,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
                 key={i}
                 style={{
                   aspectRatio: '1',
-                  backgroundColor: '#32C864',
+                  backgroundColor: 'var(--concrete-200)',
                   borderRadius: '4px',
                   opacity: 0.6,
                 }}
@@ -682,7 +680,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
           style={{
             flex: 1,
             padding: '8px',
-            backgroundColor: '#32C864',
+            backgroundColor: 'var(--concrete-200)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
@@ -701,7 +699,7 @@ export const ScalarNode: React.FC<ScalarNodeProps> = ({
           disabled={matchingCount === 0}
           style={{
             padding: '8px 12px',
-            backgroundColor: matchingCount > 0 ? '#32C864' : 'rgba(0,0,0,0.1)',
+            backgroundColor: matchingCount > 0 ? 'var(--concrete-200)' : 'rgba(0,0,0,0.1)',
             border: 'none',
             borderRadius: '4px',
             cursor: matchingCount > 0 ? 'pointer' : 'not-allowed',

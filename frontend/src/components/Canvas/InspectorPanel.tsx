@@ -37,8 +37,8 @@ export function InspectorPanel({ editor, onClose }: InspectorPanelProps) {
     <div
       style={{
         width: 300,
-        backgroundColor: 'white',
-        borderLeft: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--concrete-100)',
+        borderLeft: '1px solid var(--hairline)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
@@ -48,7 +48,7 @@ export function InspectorPanel({ editor, onClose }: InspectorPanelProps) {
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          borderBottom: '1px solid var(--hairline)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -427,29 +427,36 @@ function TextBlockProps({ editor, shape }: { editor: Editor; shape: TLShape }) {
 // Styles
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontFamily: 'var(--font-secondary)',
-  fontSize: 11,
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'rgba(0,0,0,0.5)',
+  letterSpacing: '0.12em',
+  color: 'var(--ink-400)',
   marginBottom: 6,
 };
 
 const subLabelStyle: React.CSSProperties = {
   display: 'block',
-  fontFamily: 'var(--font-secondary)',
+  fontFamily: 'var(--font-mono)',
   fontSize: 10,
-  color: 'rgba(0,0,0,0.4)',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-400)',
   marginBottom: 4,
 };
 
+// Coordinate / size values read as instrument annotations: mono debossed wells.
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  fontFamily: 'var(--font-secondary)',
-  fontSize: 13,
+  fontFamily: 'var(--font-mono)',
+  fontVariantNumeric: 'tabular-nums',
+  fontSize: 12,
+  color: 'var(--ink-900)',
   padding: '8px 10px',
-  border: '1px solid rgba(0,0,0,0.15)',
-  borderRadius: 6,
+  background: 'var(--concrete-sunken)',
+  boxShadow: 'var(--deboss)',
+  border: 'none',
+  borderRadius: 'var(--radius-sm)',
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -459,11 +466,13 @@ const actionButtonStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: 6,
   padding: '8px 12px',
-  backgroundColor: 'rgba(0,0,0,0.04)',
+  background: 'var(--concrete-100)',
+  boxShadow: 'var(--emboss)',
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   cursor: 'pointer',
-  fontFamily: 'var(--font-secondary)',
+  fontFamily: 'var(--font-body)',
   fontSize: 12,
+  color: 'var(--ink-700)',
 };
 

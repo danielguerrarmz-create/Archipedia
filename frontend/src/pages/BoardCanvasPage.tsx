@@ -8,10 +8,12 @@ import {
   DefaultToolbarContent,
 } from 'tldraw';
 import 'tldraw/tldraw.css';
+import '../styles/canvas.css';
 
 import { useCanvasStore } from '../stores/canvasStore';
 import { useBoardStore } from '../stores/boardStore';
 import { customShapeUtils } from '../components/Canvas/shapes';
+import { AppHeader } from '../components/AppHeader';
 import { EditorHeader } from '../components/Canvas/EditorHeader';
 import { ToolBar } from '../components/Canvas/ToolBar';
 import { AssetsPanel } from '../components/Canvas/AssetsPanel';
@@ -216,7 +218,10 @@ export function BoardCanvasPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Header */}
+      {/* Canonical dark studio app header */}
+      <AppHeader active="boards" />
+
+      {/* Board working toolbar */}
       <EditorHeader
         boardId={boardId}
         title={board.title}
@@ -246,8 +251,9 @@ export function BoardCanvasPage() {
           />
         )}
 
-        {/* Canvas */}
-        <div style={{ flex: 1, position: 'relative' }}>
+        {/* Canvas — concrete bg + 24px grid + grain via canvas.css overrides */}
+        <div className="an-canvas-wrap" style={{ flex: 1, position: 'relative' }}>
+          <div className="an-canvas-grain" aria-hidden style={{ zIndex: 5 }} />
           <Tldraw
             shapeUtils={customShapeUtils}
             onMount={handleEditorMount}

@@ -6,7 +6,7 @@ import { useSearchStore, SearchResult } from "../stores/searchStore";
 import { searchByText, toAbsoluteUrl } from "../lib/navigatorApi";
 import { useCanvasStore } from "../stores/canvasStore";
 import { NodeCanvas } from "../components/Canvas/NodeCanvas";
-import { NodePaletteSidebar } from "../components/Sidebar/NodePaletteSidebar";
+import { AppHeader } from "../components/AppHeader";
 import { ResultsGridCompact } from "../components/SearchResults/ResultsGridCompact";
 import { PrecedentProject } from "../types/nodes";
 import { UserButton } from "../components/UserButton";
@@ -408,10 +408,14 @@ export function ResultsPage() {
         width: '100%',
         height: '100vh',
         display: 'flex',
-        backgroundColor: 'var(--bg-primary)',
+        flexDirection: 'column',
+        backgroundColor: 'var(--concrete-50)',
         overflow: 'hidden',
       }}
     >
+      <AppHeader active="canvas" />
+
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
       {/* ===== LEFT (75%) = CANVAS ===== */}
       <div
         style={{
@@ -422,65 +426,23 @@ export function ResultsPage() {
           width: '75%',
         }}
       >
-        {/* Canvas Top-Left Controls */}
+        {/* Canvas docked toolbar — concrete, raised. RUN is the one Signal. */}
         <div
           style={{
             position: 'absolute',
             top: '16px',
-            left: '16px',
+            right: '16px',
             zIndex: 30,
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            gap: '8px',
+            background: 'var(--concrete-100)',
+            boxShadow: 'var(--raised)',
+            padding: '6px 8px',
+            borderRadius: 'var(--radius-md)',
           }}
         >
-          {/* Smiley Logo */}
-          <button
-            onClick={() => setLocation('/')}
-            style={{
-              fontSize: '18px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'opacity 200ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-          >
-            🙂
-          </button>
-
-          {/* Actions Dropdown */}
-          <select
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '12px',
-              padding: '4px 8px',
-              border: 'none',
-              borderRadius: '4px',
-              backgroundColor: 'rgba(0,0,0,0.05)',
-              cursor: 'pointer',
-              marginRight: '8px',
-              appearance: 'none',
-              backgroundImage: 'none',
-            }}
-          >
-            <option>Actions</option>
-            <option>Share Canvas</option>
-            <option>Download JSON</option>
-            <option>Export Image</option>
-          </select>
-
-          {/* RUN Button */}
+          {/* RUN Button — the one Signal action on the canvas */}
           <button
             onClick={async () => {
               try {
@@ -491,44 +453,31 @@ export function ResultsPage() {
               }
             }}
             style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '12px',
-              padding: '4px 12px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              padding: '7px 18px',
               border: 'none',
-              borderRadius: '4px',
-              backgroundColor: '#32C864',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--signal)',
               color: '#FFFFFF',
               cursor: 'pointer',
               fontWeight: 500,
-              transition: 'background-color 200ms ease',
+              boxShadow: 'var(--emboss)',
+              transition: 'background-color var(--dur-1) var(--ease-press)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#28A855';
+              e.currentTarget.style.backgroundColor = 'var(--signal-hover)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#32C864';
+              e.currentTarget.style.backgroundColor = 'var(--signal)';
             }}
           >
             RUN
           </button>
-        </div>
 
-        {/* Canvas Top-Right Controls - Profile Button */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            zIndex: 30,
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-          }}
-        >
+          <div style={{ width: 1, height: 22, background: 'var(--hairline)' }} />
+
           <UserButton />
         </div>
 
@@ -537,304 +486,16 @@ export function ResultsPage() {
           style={{
             flex: 1,
             position: 'relative',
-            background: 'linear-gradient(to bottom right, #F5F1E8, #FAFAF8)',
+            background: 'var(--concrete-50)',
           overflow: 'hidden',
         }}
       >
           <NodeCanvas />
 
-          {/* Empty State */}
-          {nodes.length === 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                pointerEvents: 'none',
-              }}
-            >
-              {/* Left Column - Node Descriptions aligned with sidebar buttons */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '220px', // Align with sidebar (180px width + 20px left + 20px gap)
-                  top: '120px', // Match sidebar top
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px', // Match sidebar gap
-                  textAlign: 'left',
-                }}
-              >
-                {/* Box: Node descriptions - each aligned with its button (40px height, 4px gap) */}
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '0 12px 12px 12px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    minHeight: '348px', // Match approximate height: 8 nodes * 40px + 7 gaps * 4px = 348px
-                    width: '280px', // Match width with workflows box
-                  }}
-                >
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>TEXT</strong> — Search by description or prompt
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>IMAGE</strong> — Search by visual similarity
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>ATTRIBUTES</strong> — Filter by typology, climate, etc.
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>CONSTRAINTS</strong> — Apply scalar filters (area, height, etc.)
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>RESULTS</strong> — Display search results
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>AND</strong> — Combine multiple inputs
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>OR</strong> — Union of multiple inputs
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>NOT</strong> — Exclude similar results
-                    </div>
-                  </div>
-                </div>
-
-                {/* Box: Workflows section - aligned with Workflows button (after 8 nodes + separator) */}
-                <div style={{ marginTop: '12px', paddingTop: '12px' }}>
-                  <div
-                    style={{
-                      border: '1px solid rgba(0,0,0,0.15)',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      backgroundColor: 'rgba(255,255,255,0.6)',
-                      minHeight: '60px',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      width: '280px', // Match width with node descriptions box
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-primary)',
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: 'rgba(0,0,0,0.5)',
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                        }}
-                      >
-                        Workflows
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-primary)',
-                          fontSize: '12px',
-                          fontWeight: 300,
-                          color: 'rgba(0,0,0,0.4)',
-                          lineHeight: '1.5',
-                        }}
-                      >
-                        Save and load workflow templates.
-                        <br />
-                        Click the <strong>WORKFLOWS</strong> button to manage your saved workflows.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Hero and Navigation */}
-              {/* Hero box - aligned horizontally with Workflows box */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '750px', // Position further to the right, separate from left column
-                  top: '492px', // Align with Workflows section
-                  textAlign: 'left',
-                }}
-              >
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '16px',
-                      fontWeight: 300,
-                      color: 'rgba(0,0,0,0.4)',
-                      marginBottom: '6px',
-                    }}
-                  >
-                    Click node icons to begin
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      color: 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    Add precedents and create stacks
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation box - aligned horizontally with Node Types box */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '750px', // Position further to the right, separate from left column
-                  top: '120px', // Align with Node Types section
-                  textAlign: 'left',
-                }}
-              >
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: 'rgba(0,0,0,0.5)',
-                      marginBottom: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    Navigation
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      fontWeight: 300,
-                      color: 'rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    <div><strong>Left Click</strong> — Select node or drag to pan canvas</div>
-                    <div><strong>Right Click</strong> — Open context menu</div>
-                    <div><strong>Shift + Left Click</strong> — Multi-select nodes</div>
-                    <div><strong>Drag Handle</strong> — Connect nodes</div>
-                    <div><strong>Scroll</strong> — Zoom in/out</div>
-                    <div><strong>Delete/Backspace</strong> — Remove selected nodes</div>
-                    <div><strong>Esc</strong> — Cancel connection or deselect</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Node Palette Sidebar */}
-        <NodePaletteSidebar 
-          onAddNode={addNodeToCanvas}
-          onOpenTemplates={() => {
-            if ((window as any).__openTemplates) {
-              (window as any).__openTemplates();
-            }
-          }}
-          onLoadTemplate={(template) => {
-            // Handle template loading
-            if ((window as any).__loadTemplate) {
-              (window as any).__loadTemplate(template);
-            }
-          }}
-          currentNodes={nodes}
-          currentEdges={edges}
-        />
+        {/* The unified left rail (Palette) + empty-canvas templates now live
+            inside <NodeCanvas/> — no separate legacy palette here. */}
       </div>
 
       {/* ===== RIGHT (25%) = RESIZABLE SECTIONS ===== */}
@@ -842,7 +503,7 @@ export function ResultsPage() {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          borderLeft: '1px solid rgba(0,0,0,0.1)',
+          borderLeft: '1px solid var(--hairline)',
           width: '25%',
           minWidth: 0,
         }}
@@ -850,7 +511,7 @@ export function ResultsPage() {
         {/* Section 1: Research Header (collapsible toggle) */}
         <div
           style={{
-            borderBottom: '1px solid rgba(0,0,0,0.1)',
+            borderBottom: '1px solid var(--hairline)',
             padding: '12px 16px',
             flexShrink: 0,
             cursor: 'pointer',
@@ -865,7 +526,7 @@ export function ResultsPage() {
               fontFamily: 'var(--font-primary)',
               fontSize: '10px',
               fontWeight: 400,
-              color: '#000000',
+              color: 'var(--ink-900)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               margin: 0,
@@ -874,9 +535,9 @@ export function ResultsPage() {
             Research
           </h3>
           {researchPanelCollapsed ? (
-            <ChevronDown size={16} color="rgba(0,0,0,0.5)" />
+            <ChevronDown size={16} color="var(--ink-500)" />
           ) : (
-            <ChevronUp size={16} color="rgba(0,0,0,0.5)" />
+            <ChevronUp size={16} color="var(--ink-500)" />
           )}
         </div>
 
@@ -886,7 +547,7 @@ export function ResultsPage() {
             {/* Search Input Section */}
             <div
               style={{
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                borderBottom: '1px solid var(--hairline)',
                 padding: '12px 16px',
                 flexShrink: 0,
               }}
@@ -909,50 +570,20 @@ export function ResultsPage() {
                   fontSize: '12px',
                   padding: '10px 12px',
                   width: '100%',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '6px',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
                   boxSizing: 'border-box',
-                  backgroundColor: 'white',
+                  background: 'var(--concrete-0)',
+                  boxShadow: 'var(--deboss)',
                 }}
               />
               
-              {/* Help Text - Show when no search has been performed */}
-              {!hasSearched && (
-                <div
-                  style={{
-                    marginTop: '12px',
-                    padding: '12px',
-                    backgroundColor: 'rgba(0,0,0,0.02)',
-                    borderRadius: '6px',
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '10px',
-                    lineHeight: '1.5',
-                    color: 'rgba(0,0,0,0.7)',
-                  }}
-                >
-                  <div style={{ fontWeight: 500, marginBottom: '6px', color: '#000000' }}>
-                    How to use this page:
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Type your search query above and press Enter to find architectural precedents
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Adjust the Fusion Weights below to prioritize Visual, Spatial, or Regional similarity
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Use Filters to narrow down by typology or climate
-                  </div>
-                  <div>
-                    • Drag projects from the results onto the canvas to create precedent nodes
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Section 2: Fusion Weights + Filters */}
             <div
               style={{
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                borderBottom: '1px solid var(--hairline)',
                 padding: '12px 16px',
                 flexShrink: 0,
                 height: hasSearched ? '25%' : 'auto',
@@ -967,7 +598,7 @@ export function ResultsPage() {
                 fontFamily: 'var(--font-primary)',
                 fontSize: '10px',
                 fontWeight: 400,
-                color: '#000000',
+                color: 'var(--ink-900)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: '8px',
@@ -977,9 +608,9 @@ export function ResultsPage() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { label: 'Visual', value: fusionWeights.visual, color: '#FFC800' },
-                { label: 'Spatial', value: fusionWeights.spatial, color: '#64B5FF' },
-                { label: 'Regional', value: fusionWeights.attribute, color: '#32C864' },
+                { label: 'Visual', value: fusionWeights.visual, color: 'var(--ink-700)' },
+                { label: 'Spatial', value: fusionWeights.spatial, color: 'var(--ink-500)' },
+                { label: 'Regional', value: fusionWeights.attribute, color: 'var(--ink-400)' },
               ].map((slider) => (
                 <div key={slider.label}>
                   <div
@@ -1042,7 +673,7 @@ export function ResultsPage() {
                 fontFamily: 'var(--font-primary)',
                 fontSize: '10px',
                 fontWeight: 400,
-                color: '#000000',
+                color: 'var(--ink-900)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: '8px',
@@ -1062,17 +693,17 @@ export function ResultsPage() {
                       handleFilterChange(isClimate ? 'climate' : 'typology', filter, !isSelected);
                     }}
                     style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '9px',
-                      padding: '4px 8px',
-                      backgroundColor: isSelected ? '#FFC800' : 'rgba(0,0,0,0.05)',
-                      border: isSelected
-                        ? '1px solid #FFC800'
-                        : '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: '4px',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      letterSpacing: '0.04em',
+                      padding: '4px 10px',
+                      background: isSelected ? 'var(--concrete-sunken)' : 'var(--concrete-100)',
+                      boxShadow: isSelected ? 'var(--deboss)' : 'var(--emboss)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
                       cursor: 'pointer',
-                      color: '#000000',
-                      transition: 'all 150ms ease',
+                      color: isSelected ? 'var(--ink-900)' : 'var(--ink-500)',
+                      transition: 'box-shadow var(--dur-1) var(--ease-press), color var(--dur-1) var(--ease-press)',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -1092,7 +723,7 @@ export function ResultsPage() {
             <div
               style={{
                 padding: '12px 16px',
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                borderBottom: '1px solid var(--hairline)',
                 fontSize: '10px',
                 fontWeight: 400,
                 fontFamily: 'var(--font-primary)',
@@ -1113,7 +744,7 @@ export function ResultsPage() {
                           width: '12px',
                           height: '12px',
                           border: '2px solid rgba(0,0,0,0.1)',
-                          borderTop: '2px solid #64B5FF',
+                          borderTop: '2px solid var(--ink-500)',
                           borderRadius: '50%',
                           animation: 'spin 0.8s linear infinite',
                         }}
@@ -1149,7 +780,7 @@ export function ResultsPage() {
                       width: '32px',
                       height: '32px',
                       border: '3px solid rgba(0,0,0,0.1)',
-                      borderTop: '3px solid #64B5FF',
+                      borderTop: '3px solid var(--ink-500)',
                       borderRadius: '50%',
                       animation: 'spin 0.8s linear infinite',
                       margin: '0 auto 12px',
@@ -1176,6 +807,7 @@ export function ResultsPage() {
           </div>
         )}
 
+      </div>
       </div>
     </div>
   );

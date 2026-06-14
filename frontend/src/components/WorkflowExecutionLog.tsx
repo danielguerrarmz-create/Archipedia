@@ -81,9 +81,9 @@ export const WorkflowExecutionLog: React.FC<WorkflowExecutionLogProps> = ({ cust
                 fontSize: '10px',
                 color: 'rgba(0,0,0,0.7)',
                 padding: '6px 8px',
-                backgroundColor: 'rgba(255,200,0,0.08)',
+                backgroundColor: 'rgba(31, 63, 255,0.08)',
                 borderRadius: '3px',
-                borderLeft: '2px solid #FFC800',
+                borderLeft: '2px solid var(--signal)',
               }}
             >
               {entry.input}
@@ -203,7 +203,7 @@ export const WorkflowExecutionLog: React.FC<WorkflowExecutionLogProps> = ({ cust
                 style={{
                   width: `${children.length > 0 ? (complete.length / children.length) * 100 : 0}%`,
                   height: '100%',
-                  backgroundColor: '#FFC800',
+                  backgroundColor: 'var(--signal)',
                   transition: 'width 300ms ease',
                 }}
               />

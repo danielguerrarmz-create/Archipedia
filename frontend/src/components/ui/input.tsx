@@ -2,17 +2,53 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+/*
+ * Concrete & Signal input — debossed well.
+ * bg concrete-0, deboss shadow, h40, radius-md.
+ * Focus = deboss + 3px focus-ring + inset signal hairline.
+ * Error = inset error hairline + aria-invalid.
+ */
+
+if (typeof document !== "undefined" && !document.getElementById("an-input-styles")) {
+  const s = document.createElement("style");
+  s.id = "an-input-styles";
+  s.textContent = `
+    .an-input::placeholder { color: var(--ink-400); }
+    .an-input:focus {
+      box-shadow: var(--deboss), 0 0 0 3px var(--focus-ring), inset 0 0 0 1px var(--signal);
+    }
+    .an-input[aria-invalid="true"] {
+      box-shadow: var(--deboss), inset 0 0 0 1px var(--error);
+    }
+    .an-input:disabled { background: var(--concrete-200); color: var(--ink-400); cursor: not-allowed; }
+    .an-input { -webkit-font-smoothing: antialiased; }
+  `;
+  document.head.appendChild(s);
+}
+
+function Input({ className, type, style, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-        className,
-      )}
+      className={cn("an-input", className)}
+      style={{
+        display: "flex",
+        height: "40px",
+        width: "100%",
+        minWidth: 0,
+        borderRadius: "var(--radius-md)",
+        background: "var(--concrete-0)",
+        boxShadow: "var(--deboss)",
+        border: "none",
+        outline: "none",
+        padding: "0 12px",
+        fontFamily: "var(--font-body)",
+        fontSize: "14px",
+        color: "var(--ink-900)",
+        transition: "box-shadow var(--dur-1) var(--ease-press)",
+        ...style,
+      }}
       {...props}
     />
   );

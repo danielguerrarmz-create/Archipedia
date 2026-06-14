@@ -30,7 +30,7 @@ export const ChildNodeGroup: React.FC<ChildNodeGroupProps> = ({ parentNode, chil
     : allComplete
     ? 'rgba(76, 175, 80, 0.1)'
     : hasRunning
-    ? 'rgba(255, 200, 0, 0.1)'
+    ? 'rgba(31, 63, 255, 0.1)'
     : 'rgba(0, 0, 0, 0.05)';
 
   const borderColor = hasFailed
@@ -38,7 +38,7 @@ export const ChildNodeGroup: React.FC<ChildNodeGroupProps> = ({ parentNode, chil
     : allComplete
     ? 'rgba(76, 175, 80, 0.3)'
     : hasRunning
-    ? 'rgba(255, 200, 0, 0.3)'
+    ? 'rgba(31, 63, 255, 0.3)'
     : 'rgba(0, 0, 0, 0.1)';
 
   return (

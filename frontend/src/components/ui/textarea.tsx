@@ -2,14 +2,51 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+/*
+ * Concrete & Signal textarea — debossed well, same rules as Input.
+ */
+
+// Style injector (idempotent via selector collision)
+if (typeof document !== "undefined") {
+  if (!document.getElementById("an-textarea-styles")) {
+    const s = document.createElement("style");
+    s.id = "an-textarea-styles";
+    s.textContent = `
+      .an-textarea::placeholder { color: var(--ink-400); }
+      .an-textarea:focus {
+        box-shadow: var(--deboss), 0 0 0 3px var(--focus-ring), inset 0 0 0 1px var(--signal);
+      }
+      .an-textarea[aria-invalid="true"] {
+        box-shadow: var(--deboss), inset 0 0 0 1px var(--error);
+      }
+      .an-textarea:disabled { background: var(--concrete-200); color: var(--ink-400); cursor: not-allowed; }
+    `;
+    document.head.appendChild(s);
+  }
+}
+
+function Textarea({ className, style, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea
       data-slot="textarea"
-      className={cn(
-        "resize-none border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-input-background px-3 py-2 text-base transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        className,
-      )}
+      className={cn("an-textarea", className)}
+      style={{
+        display: "flex",
+        minHeight: "80px",
+        width: "100%",
+        borderRadius: "var(--radius-md)",
+        background: "var(--concrete-0)",
+        boxShadow: "var(--deboss)",
+        border: "none",
+        outline: "none",
+        padding: "10px 12px",
+        fontFamily: "var(--font-body)",
+        fontSize: "14px",
+        color: "var(--ink-900)",
+        resize: "vertical",
+        transition: "box-shadow var(--dur-1) var(--ease-press)",
+        ...style,
+      }}
       {...props}
     />
   );

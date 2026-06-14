@@ -63,7 +63,7 @@ export const ResultCardCompact: React.FC<ResultCardCompactProps> = ({
               minWidth: '80px',
               borderRadius: '8px',
               overflow: 'hidden',
-              backgroundColor: '#FFC800',
+              backgroundColor: 'var(--signal)',
               position: 'relative',
               flexShrink: 0,
             }}
@@ -86,7 +86,7 @@ export const ResultCardCompact: React.FC<ResultCardCompactProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: '#FFC800',
+                  backgroundColor: 'var(--signal)',
                   color: '#000',
                   fontFamily: 'var(--font-primary)',
                   fontSize: '24px',
@@ -102,7 +102,7 @@ export const ResultCardCompact: React.FC<ResultCardCompactProps> = ({
                 top: '4px',
                 right: '4px',
                 backgroundColor: 'rgba(0,0,0,0.85)',
-                color: '#FFC800',
+                color: 'var(--signal)',
                 padding: '2px 6px',
                 borderRadius: '4px',
                 fontFamily: 'var(--font-primary)',
@@ -130,7 +130,7 @@ export const ResultCardCompact: React.FC<ResultCardCompactProps> = ({
                 <div
                   style={{
                     flex: 1,
-                    backgroundColor: '#FFC800',
+                    backgroundColor: 'var(--signal)',
                     opacity: Math.max(0.3, project.visualScore || 0),
                     transition: 'opacity 300ms ease',
                   }}

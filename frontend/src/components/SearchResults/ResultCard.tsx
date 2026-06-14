@@ -40,9 +40,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         backgroundColor: '#FFFFFF',
         borderRadius: '12px',
         overflow: 'hidden',
-        border: selected ? '2px solid #FFC800' : 'none',
+        border: selected ? '2px solid var(--signal)' : 'none',
         boxShadow: selected
-          ? '0 4px 16px rgba(255, 200, 0, 0.3)'
+          ? '0 4px 16px rgba(31, 63, 255, 0.3)'
           : '0 2px 8px rgba(0,0,0,0.08)',
         cursor: 'move',
         transition: 'all 200ms ease',
@@ -87,7 +87,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             style={{
               width: '12px',
               height: '12px',
-              backgroundColor: '#FFC800',
+              backgroundColor: 'var(--signal)',
               borderRadius: '2px',
             }}
           />
@@ -98,7 +98,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         style={{
           width: '100%',
           aspectRatio: '4/3',
-          backgroundColor: '#FFC800',
+          backgroundColor: 'var(--signal)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

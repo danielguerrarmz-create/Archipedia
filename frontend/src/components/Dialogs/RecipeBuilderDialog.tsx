@@ -232,7 +232,7 @@ export const RecipeBuilderDialog: React.FC<RecipeBuilderDialogProps> = ({
             <div
               style={{
                 padding: '20px',
-                backgroundColor: 'rgba(255,200,0,0.05)',
+                backgroundColor: 'rgba(31, 63, 255,0.05)',
                 borderRadius: '8px',
                 marginBottom: '24px',
               }}

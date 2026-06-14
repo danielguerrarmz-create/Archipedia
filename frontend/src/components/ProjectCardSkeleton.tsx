@@ -1,20 +1,28 @@
+import { Skeleton } from "./ui/skeleton";
+
+/*
+ * ProjectCardSkeleton — Concrete & Signal.
+ * concrete-100 + hairline, opacity breathe (via Skeleton).
+ */
 export function ProjectCardSkeleton() {
   return (
-    <div className="w-[280px] bg-white rounded-lg overflow-hidden animate-pulse">
-      <div className="w-full h-[200px] bg-gray-200" />
-      <div className="p-3 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-200 rounded w-1/2" />
-        <div className="flex gap-3">
-          <div className="h-3 bg-gray-200 rounded w-20" />
-          <div className="h-3 bg-gray-200 rounded w-16" />
-        </div>
-        <div className="flex justify-between pt-1">
-          <div className="flex gap-2">
-            <div className="h-4 w-4 bg-gray-200 rounded" />
-            <div className="h-4 w-4 bg-gray-200 rounded" />
-          </div>
-          <div className="h-4 w-4 bg-gray-200 rounded" />
+    <div
+      style={{
+        width: 280,
+        background: "var(--concrete-0)",
+        borderRadius: "var(--radius-lg)",
+        boxShadow: "var(--raised)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Image placeholder */}
+      <Skeleton style={{ width: "100%", height: 200, borderRadius: 0 }} />
+      <div style={{ padding: "12px 16px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <Skeleton style={{ height: 16, width: "72%", borderRadius: "var(--radius-sm)" }} />
+        <Skeleton style={{ height: 11, width: "48%", borderRadius: "var(--radius-sm)" }} />
+        <div style={{ display: "flex", gap: 8 }}>
+          <Skeleton style={{ height: 11, width: 64, borderRadius: "var(--radius-sm)" }} />
+          <Skeleton style={{ height: 11, width: 48, borderRadius: "var(--radius-sm)" }} />
         </div>
       </div>
     </div>

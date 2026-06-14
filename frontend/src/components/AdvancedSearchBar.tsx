@@ -1,6 +1,16 @@
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, X, RotateCw, RefreshCw } from "lucide-react";
-import { LensFrame } from "./LensFrame";
+import { ConnectorLoader } from "./motif/ConnectorLoader";
+
+/*
+ * AdvancedSearchBar — Concrete & Signal.
+ * One debossed well (bg concrete-0, radius-lg hero / radius-md bar).
+ * Image-upload: ghost camera + mono-caps "ADD IMAGE".
+ * Search button: primary signal + stamp-press + ConnectorLoader while loading.
+ * When query empty: secondary (concrete-100, ink text), NOT transparent-glass.
+ * Drag-over: inset signal hairline + signal-tint wash + "DROP TO MATCH".
+ * LensFrame retired — replaced with debossed well.
+ */
 
 interface AdvancedSearchBarProps {
   placeholder?: string;
@@ -10,17 +20,14 @@ interface AdvancedSearchBarProps {
   showImageUpload?: boolean;
   disabled?: boolean;
   className?: string;
-  // Homepage-specific features
   animatedPlaceholders?: string[];
-  // Refresh button
   showRefreshButton?: boolean;
   onRefresh?: () => void;
-  refreshButtonPosition?: "before" | "after"; // "before" = before camera, "after" = after camera
-  // Button customization
+  refreshButtonPosition?: "before" | "after";
   buttonText?: string;
   buttonStyle?: "default" | "transparent-when-empty";
-  // For results page
   hasConnections?: boolean;
+  isLoading?: boolean;
 }
 
 export function AdvancedSearchBar({
@@ -38,14 +45,17 @@ export function AdvancedSearchBar({
   buttonText,
   buttonStyle = "default",
   hasConnections = false,
+  isLoading = false,
 }: AdvancedSearchBarProps) {
   const [query, setQuery] = useState(initialValue);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Animated placeholder effect for homepage
+  // Animated placeholder
   useEffect(() => {
     if (animatedPlaceholders.length > 0 && !query) {
       const interval = setInterval(() => {
@@ -70,23 +80,59 @@ export function AdvancedSearchBar({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-      };
+      reader.onload = (ev) => setUploadedImage(ev.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
-  };
-
   const removeUploadedImage = () => {
     setUploadedImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Drag-and-drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setUploadedImage(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      // Try URI from drag (e.g. from SearchResultCard)
+      const uri = e.dataTransfer.getData("text/uri-list");
+      if (uri) setUploadedImage(uri);
     }
   };
+
+  const isHero = variant === "hero";
+  const isHeader = variant === "header";
+  const isInline = variant === "inline";
+
+  const hasInput = !!(query.trim() || uploadedImage);
+
+  // Well sizing
+  const wellRadius = isHero ? "var(--radius-lg)" : "var(--radius-md)";
+  const wellPaddingV = isHero ? 12 : isInline ? 8 : isHeader ? 3 : 6;
+  const wellPaddingH = isHero ? 20 : isInline ? 16 : isHeader ? 8 : 12;
+  const textSize = isHero ? 20 : isInline ? 16 : isHeader ? 12 : 15;
+  const btnTextSize = isHero ? 16 : isInline ? 14 : isHeader ? 11 : 14;
+  const btnHeight = isHero ? 44 : isInline ? 36 : isHeader ? 26 : 36;
+  const iconSize = isHero ? 20 : isInline ? 16 : isHeader ? 12 : 16;
+
+  // Drag-over signal wash
+  const dragOverStyle = isDragOver
+    ? {
+        boxShadow: "var(--deboss), inset 0 0 0 2px var(--signal)",
+        background: "var(--signal-tint)",
+      }
+    : {};
 
   return (
     <>
@@ -95,242 +141,293 @@ export function AdvancedSearchBar({
         type="file"
         accept="image/jpeg,image/png"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: "none" }}
       />
-      
-      <LensFrame 
-        className={`${variant === "header" ? "px-2" : variant === "inline" ? "px-6" : "px-14"} ${variant === "hero" ? "rounded-lg" : "rounded-b-lg"} ${className}`}
+
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{
+          background: "var(--concrete-0)",
+          boxShadow: "var(--deboss)",
+          borderRadius: wellRadius,
+          padding: `${wellPaddingV}px ${wellPaddingH}px`,
+          position: "relative",
+          transition:
+            "box-shadow var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press)",
+          ...dragOverStyle,
+        }}
+        className={className}
       >
-        <div style={{
-          paddingTop: variant === "header" ? "2px" : variant === "inline" ? "4px" : "5px",
-          paddingBottom: variant === "header" ? "2px" : variant === "inline" ? "4px" : "5px",
-        }}>
+        {/* Drag overlay label */}
+        {isDragOver && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: wellRadius,
+              pointerEvents: "none",
+              zIndex: 10,
+            }}
+          >
+            <span
+              className="mono-caps"
+              style={{ color: "var(--signal)", fontSize: 13, letterSpacing: "0.14em" }}
+            >
+              DROP TO MATCH
+            </span>
+          </div>
+        )}
+
+        {/* Uploaded image preview */}
         {uploadedImage && (
-          <div className={variant === "header" ? "mb-0.5 flex justify-center" : variant === "inline" ? "mb-2 flex justify-center" : "mb-4 flex justify-center"}>
-            <div className="relative inline-block">
-              <div className={`relative ${variant === "header" ? "w-7 h-7" : variant === "inline" ? "w-16 h-16" : "w-32 h-32"} rounded-lg overflow-hidden border-2 border-[rgba(0,0,0,0.3)]`}>
+          <div
+            style={{
+              marginBottom: isHero ? 12 : isInline ? 8 : 4,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <div
+                style={{
+                  width: isHero ? 96 : isInline ? 48 : 28,
+                  height: isHero ? 96 : isInline ? 48 : 28,
+                  borderRadius: "var(--radius-sm)",
+                  overflow: "hidden",
+                  boxShadow: "var(--emboss)",
+                }}
+              >
                 <img
                   src={uploadedImage}
-                  alt="Uploaded reference"
-                  className="w-full h-full object-cover"
+                  alt="Reference"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-                <button
-                  onClick={removeUploadedImage}
-                  className="absolute top-0 right-0 p-0.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                  type="button"
-                >
-                  <X size={variant === "header" ? 6 : variant === "inline" ? 10 : 14} className="text-[#000000]" />
-                </button>
               </div>
-              <div 
-                className="absolute -top-1 -left-1 px-0.5 py-0 bg-[rgba(0,0,0,0.8)] text-white rounded"
-                style={{ fontSize: variant === "header" ? "5px" : variant === "inline" ? "8px" : "10px" }}
+              <button
+                onClick={removeUploadedImage}
+                type="button"
+                style={{
+                  position: "absolute",
+                  top: -5,
+                  right: -5,
+                  width: 16,
+                  height: 16,
+                  borderRadius: "var(--radius-pill)",
+                  background: "var(--ink-900)",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                {variant === "header" ? "Ref" : "Reference"}
-              </div>
+                <X size={9} style={{ color: "#fff" }} />
+              </button>
+              <span
+                className="mono-caps"
+                style={{
+                  position: "absolute",
+                  top: -9,
+                  left: -2,
+                  fontSize: 9,
+                  background: "var(--ink-900)",
+                  color: "#fff",
+                  padding: "1px 4px",
+                  borderRadius: 2,
+                }}
+              >
+                {isHeader ? "Ref" : "Reference"}
+              </span>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={`flex items-center ${variant === "header" ? "gap-2" : variant === "inline" ? "gap-4" : "gap-8"}`}>
-          <div className="flex-1 relative">
-            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 flex items-center gap-2" style={{ marginLeft: variant === "header" ? "4px" : variant === "inline" ? "8px" : "12px" }}>
-              {showImageUpload && (
-                <>
-                  {showRefreshButton && refreshButtonPosition === "before" && (
-                    <button
-                      type="button"
-                      onClick={onRefresh}
-                      className="hover:opacity-70 transition-opacity cursor-pointer z-10"
-                      style={{ 
-                        opacity: 0.5,
-                      }}
-                      title="Refresh results"
-                    >
-                      {variant === "hero" ? (
-                        <RotateCw size={20} strokeWidth={1.5} color="#000000" />
-                      ) : variant === "header" ? (
-                        <RefreshCw size={9} strokeWidth={1.5} color="#000000" />
-                      ) : variant === "inline" ? (
-                        <RefreshCw size={16} strokeWidth={1.5} color="#000000" />
-                      ) : (
-                        <RefreshCw size={20} strokeWidth={1.5} color="#000000" />
-                      )}
-                    </button>
-                  )}
-                  
-                  <button
-                    type="button"
-                    onClick={handleCameraClick}
-                    className="hover:opacity-100 transition-opacity cursor-pointer z-10"
-                    style={{ 
-                      opacity: uploadedImage ? 1 : 0.3,
-                    }}
-                    title="Upload reference image"
-                  >
-                    <Camera size={variant === "header" ? 9 : variant === "inline" ? 16 : 20} strokeWidth={1.5} color="#000000" />
-                  </button>
+        <form onSubmit={handleSubmit} style={{ display: "flex", alignItems: "center", gap: isHero ? 16 : 8 }}>
+          {/* Left icons */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            {showImageUpload && showRefreshButton && refreshButtonPosition === "before" && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                title="Refresh results"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  opacity: 0.4,
+                  color: "var(--ink-700)",
+                  display: "flex",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.4"; }}
+              >
+                <RotateCw size={iconSize} strokeWidth={1.5} />
+              </button>
+            )}
 
-                  {showRefreshButton && refreshButtonPosition === "after" && (
-                    <button
-                      type="button"
-                      onClick={onRefresh}
-                      className="hover:opacity-100 transition-all cursor-pointer z-10"
-                      style={{ 
-                        opacity: 0.5,
-                      }}
-                      title="Refresh"
-                    >
-                      {variant === "hero" ? (
-                        <RotateCw size={20} strokeWidth={1.5} color="#000000" />
-                      ) : variant === "header" ? (
-                        <RefreshCw size={9} strokeWidth={1.5} color="#000000" />
-                      ) : variant === "inline" ? (
-                        <RefreshCw size={16} strokeWidth={1.5} color="#000000" />
-                      ) : (
-                        <RefreshCw size={20} strokeWidth={1.5} color="#000000" />
-                      )}
-                    </button>
-                  )}
-                </>
-              )}
-              
-              {!showImageUpload && showRefreshButton && (
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  className="hover:opacity-70 transition-opacity cursor-pointer z-10"
-                  style={{ 
-                    opacity: 0.5,
-                  }}
-                  title="Refresh"
-                >
-                  <RefreshCw size={variant === "header" ? 9 : variant === "inline" ? 16 : 20} strokeWidth={1.5} color="#000000" />
-                </button>
-              )}
-            </div>
+            {showImageUpload && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="ADD IMAGE"
+                aria-label="Add reference image"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  opacity: uploadedImage ? 1 : 0.4,
+                  color: "var(--ink-700)",
+                  transition: "opacity var(--dur-1)",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = uploadedImage ? "1" : "0.4"; }}
+              >
+                <Camera size={iconSize} strokeWidth={1.5} />
+                {!isHeader && !uploadedImage && (
+                  <span className="mono-caps" style={{ fontSize: 9 }}>
+                    ADD IMAGE
+                  </span>
+                )}
+              </button>
+            )}
 
-            {(() => {
-              const buttonCount = (showImageUpload ? 1 : 0) + (showRefreshButton ? 1 : 0);
-              // Compact padding for different variants
-              const leftPadding = variant === "header" 
-                ? (buttonCount === 0 ? "22px" : buttonCount === 1 ? "22px" : "32px")
-                : variant === "inline"
-                ? (buttonCount === 0 ? "32px" : buttonCount === 1 ? "32px" : "56px")
-                : (buttonCount === 0 ? "42px" : buttonCount === 1 ? "42px" : (refreshButtonPosition === "before" ? "74px" : "80px"));
-              
-              const fontSize = variant === "header" ? "9px" : variant === "inline" ? "16px" : "25px";
-              const inputPadding = variant === "header" 
-                ? `3px 6px 3px ${leftPadding}` 
-                : variant === "inline"
-                ? `8px 12px 8px ${leftPadding}`
-                : `12px 18px 12px ${leftPadding}`;
-              
-              const pbClass = variant === "header" ? "pb-0.5" : variant === "inline" ? "pb-2" : "pb-3";
-              
-              return (
-                <>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className={`w-full bg-transparent border-0 border-b border-[rgba(0,0,0,0.3)] ${pbClass} focus:outline-none transition-colors`}
-                    style={{
-                      fontFamily: "var(--font-primary)",
-                      fontSize,
-                      color: animatedPlaceholders.length > 0 && !query ? "transparent" : "#000000",
-                      padding: inputPadding,
-                    }}
-                    placeholder={animatedPlaceholders.length === 0 ? placeholder : ""}
-                    disabled={disabled}
-                  />
-                  
-                  {animatedPlaceholders.length > 0 && !query && (
-                    <>
-                      <div 
-                        className={`absolute inset-0 flex items-end ${pbClass} pointer-events-none`}
-                        style={{
-                          opacity: isPlaceholderVisible ? 1 : 0,
-                          transition: "opacity 500ms ease-in-out"
-                        }}
-                      >
-                        <span 
-                          style={{
-                            fontFamily: "var(--font-primary)",
-                            fontSize,
-                            color: "#000000",
-                            padding: inputPadding
-                          }}
-                        >
-                          {animatedPlaceholders[placeholderIndex]}
-                        </span>
-                      </div>
-                      
-                      {variant !== "header" && variant !== "inline" && (
-                        <div
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none"
-                          style={{
-                            fontSize: "13px",
-                            color: "rgba(0,0,0,0.4)",
-                            fontFamily: "var(--font-primary)",
-                            fontWeight: 300,
-                          }}
-                        >
-                          text + image
-                        </div>
-                      )}
-                    </>
-                  )}
-                  
-                  {animatedPlaceholders.length === 0 && variant !== "header" && variant !== "inline" && (
-                    <div
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none"
-                      style={{
-                        fontSize: "13px",
-                        color: "rgba(0,0,0,0.4)",
-                        fontFamily: "var(--font-primary)",
-                        fontWeight: 300,
-                      }}
-                    >
-                      text + image
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+            {showImageUpload && showRefreshButton && refreshButtonPosition === "after" && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                title="Refresh"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  opacity: 0.4,
+                  color: "var(--ink-700)",
+                  display: "flex",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.4"; }}
+              >
+                <RefreshCw size={iconSize} strokeWidth={1.5} />
+              </button>
+            )}
+
+            {!showImageUpload && showRefreshButton && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                title="Refresh"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  opacity: 0.4,
+                  color: "var(--ink-700)",
+                  display: "flex",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.4"; }}
+              >
+                <RefreshCw size={iconSize} strokeWidth={1.5} />
+              </button>
+            )}
           </div>
 
+          {/* Text field */}
+          <div style={{ flex: 1, position: "relative" }}>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={animatedPlaceholders.length === 0 ? placeholder : ""}
+              disabled={disabled}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontFamily: "var(--font-body)",
+                fontSize: textSize,
+                color: animatedPlaceholders.length > 0 && !query ? "transparent" : "var(--ink-900)",
+                padding: 0,
+              }}
+            />
+            {/* Animated placeholder overlay */}
+            {animatedPlaceholders.length > 0 && !query && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  pointerEvents: "none",
+                  opacity: isPlaceholderVisible ? 1 : 0,
+                  transition: "opacity 400ms ease",
+                  fontFamily: "var(--font-body)",
+                  fontSize: textSize,
+                  color: "var(--ink-400)",
+                  display: "flex",
+                  alignItems: "center",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {animatedPlaceholders[placeholderIndex]}
+              </div>
+            )}
+          </div>
+
+          {/* Search button — primary signal when has input, secondary when empty */}
           <button
             type="submit"
-            className="rounded-md transition-all"
-            style={{
-              fontFamily: "var(--font-primary)",
-              fontSize: variant === "header" ? "7px" : variant === "inline" ? "14px" : "21px",
-              backgroundColor: buttonStyle === "transparent-when-empty" && !query && !uploadedImage
-                ? "transparent"
-                : hasConnections
-                ? "#10B981"
-                : "var(--accent)",
-              color: "#000000",
-              border: buttonStyle === "transparent-when-empty" && !query && !uploadedImage
-                ? "1px solid rgba(0,0,0,0.3)"
-                : "none",
-              backdropFilter: buttonStyle === "transparent-when-empty" && !query && !uploadedImage
-                ? "blur(4px)"
-                : "none",
-              paddingLeft: variant === "header" ? "8px" : variant === "inline" ? "20px" : "32px",
-              paddingRight: variant === "header" ? "10px" : variant === "inline" ? "20px" : "32px",
-              paddingTop: variant === "header" ? "4px" : variant === "inline" ? "10px" : "16px",
-              paddingBottom: variant === "header" ? "4px" : variant === "inline" ? "10px" : "16px",
-            }}
             disabled={disabled}
+            onMouseDown={() => setIsPressed(true)}
+            onMouseUp={() => setIsPressed(false)}
+            onMouseLeave={() => setIsPressed(false)}
+            style={{
+              flexShrink: 0,
+              height: btnHeight,
+              padding: `0 ${isHero ? 28 : isInline ? 20 : 14}px`,
+              borderRadius: "var(--radius-md)",
+              background: hasInput ? "var(--signal)" : "var(--concrete-100)",
+              color: hasInput ? "#fff" : "var(--ink-700)",
+              boxShadow: isPressed ? "var(--deboss)" : "var(--emboss)",
+              border: "none",
+              cursor: disabled ? "not-allowed" : "pointer",
+              fontFamily: "var(--font-body)",
+              fontSize: btnTextSize,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              transform: isPressed ? "translateY(1px) scale(0.99)" : "none",
+              transition:
+                "background var(--dur-1) var(--ease-press), box-shadow var(--dur-1) var(--ease-press), transform var(--dur-1) var(--ease-press), color var(--dur-1) var(--ease-press)",
+              minWidth: isHero ? 100 : isHeader ? 56 : 72,
+            }}
           >
-            {buttonText || (hasConnections ? "Remix" : "Search")}
+            {isLoading ? (
+              <ConnectorLoader size={isHero ? 40 : 28} light={hasInput} />
+            ) : (
+              buttonText || (hasConnections ? "Remix" : "Search")
+            )}
           </button>
         </form>
-        </div>
-      </LensFrame>
+      </div>
     </>
   );
 }
-

@@ -102,7 +102,7 @@ export function EditorHeader({
               width: 36,
               height: 36,
               backgroundColor: 'transparent',
-              border: '1px solid rgba(0,0,0,0.1)',
+              border: '1px solid var(--hairline)',
               borderRadius: 8,
               cursor: 'pointer',
             }}
@@ -125,7 +125,7 @@ export function EditorHeader({
               fontSize: 16,
               fontWeight: 600,
               border: 'none',
-              borderBottom: '2px solid var(--accent)',
+              borderBottom: '2px solid var(--signal)',
               outline: 'none',
               padding: '4px 0',
               minWidth: 200,
@@ -151,22 +151,22 @@ export function EditorHeader({
         {/* Save Status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {isSaving && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(0,0,0,0.5)', fontSize: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--ink-400)', fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               <Loader2 size={14} className="animate-spin" />
               Saving...
             </span>
           )}
           {!isSaving && hasUnsavedChanges && (
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 12 }}>Unsaved</span>
+            <span style={{ color: 'var(--ink-400)', fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Unsaved</span>
           )}
           {!isSaving && !hasUnsavedChanges && !saveError && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#22c55e', fontSize: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--success)', fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               <Check size={14} />
               Saved
             </span>
           )}
           {saveError && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', fontSize: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--error)', fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               <AlertCircle size={14} />
               {saveError}
             </span>
@@ -211,7 +211,7 @@ export function EditorHeader({
           <Redo2 size={18} />
         </button>
 
-        <div style={{ width: 1, height: 24, backgroundColor: 'rgba(0,0,0,0.1)', margin: '0 8px' }} />
+        <div style={{ width: 1, height: 24, backgroundColor: 'var(--hairline)', margin: '0 8px' }} />
 
         <select
           value={zoom}
@@ -220,7 +220,7 @@ export function EditorHeader({
             fontFamily: 'var(--font-secondary)',
             fontSize: 13,
             padding: '6px 10px',
-            border: '1px solid rgba(0,0,0,0.15)',
+            border: '1px solid var(--hairline)',
             borderRadius: 6,
             backgroundColor: 'white',
             cursor: 'pointer',
@@ -246,7 +246,7 @@ export function EditorHeader({
             gap: 6,
             padding: '8px 12px',
             backgroundColor: 'transparent',
-            border: '1px solid rgba(0,0,0,0.15)',
+            border: '1px solid var(--hairline)',
             borderRadius: 8,
             cursor: 'pointer',
             fontFamily: 'var(--font-secondary)',
@@ -266,7 +266,7 @@ export function EditorHeader({
             gap: 6,
             padding: '8px 12px',
             backgroundColor: 'transparent',
-            border: '1px solid rgba(0,0,0,0.15)',
+            border: '1px solid var(--hairline)',
             borderRadius: 8,
             cursor: 'pointer',
             fontFamily: 'var(--font-secondary)',
@@ -285,7 +285,7 @@ export function EditorHeader({
             gap: 6,
             padding: '8px 12px',
             backgroundColor: 'transparent',
-            border: '1px solid rgba(0,0,0,0.15)',
+            border: '1px solid var(--hairline)',
             borderRadius: 8,
             cursor: 'pointer',
             fontFamily: 'var(--font-secondary)',

@@ -1,0 +1,263 @@
+/* ============================================================================
+   ARCHIPEDIA — "CONCRETE & SIGNAL"  ·  Brand token foundation
+   North-star: "Every building leaves a mark."
+   Light Swiss-brutalist, refined. Matte concrete + true ink + ONE Klein-blue
+   Signal (<5% of pixels). Emboss/deboss materiality — NO glass/blur.
+   This file is imported LAST so it overrides the legacy compiled-Tailwind dumps
+   (index.css / globals.css). It also ALIASES legacy var names → the new system,
+   so untouched components adopt the brand automatically.
+   See frontend/BRAND.md for the full playbook.
+   ========================================================================== */
+
+:root {
+  /* ── FONT STACKS ──────────────────────────────────────────────────────── */
+  --font-display: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Hanken Grotesk Variable", "Hanken Grotesk", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "SFMono-Regular", "Menlo", monospace;
+
+  /* ── CONCRETE (surfaces) ──────────────────────────────────────────────── */
+  --concrete-0: #ffffff;       /* images / modal sheets only */
+  --concrete-50: #f4f4f2;      /* PAGE BACKGROUND */
+  --concrete-100: #ececE9;     /* surface / cards at rest */
+  --concrete-200: #e2e2de;     /* raised surface (toolbar, popover) */
+  --concrete-300: #d4d4cf;     /* heavy dividers */
+  --concrete-sunken: #e8e8e4;  /* inset wells, input troughs */
+
+  /* ── INK (text + structural black) ────────────────────────────────────── */
+  --ink-900: #15161a;          /* primary text, wordmark */
+  --ink-700: #3a3c42;          /* strong secondary, icons */
+  --ink-500: #6b6e76;          /* secondary text */
+  --ink-400: #989ba2;          /* tertiary / placeholder */
+  --ink-300: #bfc1c5;          /* disabled, faint meta */
+  --hairline: rgba(21, 22, 26, 0.12);
+  --hairline-strong: rgba(21, 22, 26, 0.22);
+
+  /* ── SIGNAL — International Klein Blue (the ONE accent) ────────────────── */
+  --signal: #1f3fff;
+  --signal-deep: #002fa7;
+  --signal-hover: #1733e0;
+  --signal-tint: #e7eaff;
+  --signal-tint-2: #cfd6ff;
+  --focus-ring: rgba(31, 63, 255, 0.45);
+
+  /* ── SEMANTIC (muted, architectural) ──────────────────────────────────── */
+  --success: #2f6b4f;  --success-tint: #e4efe9;
+  --warn: #8a6a1f;     --warn-tint: #f3ecda;
+  --error: #b23a28;    --error-tint: #f6e3df;
+
+  --select-bg: var(--signal-tint);
+  --select-fg: var(--ink-900);
+
+  /* ── RADIUS (Swiss = small + decisive) ────────────────────────────────── */
+  --radius-sm: 2px;   /* chips, stamps, tags, the mark tile */
+  --radius-md: 4px;   /* buttons, inputs, cards — workhorse */
+  --radius-lg: 8px;   /* panels, modal sheets, image tiles */
+  --radius-pill: 999px; /* dots / avatars ONLY */
+
+  /* ── SPACING (4px base) ───────────────────────────────────────────────── */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px;  --space-7: 48px; --space-8: 64px;
+  --space-9: 96px; --space-10: 128px;
+
+  /* ── ELEVATION — pressed-first, no soft glows ─────────────────────────── */
+  --deboss: inset 0 1px 2px rgba(21, 22, 26, 0.18),
+            inset 0 -1px 0 rgba(255, 255, 255, 0.85);
+  --emboss: 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 1px 2px rgba(21, 22, 26, 0.1),
+            0 0 0 1px var(--hairline);
+  --raised: 0 0 0 1px var(--hairline),
+            0 1px 1px rgba(21, 22, 26, 0.05),
+            0 4px 10px rgba(21, 22, 26, 0.06);
+  --elev-modal: 0 0 0 1px var(--hairline-strong),
+                0 24px 48px -12px rgba(21, 22, 26, 0.22);
+
+  /* ── STUDIO GROUND — the dark cinematic field (hero + final CTA) ───────── */
+  /* "Ink, not absence": a deep, LIT, warm-charcoal concrete. Shadow lives here
+     so emboss/deboss are physically visible and Klein-blue Signal detonates.
+     Used for BOTH the hero and the Final-CTA band → DARK → light → DARK arc. */
+  --studio-ground: #181612;          /* base = deep warm-charcoal concrete */
+  --studio-ground-solid: #181612;    /* explicit solid alias */
+  --studio-ground-2: #1c1b17;        /* slightly lifted plane */
+  --studio-ground-deep: #131210;     /* recessed / vignette floor */
+  --studio-ink: #f1efe9;             /* off-white display type on the dark ground */
+  --studio-stone: #a8a49a;           /* desaturated stone for mono eyebrows */
+  --studio-stone-dim: #6f6c64;       /* faint mono meta on dark */
+  --studio-line: rgba(241, 239, 233, 0.16);       /* hairline on dark */
+  --studio-line-strong: rgba(241, 239, 233, 0.30);/* connector weight on dark */
+  --studio-grain: 0.08;              /* subsurface grain opacity on dark */
+  /* a single raking directional light (upper-left), like sun across concrete */
+  --studio-light:
+    radial-gradient(110% 80% at 22% 8%, rgba(255, 246, 228, 0.14) 0%,
+      rgba(255, 246, 228, 0.05) 26%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(155deg, var(--studio-ground-2) 0%, var(--studio-ground-solid) 42%,
+      var(--studio-ground-deep) 100%);
+  /* directional cast shadow for a large precedent bleeding off-edge */
+  --studio-cast: -28px 40px 80px -24px rgba(0, 0, 0, 0.66),
+                 0 0 0 1px rgba(0, 0, 0, 0.4);
+
+  /* ── MOTION — "die pressing into material": settle, don't slide ───────── */
+  --ease-press: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emerge: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
+
+  /* ── MODULAR GRID ─────────────────────────────────────────────────────── */
+  --grid-unit: 24px;
+  --grid-line: rgba(21, 22, 26, 0.05);
+  --grid-node: rgba(21, 22, 26, 0.1);
+  --container-max: 1320px;
+
+  /* ── CANVAS NODE TOKENS (used by react-flow / BaseNode) ───────────────── */
+  --node-w: 264px;
+  --node-w-compact: 168px;
+  --seat-bg: var(--concrete-sunken);
+  --node-bg: var(--concrete-100);
+  --port-size: 8px;
+  --port-fill: var(--ink-700);
+  --port-fill-active: var(--signal);
+  --wire: var(--hairline-strong);
+  --wire-active: var(--signal);
+  --cat-input: var(--ink-500);
+  --cat-operator: var(--ink-700);
+  --cat-generate: var(--signal);
+  --cat-output: var(--ink-900);
+
+  /* ══ LEGACY ALIASES — remap old names so untouched components rebrand ═══ */
+  --font-primary: var(--font-display);
+  --font-secondary: var(--font-body);
+  --font-body-legacy: var(--font-body);
+  --accent: var(--signal);
+  --accent-hover: var(--signal-hover);
+  --primary-blue: var(--signal);
+  --secondary-green: var(--success);
+  --bg-primary: var(--concrete-50);
+  --bg-neutral: var(--concrete-100);
+  --bg-glass: var(--concrete-100);
+  --bg-glass-hover: var(--concrete-200);
+  --text-primary: var(--ink-900);
+  --text-secondary: var(--ink-500);
+  --text-tertiary: var(--ink-400);
+  --border-light: var(--hairline);
+  --border-color: var(--hairline);
+  --border-glass: var(--hairline);
+  --glass-blur: none;
+  --glass-shadow: var(--raised);
+  --glass-opacity: 1;
+}
+
+/* ── BASE TYPOGRAPHY ────────────────────────────────────────────────────── */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  font-family: var(--font-body);
+  color: var(--ink-900);
+  background-color: var(--concrete-50);
+  font-size: 15px;
+  line-height: 1.6;
+}
+h1, h2, h3, h4, h5 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+::selection { background: var(--select-bg); color: var(--select-fg); }
+:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+a { color: inherit; }
+
+/* Numbers/IDs/coords read as instrument annotations */
+.mono, code, kbd, samp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Re-skin the legacy typographic helper classes from index.css */
+.heading-l { font-family: var(--font-display) !important; text-transform: none !important;
+  letter-spacing: -0.03em !important; font-weight: 600 !important; color: var(--ink-900); }
+.heading-m { font-family: var(--font-display) !important; text-transform: none !important;
+  letter-spacing: -0.02em !important; font-weight: 600 !important; color: var(--ink-900); }
+.body-l, .body-m { font-family: var(--font-body) !important; color: var(--ink-700) !important; }
+.caption { font-family: var(--font-mono) !important; text-transform: uppercase;
+  letter-spacing: 0.14em !important; color: var(--ink-500) !important; }
+
+/* ── MATERIALITY UTILITIES ──────────────────────────────────────────────── */
+.emboss { background: var(--concrete-100); box-shadow: var(--emboss); border-radius: var(--radius-md); }
+.deboss { background: var(--concrete-sunken); box-shadow: var(--deboss); border-radius: var(--radius-md); }
+.raised { background: var(--concrete-100); box-shadow: var(--raised); border-radius: var(--radius-lg); }
+.stamp {
+  background: var(--concrete-100); box-shadow: var(--deboss); border-radius: var(--radius-sm);
+  color: var(--ink-700); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.hairline-rule { border: 0; border-top: 1px solid var(--hairline); }
+
+/* Eyebrow / micro-label (mono caps) */
+.mono-caps {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-500);
+}
+.mono-meta {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums; color: var(--ink-500);
+}
+
+/* Static concrete grain — never animated. Apply to body via .has-grain or directly. */
+.grain::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* Modular grid background (canvas, empty states, marketing bands) */
+.modular-grid {
+  background-color: var(--concrete-50);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(var(--grid-node) 1.2px, transparent 1.2px);
+  background-size:
+    var(--grid-unit) var(--grid-unit),
+    var(--grid-unit) var(--grid-unit),
+    calc(var(--grid-unit) * 4) calc(var(--grid-unit) * 4);
+  background-position: -1px -1px;
+}
+
+/* ── GLASS KILL-SWITCH ──────────────────────────────────────────────────── */
+/* No glassmorphism anywhere. Neutralize leftover blur from inline styles + the
+   compiled .blur utility. Depth comes from emboss/deboss + hairlines instead. */
+.blur, [style*="backdrop-filter"], [style*="backdropFilter"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.blur { filter: none !important; }
+
+/* ── REACT-FLOW (canvas) — node–connector–union motif ───────────────────── */
+.react-flow__node { font-family: var(--font-body); }
+.react-flow__edge-path { stroke: var(--hairline-strong); stroke-width: 1.5px; }
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path { stroke: var(--signal); stroke-width: 2px; }
+.react-flow__handle {
+  width: var(--port-size); height: var(--port-size);
+  border-radius: var(--radius-sm);
+  background: var(--port-fill);
+  border: 1px solid var(--concrete-50);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background var(--dur-1) var(--ease-press), transform var(--dur-1) var(--ease-press);
+}
+.react-flow__handle:hover,
+.react-flow__handle-connecting,
+.react-flow__handle-valid { background: var(--signal); transform: scale(1.4); }
+.react-flow__controls {
+  box-shadow: var(--raised); border-radius: var(--radius-lg); overflow: hidden;
+  background: var(--concrete-100);
+}
+.react-flow__controls-button {
+  background: var(--concrete-100); border-bottom: 1px solid var(--hairline);
+  color: var(--ink-700); width: 32px; height: 32px;
+}
+.react-flow__controls-button:hover { background: var(--concrete-200); }
+.react-flow__controls-button svg { fill: var(--ink-700); }
+.react-flow__minimap {
+  background: var(--concrete-100); box-shadow: var(--raised);
+  border-radius: var(--radius-lg); border: none;
+}
+.react-flow__selection {
+  border: 1px dashed var(--signal);
+  background: rgba(31, 63, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

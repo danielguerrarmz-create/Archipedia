@@ -111,16 +111,14 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({
       style={{
         width: '280px',
         minHeight: '260px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #FFA500' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #FFA500, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         fontFamily: 'var(--font-primary)',
         position: 'relative',
       }}
@@ -157,9 +155,9 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#FFA500',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -171,7 +169,7 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({
         style={{
           padding: '12px 16px',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: '#FFA500',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -300,7 +298,7 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({
               width: '100%',
               aspectRatio: '16/10',
               borderRadius: '8px',
-              border: isDragging ? '2px dashed #FFA500' : '2px dashed rgba(0,0,0,0.2)',
+              border: isDragging ? '2px dashed var(--concrete-200)' : '2px dashed rgba(0,0,0,0.2)',
               backgroundColor: isDragging ? 'rgba(255, 165, 0, 0.1)' : 'rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
@@ -311,7 +309,7 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({
               gap: '8px',
             }}
           >
-            <Upload size={28} color={isDragging ? '#FFA500' : 'rgba(0,0,0,0.3)'} />
+            <Upload size={28} color={isDragging ? 'var(--concrete-200)' : 'rgba(0,0,0,0.3)'} />
             <div
               style={{
                 fontFamily: 'var(--font-primary)',

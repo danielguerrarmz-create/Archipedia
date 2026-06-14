@@ -62,7 +62,7 @@ export const RecipeTemplates: React.FC<RecipeTemplatesProps> = ({ onSelectTempla
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-            e.currentTarget.style.borderColor = '#FFC800';
+            e.currentTarget.style.borderColor = 'var(--signal)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.03)';

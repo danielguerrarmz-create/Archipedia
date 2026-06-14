@@ -79,16 +79,14 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
       style={{
         width: '400px',
         minHeight: '450px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #90EE90' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #90EE90, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         position: 'relative',
       }}
     >
@@ -124,9 +122,9 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#90EE90',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -165,9 +163,9 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#90EE90',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -179,7 +177,7 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
         style={{
           padding: '12px 16px',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: '#90EE90',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -301,9 +299,9 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
             FUSION WEIGHTS:
           </div>
           {[
-            { key: 'visual' as const, label: 'Visual', color: '#FFC800', description: 'Similarity to visual reference' },
-            { key: 'spatial' as const, label: 'Spatial', color: '#64B5FF', description: 'Circulation, corridor ratio, etc' },
-            { key: 'regional' as const, label: 'Regional', color: '#32C864', description: 'Climate, geography, typology' },
+            { key: 'visual' as const, label: 'Visual', color: 'var(--concrete-200)', description: 'Similarity to visual reference' },
+            { key: 'spatial' as const, label: 'Spatial', color: 'var(--concrete-200)', description: 'Circulation, corridor ratio, etc' },
+            { key: 'regional' as const, label: 'Regional', color: 'var(--concrete-200)', description: 'Climate, geography, typology' },
           ].map((slider) => (
             <div key={slider.key} style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -392,7 +390,7 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
               outline: 'none',
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = '#90EE90';
+              e.target.style.borderColor = 'var(--concrete-200)';
             }}
             onBlur={(e) => {
               e.target.style.borderColor = 'rgba(0,0,0,0.1)';
@@ -460,7 +458,7 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
           style={{
             flex: 1,
             padding: '8px',
-            backgroundColor: '#90EE90',
+            backgroundColor: 'var(--concrete-200)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',

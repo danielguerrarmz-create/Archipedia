@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { FolderOpen, X, SortAsc, Search } from 'lucide-react';
+import { FolderOpen, X, SortAsc } from 'lucide-react';
 import {
   ClassicSearchBar,
   FilterSidebar,
@@ -12,12 +12,13 @@ import {
   type SearchResultData,
   type ProjectImage,
 } from '../components/ClassicSearch';
-import { HamburgerMenu } from '../components/HamburgerMenu';
+import { AppHeader } from '../components/AppHeader';
 import { useBoardStore } from '../stores/boardStore';
 import { useSelectionStore } from '../stores/selectionStore';
 import { SelectionToolbar, SearchExportDialog } from '../components/Export';
-import { mockProjects } from '../lib/mockData';
 import { toast } from 'sonner';
+import { ErrorPanel } from '../components/ErrorPanel';
+import { Skeleton } from '../components/ui/skeleton'; // side-effect: injects an-skeleton CSS
 import { searchByText, searchByImageFile, searchHybrid, searchByMultipleImages, searchByImageId, toAbsoluteUrl, SearchError } from '../lib/navigatorApi';
 import { addToHistory } from '../lib/searchHistory';
 
@@ -247,29 +248,13 @@ export function ClassicSearchPage() {
           });
           setResults([]);
         } else {
-          // Generic error - use fallback
-          toast.error('Search failed. Using fallback results.');
-          
-          // Fallback to mock data
-          const fallbackResults: SearchResultData[] = mockProjects.slice(0, 12).map((project, index) => ({
-            project_id: project.id,
-            project_title: project.name,
-            architect: project.architect,
-            location_display: project.location,
-            year: project.yearBuilt,
-            image_id: `img_${project.id}_01`,
-            thumb_url: project.imageUrl,
-            image_url: project.imageUrl,
-            images: [{ image_id: `img_${project.id}_01`, thumb_url: project.imageUrl, image_url: project.imageUrl }],
-            score: 0.95 - index * 0.015,
-            match_reason: 'Fallback result',
-            badges: {
-              typology: [project.buildingType],
-              country: [project.location.split(',').pop()?.trim() || ''],
-              climate_bin: project.climate,
-            },
-          }));
-          setResults(fallbackResults);
+          // Generic error — surface to user honestly, no fake results
+          setSearchError({
+            message: "Couldn't reach the index",
+            suggestion: 'Check your connection and try again.',
+          });
+          setResults([]);
+          toast.error('Search failed. Please try again.');
         }
       } finally {
         setIsSearching(false);
@@ -702,99 +687,76 @@ export function ClassicSearchPage() {
         backgroundColor: 'var(--bg-primary)',
       }}
     >
-      {/* Top Bar */}
-      <header
+      {/* Canonical dark studio header */}
+      <AppHeader
+        active="search"
+        right={
+          <button
+            onClick={() => openDrawer()}
+            className="appheader-cta"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 16px',
+              background: 'transparent',
+              color: 'var(--studio-ink)',
+              border: '1px solid var(--studio-line-strong)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              fontWeight: 500,
+              transition: 'background var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press)',
+            }}
+          >
+            <FolderOpen size={16} />
+            Boards
+            {boards.length > 0 && (
+              <span
+                className="mono-meta"
+                style={{
+                  background: 'rgba(255,255,255,0.10)',
+                  color: 'var(--studio-stone)',
+                  padding: '1px 6px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {boards.reduce((acc, b) => acc + (b.blocks?.length || 0), 0)}
+              </span>
+            )}
+          </button>
+        }
+      />
+
+      {/* Search band — clean debossed field on concrete */}
+      <div
         style={{
           position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          top: 60,
+          zIndex: 90,
+          background: 'var(--concrete-0)',
+          borderBottom: '1px solid var(--hairline)',
         }}
       >
         <div
           style={{
             maxWidth: '1400px',
             margin: '0 auto',
-            padding: '16px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
+            padding: '14px 24px',
           }}
         >
-          {/* Logo */}
-          <button
-            onClick={() => setLocation('/')}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '20px',
-              fontWeight: 600,
-              color: '#000',
-              padding: '8px 0',
-            }}
-          >
-            Archipedia
-          </button>
-
-          {/* Search Bar */}
-          <div style={{ flex: 1 }}>
-            <ClassicSearchBar
-              initialQuery={query}
-              onSearch={handleSearch}
-              onMultiImageSearch={handleMultiImageSearch}
-              onClear={handleClearSearch}
-              isSearching={isSearching}
-              enableMultiImage={true}
-            />
-          </div>
-
-          {/* Right Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <button
-              onClick={() => openDrawer()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: isDrawerOpen ? 'var(--accent)' : 'rgba(0,0,0,0.05)',
-                color: isDrawerOpen ? 'white' : '#000',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-secondary)',
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'all 150ms ease',
-              }}
-            >
-              <FolderOpen size={18} />
-              Boards
-              {boards.length > 0 && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    backgroundColor: isDrawerOpen ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
-                    color: 'white',
-                    padding: '2px 6px',
-                    borderRadius: '8px',
-                  }}
-                >
-                  {boards.reduce((acc, b) => acc + (b.blocks?.length || 0), 0)}
-                </span>
-              )}
-            </button>
-            
-            {/* Hamburger Menu */}
-            <HamburgerMenu />
-          </div>
+          <ClassicSearchBar
+            initialQuery={query}
+            onSearch={handleSearch}
+            onMultiImageSearch={handleMultiImageSearch}
+            onClear={handleClearSearch}
+            isSearching={isSearching}
+            enableMultiImage={true}
+          />
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main
@@ -829,13 +791,13 @@ export function ClassicSearchPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <span
+                  className="mono-meta"
                   style={{
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '14px',
-                    fontWeight: 500,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--ink-700)',
                   }}
                 >
-                  {isSearching ? 'Searching...' : `${sortedResults.length} results`}
+                  {isSearching ? 'Searching…' : `${sortedResults.length} results`}
                 </span>
 
                 {/* Active Filter Chips */}
@@ -846,12 +808,15 @@ export function ClassicSearchPage() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      padding: '6px 12px',
-                      backgroundColor: 'rgba(182, 68, 36, 0.1)',
-                      borderRadius: '6px',
-                      fontFamily: 'var(--font-secondary)',
-                      fontSize: '12px',
-                      color: 'var(--accent)',
+                      padding: '3px 10px',
+                      background: 'var(--concrete-100)',
+                      borderRadius: 'var(--radius-sm)',
+                      boxShadow: '0 0 0 1px var(--hairline)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      letterSpacing: '0.06em',
+                      color: 'var(--ink-700)',
                     }}
                   >
                     {chip.value}
@@ -861,12 +826,13 @@ export function ClassicSearchPage() {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        padding: '2px',
+                        padding: '1px',
                         display: 'flex',
                         alignItems: 'center',
+                        color: 'var(--ink-500)',
                       }}
                     >
-                      <X size={12} />
+                      <X size={10} />
                     </button>
                   </span>
                 ))}
@@ -874,18 +840,22 @@ export function ClassicSearchPage() {
 
               {/* Sort Dropdown */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <SortAsc size={16} style={{ opacity: 0.5 }} />
+                <SortAsc size={14} style={{ color: 'var(--ink-400)' }} />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                   style={{
-                    fontFamily: 'var(--font-secondary)',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
-                    padding: '8px 12px',
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '6px',
-                    backgroundColor: 'white',
+                    height: 32,
+                    padding: '0 10px',
+                    background: 'var(--concrete-0)',
+                    boxShadow: 'var(--deboss)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--ink-900)',
                     cursor: 'pointer',
+                    outline: 'none',
                   }}
                 >
                   <option value="best">Best match</option>
@@ -909,108 +879,31 @@ export function ClassicSearchPage() {
                 <div
                   key={i}
                   style={{
-                    backgroundColor: 'rgba(0,0,0,0.05)',
-                    borderRadius: '12px',
+                    background: 'var(--concrete-0)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--raised)',
                     overflow: 'hidden',
                   }}
                 >
-                  <div
-                    style={{
-                      paddingBottom: '66.67%',
-                      backgroundColor: 'rgba(0,0,0,0.08)',
-                      animation: 'pulse 1.5s infinite',
-                    }}
-                  />
-                  <div style={{ padding: '14px 16px' }}>
-                    <div
-                      style={{
-                        height: '18px',
-                        backgroundColor: 'rgba(0,0,0,0.08)',
-                        borderRadius: '4px',
-                        marginBottom: '8px',
-                        width: '70%',
-                      }}
-                    />
-                    <div
-                      style={{
-                        height: '14px',
-                        backgroundColor: 'rgba(0,0,0,0.05)',
-                        borderRadius: '4px',
-                        width: '50%',
-                      }}
-                    />
+                  <Skeleton style={{ width: '100%', paddingBottom: '66.67%', height: 0, borderRadius: 0 }} />
+                  <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Skeleton style={{ height: 16, width: '70%', borderRadius: 'var(--radius-sm)' }} />
+                    <Skeleton style={{ height: 11, width: '50%', borderRadius: 'var(--radius-sm)' }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : hasSearched ? (
             searchError ? (
-              // Error state with helpful message
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '80px 40px',
-                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
+              <ErrorPanel
+                message={searchError.message}
+                detail={searchError.suggestion}
+                onRetry={() => {
+                  setSearchError(null);
+                  handleClearSearch();
                 }}
-              >
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 16px',
-                  }}
-                >
-                  <Search size={24} style={{ color: 'rgb(239, 68, 68)' }} />
-                </div>
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '20px',
-                    fontWeight: 600,
-                    marginBottom: '12px',
-                    color: 'rgb(185, 28, 28)',
-                  }}
-                >
-                  {searchError.message}
-                </h3>
-                {searchError.suggestion && (
-                  <p
-                    style={{
-                      fontFamily: 'var(--font-secondary)',
-                      fontSize: '14px',
-                      color: 'rgba(0,0,0,0.6)',
-                      marginBottom: '24px',
-                    }}
-                  >
-                    {searchError.suggestion}
-                  </p>
-                )}
-                <button
-                  onClick={() => {
-                    setSearchError(null);
-                    handleClearSearch();
-                  }}
-                  style={{
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '14px',
-                    padding: '12px 24px',
-                    backgroundColor: '#333',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Try again
-                </button>
-              </div>
+                retryLabel="Try again"
+              />
             ) : sortedResults.length > 0 ? (
               <div
                 style={{
@@ -1040,18 +933,26 @@ export function ClassicSearchPage() {
                       onClick={loadMore}
                       disabled={isLoadingMore}
                       style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '14px',
-                        padding: '14px 40px',
-                        backgroundColor: isLoadingMore ? 'rgba(0,0,0,0.1)' : 'var(--accent)',
-                        color: isLoadingMore ? 'rgba(0,0,0,0.4)' : 'white',
+                        height: 44,
+                        padding: '0 32px',
+                        background: isLoadingMore ? 'var(--concrete-200)' : 'var(--signal)',
+                        color: isLoadingMore ? 'var(--ink-400)' : '#fff',
+                        boxShadow: 'var(--emboss)',
                         border: 'none',
-                        borderRadius: '8px',
+                        borderRadius: 'var(--radius-md)',
                         cursor: isLoadingMore ? 'not-allowed' : 'pointer',
-                        transition: 'all 150ms ease',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        transition: 'background var(--dur-1) var(--ease-press)',
                       }}
                     >
-                      {isLoadingMore ? 'Loading...' : `Load More (${results.length} of ${totalCount})`}
+                      {isLoadingMore ? 'Loading…' : `Load more · `}
+                      {!isLoadingMore && (
+                        <span className="mono-meta" style={{ color: 'rgba(255,255,255,0.75)', fontVariantNumeric: 'tabular-nums' }}>
+                          {results.length}/{totalCount}
+                        </span>
+                      )}
                     </button>
                   </div>
                 )}
@@ -1060,43 +961,51 @@ export function ClassicSearchPage() {
               <div
                 style={{
                   textAlign: 'center',
-                  padding: '80px 40px',
-                  backgroundColor: 'rgba(0,0,0,0.02)',
-                  borderRadius: '16px',
+                  padding: '64px 40px',
+                  background: 'var(--concrete-0)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: '0 0 0 1px var(--hairline)',
                 }}
               >
                 <h3
                   style={{
-                    fontFamily: 'var(--font-primary)',
+                    fontFamily: 'var(--font-display)',
                     fontSize: '20px',
                     fontWeight: 600,
-                    marginBottom: '12px',
+                    marginBottom: '10px',
+                    color: 'var(--ink-900)',
+                    letterSpacing: '-0.02em',
                   }}
                 >
                   No results found
                 </h3>
                 <p
                   style={{
-                    fontFamily: 'var(--font-secondary)',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
-                    color: 'rgba(0,0,0,0.6)',
+                    color: 'var(--ink-500)',
                     marginBottom: '24px',
+                    lineHeight: 1.6,
                   }}
                 >
                   Try adjusting your filters or search terms
                 </p>
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                   {activeFilterChips.length > 0 && (
                     <button
                       onClick={handleClearFilters}
                       style={{
-                        fontFamily: 'var(--font-secondary)',
-                        fontSize: '14px',
-                        padding: '12px 24px',
-                        backgroundColor: 'transparent',
-                        border: '1px solid rgba(0,0,0,0.2)',
-                        borderRadius: '8px',
+                        height: 40,
+                        padding: '0 20px',
+                        background: 'var(--concrete-100)',
+                        color: 'var(--ink-900)',
+                        boxShadow: 'var(--emboss)',
+                        border: 'none',
+                        borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '14px',
+                        fontWeight: 500,
                       }}
                     >
                       Clear filters
@@ -1108,14 +1017,17 @@ export function ClassicSearchPage() {
                       handleClearFilters();
                     }}
                     style={{
-                      fontFamily: 'var(--font-secondary)',
-                      fontSize: '14px',
-                      padding: '12px 24px',
-                      backgroundColor: 'var(--accent)',
-                      color: 'white',
+                      height: 40,
+                      padding: '0 20px',
+                      background: 'var(--signal)',
+                      color: '#fff',
+                      boxShadow: 'var(--emboss)',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-md)',
                       cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '14px',
+                      fontWeight: 500,
                     }}
                   >
                     Start new search
@@ -1133,23 +1045,25 @@ export function ClassicSearchPage() {
             >
               <h2
                 style={{
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '28px',
-                  fontWeight: 500,
-                  marginBottom: '16px',
-                  color: '#000',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  marginBottom: '12px',
+                  color: 'var(--ink-900)',
+                  letterSpacing: '-0.02em',
                 }}
               >
-                Find your next architectural inspiration
+                Find your next architectural precedent
               </h2>
               <p
                 style={{
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '16px',
-                  color: 'rgba(0,0,0,0.6)',
-                  marginBottom: '32px',
-                  maxWidth: '500px',
-                  margin: '0 auto 32px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '15px',
+                  color: 'var(--ink-500)',
+                  marginBottom: '28px',
+                  maxWidth: '480px',
+                  margin: '0 auto 28px',
+                  lineHeight: 1.6,
                 }}
               >
                 Search by description, upload a reference image, or both to discover relevant
@@ -1159,7 +1073,7 @@ export function ClassicSearchPage() {
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
-                  gap: '12px',
+                  gap: '8px',
                   justifyContent: 'center',
                 }}
               >
@@ -1173,22 +1087,24 @@ export function ClassicSearchPage() {
                     key={suggestion}
                     onClick={() => performSearch(suggestion, null, 'balanced')}
                     style={{
-                      fontFamily: 'var(--font-secondary)',
-                      fontSize: '13px',
-                      padding: '10px 18px',
-                      backgroundColor: 'rgba(0,0,0,0.05)',
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: '20px',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      letterSpacing: '0.06em',
+                      padding: '6px 14px',
+                      background: 'var(--concrete-100)',
+                      border: 'none',
+                      boxShadow: '0 0 0 1px var(--hairline)',
+                      borderRadius: 'var(--radius-sm)',
                       cursor: 'pointer',
-                      transition: 'all 150ms ease',
+                      color: 'var(--ink-700)',
+                      transition: 'background var(--dur-1) var(--ease-press)',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)';
+                      (e.currentTarget as HTMLElement).style.background = 'var(--concrete-200)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
+                      (e.currentTarget as HTMLElement).style.background = 'var(--concrete-100)';
                     }}
                   >
                     {suggestion}
@@ -1217,13 +1133,6 @@ export function ClassicSearchPage() {
         />
       )}
 
-      {/* CSS for skeleton animation */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -60,16 +60,14 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
       style={{
         width: '300px',
         minHeight: '300px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #4CAF50' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #4CAF50, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         fontFamily: 'var(--font-primary)',
         position: 'relative',
       }}
@@ -106,9 +104,9 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#4CAF50',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -147,9 +145,9 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#4CAF50',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -161,7 +159,7 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
         style={{
           padding: '12px 16px',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: '#4CAF50',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -304,7 +302,7 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
                   fontFamily: 'var(--font-primary)',
                   fontSize: '18px',
                   fontWeight: 600,
-                  color: '#4CAF50',
+                  color: 'var(--concrete-200)',
                 }}
               >
                 {Math.round(validationScore * 100)}%
@@ -433,7 +431,7 @@ export const ValidateNode: React.FC<ValidateNodeProps> = ({
                   style={{
                     fontSize: '11px',
                     fontWeight: 600,
-                    color: '#4CAF50',
+                    color: 'var(--concrete-200)',
                     flexShrink: 0,
                   }}
                 >

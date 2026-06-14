@@ -50,16 +50,14 @@ export const TextNode: React.FC<TextNodeProps> = ({
       style={{
         width: '280px',
         minHeight: '260px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #F5F1E8' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #F5F1E8, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         fontFamily: 'var(--font-primary)',
         position: 'relative',
       }}
@@ -96,9 +94,9 @@ export const TextNode: React.FC<TextNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#F5F1E8',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -137,9 +135,9 @@ export const TextNode: React.FC<TextNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#F5F1E8',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -150,8 +148,8 @@ export const TextNode: React.FC<TextNodeProps> = ({
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '1px solid #F5F1E8',
-          backgroundColor: '#F5F1E8',
+          borderBottom: '1px solid var(--concrete-200)',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -291,7 +289,7 @@ export const TextNode: React.FC<TextNodeProps> = ({
             outline: 'none',
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = '#F5F1E8';
+            e.target.style.borderColor = 'var(--concrete-200)';
             e.target.style.background = 'white';
           }}
           onBlur={(e) => {

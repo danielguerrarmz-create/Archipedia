@@ -105,16 +105,14 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
       style={{
         width: '280px',
         minHeight: '240px',
-        backgroundColor: '#FFFFFF',
-        border: selected ? '2px solid #64B5FF' : '1px solid rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--node-bg)',
+        border: '1px solid var(--hairline)',
         borderRadius: '12px',
-        boxShadow: selected
-          ? '0 0 0 2px #64B5FF, 0 8px 32px rgba(0,0,0,0.2)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: selected ? 50 : 10,
-        transform: `scale(${selected ? 1.02 : 1})`,
+        
         fontFamily: 'var(--font-primary)',
         position: 'relative',
       }}
@@ -151,9 +149,9 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#64B5FF',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -192,9 +190,9 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
           style={{
             width: '12px',
             height: '12px',
-            background: '#64B5FF',
+            background: 'var(--concrete-200)',
             border: '2px solid #FFFFFF',
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-sm)',
             position: 'absolute',
             pointerEvents: 'none',
           }}
@@ -206,7 +204,7 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
         style={{
           padding: '12px 16px',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: '#64B5FF',
+          backgroundColor: 'var(--concrete-200)',
           borderTopLeftRadius: '12px',
           borderTopRightRadius: '12px',
           display: 'flex',
@@ -338,7 +336,7 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
               width: '100%',
               aspectRatio: '16/9',
               borderRadius: '8px',
-              border: isDragging ? '2px dashed #64B5FF' : '2px dashed rgba(0,0,0,0.2)',
+              border: isDragging ? '2px dashed var(--concrete-200)' : '2px dashed rgba(0,0,0,0.2)',
               backgroundColor: isDragging ? 'rgba(100, 181, 255, 0.1)' : 'rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
@@ -349,7 +347,7 @@ export const ImageNode: React.FC<ImageNodeProps> = ({
               gap: '8px',
             }}
           >
-            <Upload size={32} color={isDragging ? '#64B5FF' : 'rgba(0,0,0,0.3)'} />
+            <Upload size={32} color={isDragging ? 'var(--concrete-200)' : 'rgba(0,0,0,0.3)'} />
             <div
               style={{
                 fontFamily: 'var(--font-primary)',

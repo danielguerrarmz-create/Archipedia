@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Camera, RefreshCw, X, RotateCw } from "lucide-react";
+import { Camera, X, RotateCw } from "lucide-react";
 import { useLocation } from "wouter";
-import { LensFrame } from "./LensFrame";
+import { Node } from "./motif/Node";
+
+/*
+ * Header — compact bar variant (used on canvas).
+ * variant="minimal" → back button only (debossed, no glass).
+ * default → debossed search well + camera ghost button + Search (primary signal).
+ */
 
 const searchPlaceholders = [
   "1960s Brutalist Brazilian Architecture",
@@ -16,14 +22,6 @@ const searchPlaceholders = [
   "Post-War Scandinavian Brick Bond Variations",
   "Carlo Scarpa Brass-to-Concrete Joint Details",
   "Tensile Membrane Structures in Desert Climates",
-  "Soviet Modernist Prefabricated Panel Housing Systems",
-  "Shigeru Ban Cardboard Tube Structural Applications",
-  "Venetian Terrazzo Floor Compositions in Mid-Century Modernism",
-  "Double-Skin Facade Systems for High-Rise Office Towers",
-  "Herzog & de Meuron Perforated Metal Screen Assemblies",
-  "Gunite Shotcrete Shell Structures from 1950s-1970s",
-  "Alvar Aalto Bent Plywood Ceiling and Wall Applications",
-  "Kinetic Facade Systems with Automated Brise-Soleil Elements",
 ];
 
 interface HeaderProps {
@@ -35,13 +33,13 @@ interface HeaderProps {
   initialImage?: string | null;
 }
 
-export function Header({ 
+export function Header({
   variant = "default",
-  onSearch, 
-  onRefresh, 
+  onSearch,
+  onRefresh,
   showRefresh = false,
   initialQuery = "",
-  initialImage = null 
+  initialImage = null,
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [uploadedImage, setUploadedImage] = useState<string | null>(initialImage);
@@ -53,8 +51,11 @@ export function Header({
   if (variant === "minimal") {
     return (
       <header
-        className="fixed top-0 left-0 right-0"
         style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
           padding: "8px",
           zIndex: 50,
           display: "flex",
@@ -64,16 +65,17 @@ export function Header({
         <button
           type="button"
           onClick={() => setLocation("/")}
-          className="hover:opacity-80 transition-opacity"
           style={{
-            fontFamily: "var(--font-primary)",
-            fontSize: "9px",
-            background: "rgba(255,255,255,0.8)",
-            border: "1px solid rgba(0,0,0,0.12)",
-            borderRadius: "4px",
-            padding: "4px 6px",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            background: "var(--concrete-0)",
+            boxShadow: "var(--emboss)",
+            border: "none",
+            borderRadius: "var(--radius-md)",
+            padding: "4px 10px",
+            cursor: "pointer",
+            color: "var(--ink-700)",
+            letterSpacing: "0.06em",
           }}
         >
           ← Back
@@ -82,18 +84,16 @@ export function Header({
     );
   }
 
-  // Placeholder rotation effect with fade animation
+  // Placeholder rotation
   useEffect(() => {
-    if (searchQuery) return; // Don't rotate if user is typing
-    
+    if (searchQuery) return;
     const interval = setInterval(() => {
       setIsPlaceholderVisible(false);
       setTimeout(() => {
         setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
         setIsPlaceholderVisible(true);
       }, 400);
-    }, 5000); // Change every 5 seconds
-
+    }, 5000);
     return () => clearInterval(interval);
   }, [searchQuery]);
 
@@ -102,10 +102,9 @@ export function Header({
     if (onSearch) {
       onSearch(searchQuery, uploadedImage);
     } else {
-      // Default behavior: navigate into canvas (even if query is empty).
       const params = new URLSearchParams();
-      if (searchQuery.trim()) params.set('q', searchQuery);
-      if (uploadedImage) params.set('type', 'image');
+      if (searchQuery.trim()) params.set("q", searchQuery);
+      if (uploadedImage) params.set("type", "image");
       const qs = params.toString();
       setLocation(qs ? `/canvas?${qs}` : "/canvas");
     }
@@ -115,30 +114,23 @@ export function Header({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-      };
+      reader.onload = (ev) => setUploadedImage(ev.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeUploadedImage = () => {
-    setUploadedImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  const hasInput = !!(searchQuery || uploadedImage);
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 flex justify-center"
       style={{
-        padding: "0",
-        paddingTop: "4px",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        display: "flex",
+        justifyContent: "center",
+        paddingTop: 6,
         zIndex: 50,
       }}
     >
@@ -147,137 +139,161 @@ export function Header({
         type="file"
         accept="image/jpeg,image/png"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: "none" }}
       />
 
-      <div 
+      <div
         style={{
           width: "50%",
-          maxWidth: "600px",
-          minWidth: "320px",
-          overflow: "hidden",
-      }}
-    >
-        <LensFrame 
-          className="px-2 rounded-b-lg"
-          style={{
-            paddingTop: "2px",
-            paddingBottom: "2px",
-          }}
-        >
-          {uploadedImage && (
-            <div className="mb-0.5 flex justify-center">
-              <div className="relative inline-block">
-                <div className="relative w-7 h-7 rounded overflow-hidden border border-[rgba(0,0,0,0.3)]">
-                  <img
-                    src={uploadedImage}
-                    alt="Uploaded reference"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={removeUploadedImage}
-                    className="absolute top-0 right-0 p-0.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                    type="button"
-                  >
-                    <X size={6} className="text-[#000000]" />
-                  </button>
-                </div>
-                <div 
-                  className="absolute -top-1 -left-1 px-0.5 py-0 bg-[rgba(0,0,0,0.8)] text-white rounded"
-                  style={{ fontSize: "5px" }}
-                >
-                  Ref
-                </div>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSearch} className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 flex items-center gap-1" style={{ marginLeft: "4px" }}>
-                {showRefresh && onRefresh && (
-                  <button
-                    type="button"
-                    onClick={onRefresh}
-                    className="hover:opacity-100 transition-all cursor-pointer z-10"
-                    style={{ 
-                      opacity: 0.3,
-                    }}
-                    title="Refresh nodes"
-                  >
-                    <RotateCw size={9} strokeWidth={1.5} color="#000000" />
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleCameraClick}
-                  className="hover:opacity-100 transition-opacity cursor-pointer z-10"
-                  style={{ 
-                    opacity: uploadedImage ? 1 : 0.3,
-                    marginLeft: showRefresh ? "0" : "0"
-                  }}
-                  title="Upload reference image"
-                >
-                  <Camera size={9} strokeWidth={1.5} color="#000000" />
-                </button>
-        </div>
-
-          <input
-            type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-0 border-b border-[rgba(0,0,0,0.3)] pb-0.5 focus:outline-none transition-colors"
-            style={{
-                  fontFamily: "var(--font-primary)",
-                  fontSize: "9px",
-                  color: searchQuery ? "#000000" : "transparent",
-                  padding: `3px 6px 3px ${showRefresh ? '32px' : '22px'}`,
+          maxWidth: 600,
+          minWidth: 320,
+          background: "var(--concrete-0)",
+          boxShadow: "var(--raised)",
+          borderRadius: "var(--radius-md)",
+          padding: "4px 8px",
+        }}
+      >
+        {/* Uploaded image preview */}
+        {uploadedImage && (
+          <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}>
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "var(--radius-sm)",
+                  overflow: "hidden",
+                  boxShadow: "var(--deboss)",
                 }}
-              />
-              
-              {!searchQuery && (
-                <div 
-                  className="absolute inset-0 flex items-end pb-0.5 pointer-events-none"
-                  style={{
-                    opacity: isPlaceholderVisible ? 1 : 0,
-                    transition: "opacity 500ms ease-in-out"
-                  }}
-                >
-                  <span 
-                    style={{
-                      fontFamily: "var(--font-primary)",
-                      fontSize: "9px",
-                      color: "#000000",
-                      padding: `3px 6px 3px ${showRefresh ? '32px' : '22px'}`
-                    }}
-                  >
-                    {searchPlaceholders[placeholderIndex]}
-                  </span>
-                </div>
-              )}
+              >
+                <img src={uploadedImage} alt="Reference" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+              <button
+                onClick={() => { setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                type="button"
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "var(--radius-pill)",
+                  background: "var(--ink-900)",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={8} style={{ color: "#fff" }} />
+              </button>
+              <span
+                className="mono-caps"
+                style={{ position: "absolute", top: -8, left: -2, fontSize: 9, background: "var(--ink-900)", color: "#fff", padding: "1px 4px", borderRadius: 2 }}
+              >
+                Ref
+              </span>
             </div>
+          </div>
+        )}
 
+        <form onSubmit={handleSearch} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Left icons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            {showRefresh && onRefresh && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                title="Refresh"
+                style={{ background: "none", border: "none", cursor: "pointer", opacity: 0.4, color: "var(--ink-700)", display: "flex" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.4"; }}
+              >
+                <RotateCw size={12} strokeWidth={1.5} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Upload reference image"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                opacity: uploadedImage ? 1 : 0.35,
+                color: "var(--ink-700)",
+                display: "flex",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = uploadedImage ? "1" : "0.35"; }}
+            >
+              <Camera size={12} strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* Text input */}
+          <div style={{ flex: 1, position: "relative" }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                color: searchQuery ? "var(--ink-900)" : "transparent",
+                padding: 0,
+              }}
+            />
+            {!searchQuery && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  pointerEvents: "none",
+                  opacity: isPlaceholderVisible ? 1 : 0,
+                  transition: "opacity 400ms ease",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
+                  color: "var(--ink-400)",
+                  display: "flex",
+                  alignItems: "center",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {searchPlaceholders[placeholderIndex]}
+              </div>
+            )}
+          </div>
+
+          {/* Search button */}
           <button
             type="submit"
-              className="rounded transition-all"
             style={{
-                fontFamily: "var(--font-primary)",
-                fontSize: "7px",
-                backgroundColor: (searchQuery || uploadedImage) ? "var(--accent)" : "transparent",
-                color: "#000000",
-                border: (searchQuery || uploadedImage) ? "none" : "1px solid rgba(0,0,0,0.3)",
-                backdropFilter: !(searchQuery || uploadedImage) ? "blur(4px)" : "none",
-                paddingLeft: "8px",
-                paddingRight: "10px",
-                paddingTop: "4px",
-                paddingBottom: "4px",
+              flexShrink: 0,
+              height: 28,
+              padding: "0 12px",
+              borderRadius: "var(--radius-sm)",
+              background: hasInput ? "var(--signal)" : "var(--concrete-100)",
+              color: hasInput ? "#fff" : "var(--ink-700)",
+              boxShadow: "var(--emboss)",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "var(--font-body)",
+              fontSize: 12,
+              fontWeight: 500,
+              transition: "background var(--dur-1) var(--ease-press), color var(--dur-1) var(--ease-press)",
             }}
           >
             Search
           </button>
         </form>
-        </LensFrame>
       </div>
     </header>
   );

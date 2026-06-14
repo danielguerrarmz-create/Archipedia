@@ -1,343 +1,272 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
-import { NodeData } from '../../types/nodes';
-import { Loader2, CheckCircle2, XCircle, Circle, Zap } from 'lucide-react';
+import { NodeData, NodeType } from '../../types/nodes';
+import {
+  Search, Image as ImageIcon, Type, Layers, Sliders, Filter,
+  GitMerge, Combine, Ban, LayoutGrid, Sparkles, ShieldCheck, Palette, Box, Brain, Settings, Stamp,
+} from 'lucide-react';
 import { getNodeTypeDefinition } from '../../lib/NodeRegistry';
 
-interface BaseNodeProps {
-  data: NodeData;
-  selected?: boolean;
-  children: React.ReactNode;
-  borderColor?: string;
-  backgroundColor?: string;
+/* ─────────────────────────────────────────────────────────────────────────
+   "Concrete & Signal" BaseNode
+   A node is a die pressed into concrete: a debossed SEAT holding an embossed
+   BODY. The 5-state Fuser progression (EMPTY → READY → RUNNING → RESOLVED →
+   STAMPED, plus ERROR) is expressed purely through emboss/deboss + a single
+   header status square. Selection is orthogonal and always wins.
+   ───────────────────────────────────────────────────────────────────────── */
+
+export type FuserState = 'empty' | 'ready' | 'running' | 'resolved' | 'stamped' | 'error';
+
+/** The four brand families. Drives the debossed glyph + footer micro-tick only. */
+export type NodeCategory = 'input' | 'operator' | 'generate' | 'output';
+
+const CATEGORY_BY_TYPE: Record<string, NodeCategory> = {
+  precedent: 'input',
+  stackedPrecedent: 'input',
+  image: 'input',
+  text: 'input',
+  styleReference: 'input',
+  attributeFilter: 'operator',
+  scalar: 'operator',
+  operatorAND: 'operator',
+  operatorOR: 'operator',
+  operatorNOT: 'operator',
+  generate: 'generate',
+  'image-gen': 'generate',
+  llm: 'generate',
+  '3d': 'generate',
+  validate: 'output',
+  results: 'output',
+  collection: 'output',
+  overseer: 'operator',
+};
+
+export const CATEGORY_ACCENT: Record<NodeCategory, string> = {
+  input: 'var(--cat-input)',
+  operator: 'var(--cat-operator)',
+  generate: 'var(--cat-generate)',
+  output: 'var(--cat-output)',
+};
+
+const CATEGORY_LABEL: Record<NodeCategory, string> = {
+  input: 'INPUT',
+  operator: 'OPERATOR',
+  generate: 'GENERATE',
+  output: 'OUTPUT',
+};
+
+export function getNodeCategory(type: NodeType | string): NodeCategory {
+  return CATEGORY_BY_TYPE[type as string] || 'operator';
 }
 
-export const BaseNode: React.FC<BaseNodeProps> = ({
+/** Category glyph (lucide) for a node type — debossed in the header. */
+export function getNodeGlyph(type: NodeType | string): React.ComponentType<{ size?: number }> {
+  const map: Record<string, React.ComponentType<{ size?: number }>> = {
+    precedent: ImageIcon,
+    stackedPrecedent: Layers,
+    image: Search,
+    text: Type,
+    styleReference: Palette,
+    attributeFilter: Filter,
+    scalar: Sliders,
+    operatorAND: Combine,
+    operatorOR: GitMerge,
+    operatorNOT: Ban,
+    generate: Sparkles,
+    'image-gen': Sparkles,
+    llm: Brain,
+    '3d': Box,
+    validate: ShieldCheck,
+    results: LayoutGrid,
+    collection: LayoutGrid,
+    overseer: Settings,
+  };
+  return map[type as string] || Settings;
+}
+
+/** Short index prefix for the node-index stamp, e.g. P·03 */
+function indexPrefix(type: NodeType | string): string {
+  const map: Record<string, string> = {
+    precedent: 'P', stackedPrecedent: 'P', image: 'I', text: 'T', styleReference: 'S',
+    attributeFilter: 'F', scalar: 'C', operatorAND: 'M', operatorOR: 'M', operatorNOT: 'X',
+    generate: 'G', 'image-gen': 'G', llm: 'L', validate: 'V', results: 'R', collection: 'R',
+  };
+  return map[type as string] || 'N';
+}
+
+/** Map an execution / node status into the 5-state Fuser progression. */
+export function deriveFuserState(data: NodeData): FuserState {
+  const exec = (data as any).executionStatus as string | undefined;
+  const status = (data as any).status as string | undefined;
+  if ((data as any).stamped === true) return 'stamped';
+  if (exec === 'error' || status === 'error') return 'error';
+  if (exec === 'running' || status === 'running' || status === 'generating' || status === 'validating' || status === 'extracting') return 'running';
+  if (exec === 'success' || status === 'complete') return 'resolved';
+  // EMPTY vs READY: empty when no meaningful input/content yet
+  if ((data as any).__empty === true) return 'empty';
+  return 'ready';
+}
+
+interface NodeFrameProps {
+  data: NodeData;
+  selected?: boolean;
+  /** Override the derived 5-state (e.g. operator nodes with local status). */
+  state?: FuserState;
+  /** Stable per-canvas index for the P·NN stamp. */
+  index?: number;
+  /** Optional sub-label under the mono-caps title (plain language). */
+  sublabel?: string;
+  /** Optional header-right slot (e.g. RUN / delete controls). */
+  headerActions?: React.ReactNode;
+  /** Footer right slot override (defaults to RESOLVED·N / port summary). */
+  footerRight?: React.ReactNode;
+  compact?: boolean;
+  media?: boolean;
+  /** When true, frame renders no handles (the node renders its own). */
+  noHandles?: boolean;
+  children: React.ReactNode;
+}
+
+/**
+ * NodeFrame — the shared seat/body chrome. Node types render their content as
+ * `children` and let the frame own the materiality, header, footer and ports.
+ */
+export const NodeFrame: React.FC<NodeFrameProps> = ({
   data,
   selected,
+  state,
+  index,
+  sublabel,
+  headerActions,
+  footerRight,
+  compact,
+  media,
+  noHandles,
   children,
-  borderColor = '#CCCCCC',
-  backgroundColor = 'rgba(255, 255, 255, 0.75)',
 }) => {
-  const executionStatus = data.executionStatus || 'idle';
   const nodeDef = getNodeTypeDefinition(data.type);
-  const isCached = (data as any).cached === true;
+  const category = getNodeCategory(data.type);
+  const accent = CATEGORY_ACCENT[category];
+  const Glyph = getNodeGlyph(data.type);
+  const fuser = state ?? deriveFuserState(data);
 
-  // Determine status color and icon
-  const getStatusIndicator = () => {
-    if (isCached && executionStatus === 'success') {
-      return <Zap size={16} className="text-yellow-500" />;
-    }
-    
-    switch (executionStatus) {
-      case 'running':
-        return <Loader2 size={16} className="animate-spin text-blue-500" />;
-      case 'success':
-        return <CheckCircle2 size={16} className="text-green-500" />;
-      case 'error':
-        return <XCircle size={16} className="text-red-500" />;
-      default:
-        return <Circle size={16} className="text-gray-400" />;
-    }
-  };
-
-  const getStatusBorderColor = () => {
-    if (selected) {
-      return '#FF0000'; // Red border when selected
-    }
-    switch (executionStatus) {
-      case 'running':
-        return '#2196F3';
-      case 'success':
-        return isCached ? '#FFC800' : '#4CAF50';
-      case 'error':
-        return '#F44336';
-      default:
-        return nodeDef.color;
-    }
-  };
-
-  const getHeaderColor = () => {
-    return nodeDef.color;
-  };
-
-  // Use node definition ports if available, otherwise fall back to data ports
   const inputPorts = nodeDef.inputs.length > 0 ? nodeDef.inputs : (data.inputs || []);
   const outputPorts = nodeDef.outputs.length > 0 ? nodeDef.outputs : (data.outputs || []);
 
+  const resolvedCount =
+    (data as any).resultCount ??
+    (data as any).executionResult?.count ??
+    (data as any).executionResult?.results?.length ??
+    (Array.isArray((data as any).outputResults) ? (data as any).outputResults.length : undefined);
+
+  const stamp = `${indexPrefix(data.type)}·${String((index ?? 0) + 1).padStart(2, '0')}`;
+
+  const classes = [
+    'an-node',
+    compact ? 'an-node--compact' : '',
+    media ? 'an-node--media' : '',
+    selected ? 'is-selected' : '',
+    `is-${fuser}`,
+  ].filter(Boolean).join(' ');
+
   return (
-    <div
-      className="node-base"
-      style={{
-        width: '280px',
-        minHeight: '180px',
-        borderRadius: '12px',
-        border: `2px solid ${getStatusBorderColor()}`,
-        backgroundColor,
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        boxShadow: selected
-          ? '0 8px 24px rgba(0,0,0,0.15)'
-          : '0 4px 12px rgba(0,0,0,0.1)',
-        padding: '0',
-        fontFamily: 'var(--font-secondary)',
-        transition: 'all 0.3s ease',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header with colored background */}
-      <div
-        style={{
-          backgroundColor: getHeaderColor(),
-          padding: '12px 16px',
-          color: 'white',
-          fontWeight: 600,
-          fontSize: '14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span>{data.label || nodeDef.label}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {getStatusIndicator()}
+    <div className={classes} style={{ ['--cat-accent' as any]: accent }}>
+      <div className="an-node__body">
+        {/* HEADER */}
+        <div className="an-node__header">
+          <span className="an-node__cat"><Glyph size={12} /></span>
+          <span className="an-node__title">
+            {data.label || nodeDef.label}
+            {sublabel && <span className="an-node__sub">  {sublabel}</span>}
+          </span>
+          {headerActions}
+          <span className="an-node__stamp" title={`${CATEGORY_LABEL[category]} · ${stamp}`}>{stamp}</span>
+          <span className="an-node__square" aria-hidden />
         </div>
-      </div>
 
-      {/* Port Indicator Bar */}
-      <div
-        style={{
-          borderTop: `1px solid rgba(0,0,0,0.1)`,
-          borderBottom: `1px solid rgba(0,0,0,0.1)`,
-          padding: '8px 16px',
-          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '11px',
-          color: '#666',
-          fontFamily: 'var(--font-secondary)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-          <span style={{ fontSize: '14px' }}>◐</span>
-          <span style={{ fontWeight: 500 }}>INPUT:</span>
-          {inputPorts.length > 0 ? (
-            <span>{inputPorts.map(p => p.type).join(', ')}</span>
-          ) : (
-            <span style={{ color: '#999' }}>None</span>
+        {/* CONTENT */}
+        <div className="an-node__content">{children}</div>
+
+        {/* FOOTER — mono port / metadata strip */}
+        <div className="an-node__footer">
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="micro-tick" />
+            {inputPorts.length}IN · {outputPorts.length}OUT
+          </span>
+          {footerRight ?? (
+            fuser === 'resolved' && resolvedCount != null ? (
+              <span className="resolved-tag">RESOLVED·{resolvedCount}</span>
+            ) : fuser === 'stamped' ? (
+              <span className="resolved-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Stamp size={10} /> STAMPED
+              </span>
+            ) : (
+              <span>{CATEGORY_LABEL[category]}</span>
+            )
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-end' }}>
-          <span style={{ fontWeight: 500 }}>OUTPUT:</span>
-          {outputPorts.length > 0 ? (
-            <span>{outputPorts.map(p => p.type).join(', ')}</span>
-          ) : (
-            <span style={{ color: '#999' }}>None</span>
-          )}
-          <span style={{ fontSize: '14px' }}>◑</span>
-        </div>
       </div>
 
-      {/* Content Area */}
-      <div style={{ padding: '16px' }}>
-        {children}
-      </div>
-
-      {/* Input Handles */}
-      {inputPorts.length === 0 ? (
-        <div
-          style={{
-            position: 'absolute',
-            left: '-20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-            zIndex: 10,
-          }}
-        >
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: 'transparent',
-              border: 'none',
-              position: 'relative',
-            }}
-          />
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              background: getStatusBorderColor(),
-              border: '2px solid white',
-              borderRadius: '50%',
-              position: 'absolute',
-              pointerEvents: 'none',
-            }}
-          />
-        </div>
-      ) : (
-        inputPorts.map((input, index) => (
-          <div
-            key={input.id}
-            style={{
-              position: 'absolute',
-              left: '-20px',
-              top: `${60 + index * 30}px`,
-              transform: 'translateY(-50%)',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-              zIndex: 10,
-            }}
-          >
+      {/* PORTS — 8px ink squares, vertically distributed */}
+      {!noHandles && (
+        <>
+          {inputPorts.map((input, i) => (
             <Handle
+              key={`in-${input.id}`}
               type="target"
               position={Position.Left}
               id={input.id}
-              style={{
-                width: '40px',
-                height: '40px',
-                background: 'transparent',
-                border: 'none',
-                position: 'relative',
-              }}
+              style={{ top: `${48 + i * 22}px` }}
             />
-            <div
-              style={{
-                width: '12px',
-                height: '12px',
-                background: getStatusBorderColor(),
-                border: '2px solid white',
-                borderRadius: '50%',
-                position: 'absolute',
-                pointerEvents: 'none',
-              }}
-            />
-          </div>
-        ))
-      )}
-
-      {/* Output Handles */}
-      {outputPorts.length === 0 ? (
-        <div
-          style={{
-            position: 'absolute',
-            right: '-20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-            zIndex: 10,
-          }}
-        >
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: 'transparent',
-              border: 'none',
-              position: 'relative',
-            }}
-          />
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              background: getStatusBorderColor(),
-              border: '2px solid white',
-              borderRadius: '50%',
-              position: 'absolute',
-              pointerEvents: 'none',
-            }}
-          />
-        </div>
-      ) : (
-        outputPorts.map((output, index) => (
-          <div
-            key={output.id}
-            style={{
-              position: 'absolute',
-              right: '-20px',
-              top: `${60 + index * 30}px`,
-              transform: 'translateY(-50%)',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-              zIndex: 10,
-            }}
-          >
+          ))}
+          {outputPorts.map((output, i) => (
             <Handle
+              key={`out-${output.id}`}
               type="source"
               position={Position.Right}
               id={output.id}
-              style={{
-                width: '40px',
-                height: '40px',
-                background: 'transparent',
-                border: 'none',
-                position: 'relative',
-              }}
+              style={{ top: `${48 + i * 22}px` }}
             />
-            <div
-              style={{
-                width: '12px',
-                height: '12px',
-                background: getStatusBorderColor(),
-                border: '2px solid white',
-                borderRadius: '50%',
-                position: 'absolute',
-                pointerEvents: 'none',
-              }}
-            />
-          </div>
-        ))
-      )}
-
-      {/* Execution Result Preview */}
-      {data.executionResult && executionStatus === 'success' && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '0',
-            left: '0',
-            right: '0',
-            fontSize: '9px',
-            color: '#666',
-            backgroundColor: 'rgba(76, 175, 80, 0.1)',
-            padding: '4px 8px',
-            borderTop: '1px solid rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {isCached && <Zap size={10} className="inline mr-1 text-yellow-500" />}
-          Output: {JSON.stringify(data.executionResult).substring(0, 40)}...
-        </div>
+          ))}
+        </>
       )}
     </div>
   );
 };
 
+/* ── Backwards-compatible default BaseNode ───────────────────────────────────
+   Existing node types that import { BaseNode } and pass children keep working;
+   they now inherit the concrete frame. borderColor/backgroundColor props are
+   accepted but ignored (candy fills are dead under the rebrand).
+   ────────────────────────────────────────────────────────────────────────── */
+interface BaseNodeProps {
+  data: NodeData;
+  selected?: boolean;
+  children: React.ReactNode;
+  index?: number;
+  sublabel?: string;
+  headerActions?: React.ReactNode;
+  compact?: boolean;
+  media?: boolean;
+  /** legacy props — accepted, ignored */
+  borderColor?: string;
+  backgroundColor?: string;
+}
+
+export const BaseNode: React.FC<BaseNodeProps> = ({
+  data, selected, children, index, sublabel, headerActions, compact, media,
+}) => (
+  <NodeFrame
+    data={data}
+    selected={selected}
+    index={index}
+    sublabel={sublabel}
+    headerActions={headerActions}
+    compact={compact}
+    media={media}
+  >
+    {children}
+  </NodeFrame>
+);
+
+export default BaseNode;

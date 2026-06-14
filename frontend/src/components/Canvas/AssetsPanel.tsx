@@ -83,8 +83,8 @@ export function AssetsPanel({ boardId, editor, onClose }: AssetsPanelProps) {
     <div
       style={{
         width: 260,
-        backgroundColor: 'white',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--concrete-100)',
+        borderRight: '1px solid var(--hairline)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
@@ -96,7 +96,7 @@ export function AssetsPanel({ boardId, editor, onClose }: AssetsPanelProps) {
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          borderBottom: '1px solid var(--hairline)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -127,7 +127,7 @@ export function AssetsPanel({ boardId, editor, onClose }: AssetsPanelProps) {
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          borderBottom: '1px solid var(--hairline)',
         }}
       >
         <button
@@ -141,7 +141,7 @@ export function AssetsPanel({ boardId, editor, onClose }: AssetsPanelProps) {
             gap: 6,
             backgroundColor: 'transparent',
             border: 'none',
-            borderBottom: activeTab === 'items' ? '2px solid var(--accent)' : '2px solid transparent',
+            borderBottom: activeTab === 'items' ? '2px solid var(--signal)' : '2px solid transparent',
             cursor: 'pointer',
             fontFamily: 'var(--font-secondary)',
             fontSize: 12,
@@ -162,7 +162,7 @@ export function AssetsPanel({ boardId, editor, onClose }: AssetsPanelProps) {
             gap: 6,
             backgroundColor: 'transparent',
             border: 'none',
-            borderBottom: activeTab === 'templates' ? '2px solid var(--accent)' : '2px solid transparent',
+            borderBottom: activeTab === 'templates' ? '2px solid var(--signal)' : '2px solid transparent',
             cursor: 'pointer',
             fontFamily: 'var(--font-secondary)',
             fontSize: 12,
@@ -237,7 +237,7 @@ function ItemsTab({
             overflow: 'hidden',
             cursor: 'grab',
             position: 'relative',
-            backgroundColor: '#f0f0f0',
+            background: 'var(--concrete-sunken)',
           }}
         >
           <img
@@ -378,8 +378,8 @@ function TemplatesTab({ editor }: { editor: Editor | null }) {
             flexDirection: 'column',
             alignItems: 'flex-start',
             padding: 12,
-            backgroundColor: 'rgba(0,0,0,0.02)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            background: 'var(--concrete-sunken)',
+            border: '1px solid var(--hairline)',
             borderRadius: 8,
             cursor: 'pointer',
             textAlign: 'left',
