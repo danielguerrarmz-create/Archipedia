@@ -4,6 +4,7 @@ import { BaseNodeData } from '../../types/nodes';
 import { Upload } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { NodeFrame, FuserState } from './BaseNode';
+import { UploadPrivacyNote } from '../UploadPrivacyNote';
 
 interface ImageNodeData extends BaseNodeData {
   type: 'image';
@@ -107,6 +108,8 @@ export const ImageNode: React.FC<ImageNodeProps> = ({ data, selected, id }) => {
           </div>
         )}
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileInputChange} style={{ display: 'none' }} />
+
+        {!imageUrl && <UploadPrivacyNote tone="dark" />}
 
         {status === 'error' && (
           <div className="an-field" style={{ boxShadow: 'inset 0 0 0 1px var(--error)', color: 'var(--error)', fontSize: 10, lineHeight: 1.4 }}>

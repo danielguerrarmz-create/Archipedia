@@ -165,8 +165,12 @@ export function ResultsPage() {
     try {
       const resp = await searchByText(q, { topK: 50 });
       const mapped: SearchResult[] = (resp.results || []).map((r: any, idx: number) => {
-        const baseScore = 0.65 + Math.random() * 0.25;
         const imageUrl = toAbsoluteUrl(r.thumb_url) || undefined;
+        // Use the REAL similarity the backend returned — never a fabricated/random
+        // confidence. Text search is a single fused score (no per-dimension split),
+        // so only the overall match % is shown; visual/spatial/attribute are left
+        // undefined rather than invented.
+        const score = typeof r.score === 'number' ? Math.max(0, Math.min(1, r.score)) : undefined;
         return {
           id: String(r.project_id || `text_${idx}`),
           name: String(r.title || r.project_id || 'Result'),
@@ -174,11 +178,8 @@ export function ResultsPage() {
           url: imageUrl,
           buildingType: r.typology || undefined,
           climate: r.climate_bin ? [String(r.climate_bin)] : [],
-          matchPercentage: Math.max(10, 100 - idx),
-          similarityScore: Math.max(0.1, 1 - idx / 100),
-          visualScore: Math.max(0.3, Math.min(1.0, baseScore)),
-          spatialScore: Math.max(0.3, Math.min(1.0, baseScore)),
-          attributeScore: Math.max(0.3, Math.min(1.0, baseScore)),
+          matchPercentage: score != null ? Math.round(score * 100) : undefined,
+          similarityScore: score,
           typology: r.typology ? String(r.typology) : undefined,
         } as any;
       });

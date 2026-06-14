@@ -337,11 +337,10 @@ export function HowItWorksPage() {
                 remaining pool. Both tools work together.
               </li>
               <li style={LI}>
-                <strong>Weights reset per session.</strong> The canvas persists
-                weight state in sessionStorage; opening a new tab returns weights
-                to defaults (Visual 33%, Spatial 33%, Regional 34%). Set them
-                first if you have a preferred configuration before running a
-                workflow.
+                <strong>Weights reset per session.</strong> The canvas remembers
+                your weights within a tab; opening a new tab returns them to the
+                default (Visual 100%, Spatial 0%, Regional 0%). Set them first if
+                you have a preferred configuration before running a workflow.
               </li>
             </ul>
           </div>

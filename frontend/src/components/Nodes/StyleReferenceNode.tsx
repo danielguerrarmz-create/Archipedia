@@ -4,6 +4,7 @@ import { StyleReferenceNodeData } from '../../types/nodes';
 import { Upload } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { NodeFrame, FuserState } from './BaseNode';
+import { UploadPrivacyNote } from '../UploadPrivacyNote';
 
 interface StyleReferenceNodeProps {
   data: StyleReferenceNodeData;
@@ -125,6 +126,8 @@ export const StyleReferenceNode: React.FC<StyleReferenceNodeProps> = ({ data, se
           </div>
         )}
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileInputChange} style={{ display: 'none' }} />
+
+        {!imageUrl && <UploadPrivacyNote tone="dark" />}
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {toggle('Materials', extractMaterials, setExtractMaterials, 'extractMaterials')}

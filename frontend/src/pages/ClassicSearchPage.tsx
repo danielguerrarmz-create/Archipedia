@@ -13,6 +13,7 @@ import {
   type ProjectImage,
 } from '../components/ClassicSearch';
 import { AppHeader } from '../components/AppHeader';
+import { UploadPrivacyNote } from '../components/UploadPrivacyNote';
 import { useBoardStore } from '../stores/boardStore';
 import { useSelectionStore } from '../stores/selectionStore';
 import { SelectionToolbar, SearchExportDialog } from '../components/Export';
@@ -755,6 +756,9 @@ export function ClassicSearchPage() {
             isSearching={isSearching}
             enableMultiImage={true}
           />
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+            <UploadPrivacyNote tone="light" />
+          </div>
         </div>
       </div>
 
