@@ -58,23 +58,24 @@
       port: 5173,
       host: '0.0.0.0', // Listen on all network interfaces
       open: false,
-      proxy: {
-        '/search': {
-          target: 'http://127.0.0.1:8000',
-          changeOrigin: true,
-        },
-        '/boards': {
-          target: 'http://127.0.0.1:8000',
-          changeOrigin: true,
-        },
-        '/images': {
-          target: 'http://127.0.0.1:8000',
-          changeOrigin: true,
-        },
-        '/generate': {
-          target: 'http://127.0.0.1:8000',
-          changeOrigin: true,
-        },
-      },
+      proxy: (() => {
+        // These prefixes are shared by API endpoints AND client routes
+        // (e.g. /search/text is API but /search/classic is an SPA page, and
+        // /boards/:id is API but /boards is an SPA page). Without this, a direct
+        // load or refresh of an SPA route gets proxied to the backend and 500s.
+        // `bypass` serves the SPA (index.html) for browser *navigations*
+        // (Accept: text/html) while still proxying real API/asset requests.
+        const spaBypass = (req: any) =>
+          req.headers.accept && String(req.headers.accept).includes('text/html')
+            ? '/index.html'
+            : undefined;
+        const opts = { target: 'http://127.0.0.1:8000', changeOrigin: true, bypass: spaBypass };
+        return {
+          '/search': { ...opts },
+          '/boards': { ...opts },
+          '/images': { ...opts },
+          '/generate': { ...opts },
+        };
+      })(),
     },
   });
