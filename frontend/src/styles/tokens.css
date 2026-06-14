@@ -11,6 +11,11 @@
 
 :root {
   /* ── FONT STACKS ──────────────────────────────────────────────────────── */
+  /* editorial = the high-contrast old-style serif voice (Fraunces, opsz axis).
+     Reserved for HERO + SECTION display type — the "architecture monograph"
+     register that gives the Swiss-grotesk shell its creative, premium character.
+     Optical sizing is driven per-use with font-optical-sizing / `opsz`. */
+  --font-editorial: "Fraunces Variable", "Fraunces", "Hoefler Text", Georgia, "Times New Roman", serif;
   --font-display: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Hanken Grotesk Variable", "Hanken Grotesk", -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Spline Sans Mono", ui-monospace, "SFMono-Regular", "Menlo", monospace;
@@ -38,7 +43,12 @@
   --signal-hover: #1733e0;
   --signal-tint: #e7eaff;
   --signal-tint-2: #cfd6ff;
-  --focus-ring: rgba(31, 63, 255, 0.45);
+  /* Focus ring is NEUTRAL ink — never Signal blue. Signal is reserved for
+     meaning, not for every focused field. Used as a quiet accessible ring on
+     buttons/links/controls; text fields indicate focus via a border-darken
+     instead (no ring rectangle). See the form-field rule below. */
+  --focus-ring: rgba(21, 22, 26, 0.32);
+  --focus-ring-on-dark: rgba(241, 239, 233, 0.55);
 
   /* ── SEMANTIC (muted, architectural) ──────────────────────────────────── */
   --success: #2f6b4f;  --success-tint: #e4efe9;
@@ -158,8 +168,56 @@ body {
 }
 h1, h2, h3, h4, h5 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
 ::selection { background: var(--select-bg); color: var(--select-fg); }
-:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+
+/* ── EDITORIAL DISPLAY ──────────────────────────────────────────────────── */
+/* The serif "monograph" voice. Use on the hero headline + section openers.
+   High optical size + slightly tightened tracking = architectural authority,
+   not wedding-invitation. `.editorial-em` is the in-headline italic accent. */
+.display-editorial {
+  font-family: var(--font-editorial);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
+  font-weight: 380;
+  letter-spacing: -0.018em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+.editorial-em {
+  font-style: italic;
+  font-variation-settings: "opsz" 144, "SOFT" 4, "WONK" 1;
+  font-weight: 400;
+}
+:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
 a { color: inherit; }
+
+/* ── FORM-FIELD FOCUS — clean, no blue, no ring-in-a-box ─────────────────── */
+/* Text fields must NOT show the loud blue rectangle (the old Klein-blue ring
+   nested inside a Signal border). Focus is conveyed by darkening the field's
+   own border. This wins the cascade over the compiled Tailwind ring utilities.
+   Inputs that live inside a styled "well" (hero/CTA) carry no border of their
+   own, so this is a no-op there — the wrapper handles their focus state. */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible,
+[contenteditable]:focus,
+[contenteditable]:focus-visible {
+  outline: none;
+  border-color: var(--ink-700);
+  /* neutralize the compiled Tailwind ring utilities (shadcn inputs) so no blue
+     ring is ever drawn on a focused field */
+  --tw-ring-shadow: 0 0 0 transparent;
+  --tw-ring-offset-shadow: 0 0 0 transparent;
+  --tw-ring-color: transparent;
+}
+/* The element-level :focus-visible ring above is for buttons/links/controls;
+   suppress it on text fields (they show focus via border-darken, not a ring). */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[contenteditable]:focus-visible { box-shadow: none; }
 
 /* Numbers/IDs/coords read as instrument annotations */
 .mono, code, kbd, samp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

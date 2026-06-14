@@ -89,9 +89,11 @@ export function SearchLandingPage() {
               boxShadow: "var(--deboss)",
               borderRadius: "var(--radius-sm)",
               color: "var(--ink-700)",
+            fontStyle: "italic",
+            fontFamily: "var(--font-body)",
             }}
           >
-            q = "civic concrete · brise-soleil · tropical"
+            “a civic hall in board-formed concrete, with deep sun-shading”
           </div>
         ),
         visual: <SearchGridVisual precedents={precedents} />,

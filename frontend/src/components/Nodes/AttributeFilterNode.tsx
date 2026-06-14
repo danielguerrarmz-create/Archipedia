@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import { AttributeFilterNodeData } from '../../types/nodes';
-import { Filter, X, Play } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
+import { NodeFrame } from './BaseNode';
 
 interface AttributeFilterNodeProps {
   data: AttributeFilterNodeData;
@@ -10,29 +10,16 @@ interface AttributeFilterNodeProps {
   id?: string;
 }
 
-export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
-  data,
-  selected,
-  id,
-}) => {
+export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({ data, selected, id }) => {
   const { deleteNode, executeFromNode } = useCanvasStore();
+  const [weights, setWeights] = useState(data.weights || { visual: 40, spatial: 10, regional: 50 });
+  const [keywords, setKeywords] = useState(data.keywords || '');
+  const [inputCount] = useState(12);
+  const [outputCount, setOutputCount] = useState(8);
 
   const handleRun = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (id) {
-      await executeFromNode(id);
-    }
-  };
-  const [weights, setWeights] = useState(data.weights || { visual: 40, spatial: 10, regional: 50 });
-  const [keywords, setKeywords] = useState(data.keywords || '');
-  const [inputCount, setInputCount] = useState(12);
-  const [outputCount, setOutputCount] = useState(8);
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (id) {
-      deleteNode(id);
-    }
+    if (id) await executeFromNode(id);
   };
 
   const handleWeightChange = (key: 'visual' | 'spatial' | 'regional', value: number) => {
@@ -48,9 +35,7 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
   };
 
   const handleApplyFilters = () => {
-    // Mock filter application based on keywords
     if (keywords.trim()) {
-      // Simulate filtering based on keywords
       const keywordCount = keywords.split(/\s+/).length;
       setOutputCount(Math.max(0, inputCount - keywordCount * 2));
     } else {
@@ -58,420 +43,100 @@ export const AttributeFilterNode: React.FC<AttributeFilterNodeProps> = ({
     }
   };
 
-  // Calculate positions for connection handles aligned with text labels
-  const headerHeight = 48;
-  const contentPadding = 16;
-  const inputSectionTop = headerHeight + contentPadding + 8; // Header + padding + margin to INPUT label
-  const inputHandleY = inputSectionTop + 10; // Aligned with "INPUT: Results from upstream" text
-  
-  // OUTPUT section is near the bottom, align with "OUTPUT: Filtered Results" text
-  // Calculate based on content sections: INPUT + FUSION WEIGHTS + KEYWORD + OUTPUT
-  const inputSectionHeight = 40;
-  const fusionWeightsHeight = 120;
-  const keywordSectionHeight = 60;
-  const outputSectionTop = headerHeight + contentPadding + inputSectionHeight + fusionWeightsHeight + keywordSectionHeight + 16 + 8;
-  // OUTPUT section starts at outputSectionTop, text is at +8px, so handle should be at +18px to align with text
-  const outputHandleY = outputSectionTop + 18; // Aligned with "OUTPUT: Filtered Results" text
+  const sliders = [
+    { key: 'visual' as const, label: 'Visual', description: 'Similarity to visual reference' },
+    { key: 'spatial' as const, label: 'Spatial', description: 'Circulation, corridor ratio, etc.' },
+    { key: 'regional' as const, label: 'Regional', description: 'Climate, geography, typology' },
+  ];
 
   return (
-    <div
-      className="rounded-lg overflow-visible cursor-move group transition-all"
-      style={{
-        width: '400px',
-        minHeight: '450px',
-        backgroundColor: 'var(--node-bg)',
-        border: '1px solid var(--hairline)',
-        borderRadius: '12px',
-        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: selected ? 50 : 10,
-        
-        position: 'relative',
-      }}
+    <NodeFrame
+      data={data}
+      selected={selected}
+      index={(data as any).__index}
+      state="ready"
+      sublabel="Weight & filter"
+      onDelete={(e) => { e.stopPropagation(); if (id) deleteNode(id); }}
+      primaryAction={{ label: 'Run', onClick: handleRun }}
+      noHandles
     >
-      {/* Connection Handle - INPUT (Left side) */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '-20px',
-          top: `${inputHandleY}px`,
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          zIndex: 10,
-        }}
-      >
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="input"
-          style={{
-            width: '40px',
-            height: '40px',
-            background: 'transparent',
-            border: 'none',
-            position: 'relative',
-          }}
-        />
-        <div
-          style={{
-            width: '12px',
-            height: '12px',
-            background: 'var(--concrete-200)',
-            border: '2px solid #FFFFFF',
-            borderRadius: 'var(--radius-sm)',
-            position: 'absolute',
-            pointerEvents: 'none',
-          }}
-        />
-      </div>
-
-      {/* Connection Handle - OUTPUT (Right side) */}
-      <div
-        style={{
-          position: 'absolute',
-          right: '-20px',
-          top: `${outputHandleY}px`,
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          zIndex: 10,
-        }}
-      >
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="output"
-          style={{
-            width: '40px',
-            height: '40px',
-            background: 'transparent',
-            border: 'none',
-            position: 'relative',
-          }}
-        />
-        <div
-          style={{
-            width: '12px',
-            height: '12px',
-            background: 'var(--concrete-200)',
-            border: '2px solid #FFFFFF',
-            borderRadius: 'var(--radius-sm)',
-            position: 'absolute',
-            pointerEvents: 'none',
-          }}
-        />
-      </div>
-
-      {/* Header */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
-          backgroundColor: 'var(--concrete-200)',
-          borderTopLeftRadius: '12px',
-          borderTopRightRadius: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'relative',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={16} color="#000000" />
-          <span
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '12px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Attributes - Fusion Weights
-          </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Input summary */}
+        <div className="an-field" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="an-field-label">Input</span>
+          <span className="an-num" style={{ fontSize: 11 }}>{inputCount} projects</span>
         </div>
-        <div style={{ display: 'flex', gap: '4px', position: 'absolute', top: '8px', right: '8px' }}>
-          <button
-            onClick={handleRun}
-            onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.05)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              padding: '4px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '9px',
-              color: '#000000',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-            }}
-          >
-            <Play size={10} />
-            RUN
-          </button>
-          <button
-            onClick={handleDelete}
-            onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.05)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.background = 'rgba(255,0,0,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-            }}
-          >
-            <X size={14} color="#000000" />
-          </button>
-        </div>
-      </div>
 
-      <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-        {/* INPUT: Results from upstream */}
+        {/* Fusion weights */}
         <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '8px',
-            }}
-          >
-            INPUT: Results from upstream
-          </div>
-          <div style={{ fontFamily: 'var(--font-primary)', fontSize: '11px', color: 'rgba(0,0,0,0.7)' }}>
-            ◉ Receives: Project list ({inputCount} items)
-          </div>
-        </div>
-
-        {/* FUSION WEIGHTS */}
-        <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '12px',
-            }}
-          >
-            FUSION WEIGHTS:
-          </div>
-          {[
-            { key: 'visual' as const, label: 'Visual', color: 'var(--concrete-200)', description: 'Similarity to visual reference' },
-            { key: 'spatial' as const, label: 'Spatial', color: 'var(--concrete-200)', description: 'Circulation, corridor ratio, etc' },
-            { key: 'regional' as const, label: 'Regional', color: 'var(--concrete-200)', description: 'Climate, geography, typology' },
-          ].map((slider) => (
-            <div key={slider.key} style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontFamily: 'var(--font-primary)', fontSize: '11px', color: '#000000' }}>
-                  {slider.label} [{weights[slider.key]}%]
-                </span>
+          <div className="an-field-label" style={{ marginBottom: 10 }}>Fusion weights</div>
+          {sliders.map((slider) => (
+            <div key={slider.key} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: 'var(--studio-ink)' }}>{slider.label}</span>
+                <span className="an-num" style={{ fontSize: 11 }}>{weights[slider.key]}%</span>
               </div>
-              <div
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                style={{ position: 'relative' }}
-              >
+              <div onMouseDown={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                 <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={weights[slider.key]}
+                  type="range" min={0} max={100} value={weights[slider.key]}
                   onChange={(e) => handleWeightChange(slider.key, parseInt(e.target.value))}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                  }}
-                  onTouchStart={(e) => {
-                    e.stopPropagation();
-                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
                   style={{
-                    width: '100%',
-                    height: '6px',
-                    borderRadius: '3px',
-                    appearance: 'none',
-                    background: `linear-gradient(to right, ${slider.color} 0%, ${slider.color} ${weights[slider.key]}%, rgba(0,0,0,0.1) ${weights[slider.key]}%, rgba(0,0,0,0.1) 100%)`,
-                    outline: 'none',
-                    cursor: 'grab',
-                    marginBottom: '4px',
-                    pointerEvents: 'auto',
-                    position: 'relative',
-                    zIndex: 10,
-                  }}
-                  onMouseMove={(e) => {
-                    if (e.buttons === 1) {
-                      e.stopPropagation();
-                    }
+                    width: '100%', height: 4, appearance: 'none', outline: 'none', cursor: 'pointer', borderRadius: 2,
+                    background: `linear-gradient(to right, var(--signal) 0%, var(--signal) ${weights[slider.key]}%, var(--studio-line) ${weights[slider.key]}%, var(--studio-line) 100%)`,
                   }}
                 />
               </div>
-              <div style={{ fontFamily: 'var(--font-primary)', fontSize: '9px', color: 'rgba(0,0,0,0.5)' }}>
-                ◉ {slider.description}
-              </div>
+              <div style={{ fontSize: 9, color: 'var(--studio-stone-dim)', marginTop: 2 }}>{slider.description}</div>
             </div>
           ))}
         </div>
 
-        {/* Keyword Search */}
+        {/* Keyword search */}
         <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '8px',
-            }}
-          >
-            Keyword Search:
-          </div>
+          <div className="an-field-label" style={{ marginBottom: 6 }}>Keywords</div>
           <input
             type="text"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            placeholder="Enter keywords (e.g., mediterranean, stone, courtyard...)"
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '6px',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '11px',
-              backgroundColor: 'white',
-              outline: 'none',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = 'var(--concrete-200)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = 'rgba(0,0,0,0.1)';
-            }}
+            placeholder="e.g. mediterranean, stone, courtyard…"
+            className="an-field"
+            style={{ width: '100%', border: 'none', outline: 'none', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--studio-ink)' }}
           />
         </div>
 
-        {/* OUTPUT: Filtered Results */}
-        <div>
-          <div
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '8px',
-            }}
-          >
-            OUTPUT: Filtered Results
-          </div>
-          <div style={{ fontFamily: 'var(--font-primary)', fontSize: '11px', color: 'rgba(0,0,0,0.7)' }}>
-            ◉ {outputCount} results ({inputCount - outputCount} filtered out)
-          </div>
+        {/* Output summary */}
+        <div className="an-field" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="an-field-label">Output</span>
+          <span className="an-num" style={{ fontSize: 11 }}>{outputCount} kept · {inputCount - outputCount} filtered</span>
         </div>
 
+        {/* Controls */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            className="an-node__btn"
+            style={{ flex: 1, justifyContent: 'center' }}
+            onClick={(e) => { e.stopPropagation(); setWeights({ visual: 33, spatial: 33, regional: 34 }); setKeywords(''); setOutputCount(inputCount); }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            Reset
+          </button>
+          <button
+            className="an-node__btn"
+            style={{ flex: 1, justifyContent: 'center' }}
+            onClick={(e) => { e.stopPropagation(); handleApplyFilters(); }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            Apply
+          </button>
+        </div>
       </div>
 
-      {/* Footer: Action Buttons */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid rgba(0,0,0,0.1)',
-          display: 'flex',
-          gap: '8px',
-        }}
-      >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setWeights({ visual: 33, spatial: 33, regional: 34 });
-            setKeywords('');
-            setOutputCount(inputCount);
-          }}
-          style={{
-            flex: 1,
-            padding: '8px',
-            backgroundColor: 'rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '10px',
-            color: '#000000',
-          }}
-        >
-          Reset
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleApplyFilters();
-          }}
-          style={{
-            flex: 1,
-            padding: '8px',
-            backgroundColor: 'var(--concrete-200)',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-primary)',
-            fontSize: '10px',
-            color: '#000000',
-          }}
-        >
-          Apply Filters
-        </button>
-      </div>
-    </div>
+      <Handle type="target" position={Position.Left} id="input" style={{ top: '50%' }} />
+      <Handle type="source" position={Position.Right} id="output" style={{ top: '50%' }} />
+    </NodeFrame>
   );
 };
-
-

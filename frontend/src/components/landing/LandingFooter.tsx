@@ -4,6 +4,7 @@
  * with AxisTick-style labels.
  */
 import { useLocation } from "wouter";
+import { Linkedin } from "lucide-react";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -27,6 +28,8 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "Enterprise", href: "/enterprise" },
       { label: "Contact", href: "/contact" },
+      { label: "How it works", href: "/how-it-works" },
+      { label: "Privacy", href: "/privacy" },
       { label: "Sign in", href: "/signin" },
     ],
   },
@@ -71,6 +74,33 @@ export function LandingFooter() {
             <p className="mono-meta" style={{ color: "var(--studio-stone)", maxWidth: 250, lineHeight: 1.55 }}>
               The index of the built world.
             </p>
+
+            {/* Led by Pear Design (LinkedIn only for now) */}
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
+              <span className="mono-caps" style={{ color: "var(--studio-stone-dim)" }}>LED BY</span>
+              <a
+                href="https://www.linkedin.com/company/pear-robotics/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--studio-ink)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--studio-stone)")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  width: "fit-content",
+                  color: "var(--studio-stone)",
+                  textDecoration: "none",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: "color var(--dur-1) var(--ease-press)",
+                }}
+              >
+                Pear Design
+                <Linkedin size={14} strokeWidth={1.75} />
+              </a>
+            </div>
           </div>
 
           {/* columns */}

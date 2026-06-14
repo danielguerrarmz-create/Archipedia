@@ -58,17 +58,15 @@ export function FinalCTA({ motionOn }: { motionOn: boolean }) {
         </div>
 
         <h2
+          className="display-editorial"
           style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(32px, 5vw, 56px)",
-            fontWeight: 600,
-            lineHeight: 1.05,
-            letterSpacing: "-0.03em",
+            fontSize: "clamp(32px, 4.6vw, 54px)",
+            lineHeight: 1.04,
             color: "var(--studio-ink)",
             margin: "0 0 32px",
           }}
         >
-          Start with a building in mind. Or a feeling.
+          Start with a building in mind. Or <span className="editorial-em">a feeling</span>.
         </h2>
 
         {/* search well (dark) */}
@@ -113,7 +111,7 @@ export function FinalCTA({ motionOn }: { motionOn: boolean }) {
               background: "rgba(255,255,255,.06)",
               borderRadius: "var(--radius-md)",
               boxShadow: focused
-                ? "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--signal), 0 0 0 3px var(--focus-ring)"
+                ? "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1.5px var(--studio-ink)"
                 : "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--studio-line-strong)",
               transition: "box-shadow var(--dur-1) var(--ease-press)",
               padding: "6px 6px 6px 16px",

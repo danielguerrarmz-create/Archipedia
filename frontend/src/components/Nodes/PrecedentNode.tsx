@@ -80,12 +80,9 @@ export const PrecedentNode: React.FC<PrecedentNodeProps> = ({ data, selected, id
       state={isEmpty ? 'empty' : 'ready'}
       media
       noHandles
-      headerActions={
-        <button className="an-node__btn an-node__btn--icon" onClick={handleDelete} onMouseDown={(e) => e.stopPropagation()} title="Delete">
-          <X size={11} />
-        </button>
-      }
-      footerRight={isStacked ? <span className="an-num">{currentIndex + 1}/{projects.length}</span> : undefined}
+      sublabel="Reference project"
+      onDelete={handleDelete}
+      footerRight={isStacked ? <span className="an-num">{currentIndex + 1} / {projects.length}</span> : undefined}
     >
       <section
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
@@ -124,14 +121,14 @@ export const PrecedentNode: React.FC<PrecedentNodeProps> = ({ data, selected, id
               <div
                 style={{
                   width: '100%', height: '100%',
-                  backgroundColor: 'var(--concrete-sunken)',
+                  backgroundColor: 'var(--studio-ground-deep)',
                   display: currentProject.thumbnail && currentProject.thumbnail.trim() ? 'none' : 'flex',
                   alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 6,
-                  position: 'absolute', top: 0, left: 0, color: 'var(--ink-400)',
+                  position: 'absolute', top: 0, left: 0, color: 'var(--studio-stone)',
                 }}
               >
                 <ImageIcon size={22} />
-                <div className="mono-meta" style={{ fontSize: 10 }}>{currentProject.title || 'Project'}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10 }}>{currentProject.title || 'Project'}</div>
               </div>
 
               {isStacked && (
@@ -152,8 +149,8 @@ export const PrecedentNode: React.FC<PrecedentNodeProps> = ({ data, selected, id
               )}
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-900)' }}>{currentProject.title}</div>
-            <div className="mono-meta" style={{ fontSize: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--studio-ink)' }}>{currentProject.title}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--studio-stone)', display: 'flex', flexDirection: 'column', gap: 2 }}>
               {Object.entries(currentProject.attributes).slice(0, 2).map(([key, value]) => (
                 <div key={key}>{key}: <span className="an-num">{value}</span></div>
               ))}
@@ -164,14 +161,14 @@ export const PrecedentNode: React.FC<PrecedentNodeProps> = ({ data, selected, id
             className="an-field"
             style={{
               width: '100%', aspectRatio: '16/9',
-              outline: isDragOver ? '1px dashed var(--signal)' : '1px dashed var(--hairline-strong)',
+              outline: isDragOver ? '1px dashed var(--signal)' : '1px dashed var(--studio-line-strong)',
               outlineOffset: -3,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-              color: 'var(--ink-400)',
+              color: 'var(--studio-stone)',
             }}
           >
             <ImageIcon size={28} />
-            <div className="mono-caps" style={{ fontSize: 10 }}>Drop projects here</div>
+            <div className="an-field-label">Drop projects here</div>
           </div>
         )}
       </section>

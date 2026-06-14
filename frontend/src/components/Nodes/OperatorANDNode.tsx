@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { OperatorANDNodeData } from '../../types/nodes';
-import { Plus, X, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { NodeFrame, FuserState } from './BaseNode';
 
@@ -78,38 +78,32 @@ export const OperatorANDNode: React.FC<OperatorANDNodeProps> = ({ data, selected
       compact={!isExpanded}
       sublabel="Match both"
       noHandles
+      onDelete={(e) => { e.stopPropagation(); if (id) deleteNode(id); }}
+      primaryAction={{ label: 'Run', runningLabel: 'Running', onClick: handleRun, running: status === 'running' }}
       headerActions={
-        <>
-          <button className="an-node__btn" onClick={handleRun} onMouseDown={(e) => e.stopPropagation()} disabled={status === 'running'} title="Run">
-            <Play size={9} /> RUN
-          </button>
-          <button className="an-node__btn an-node__btn--icon" onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} onMouseDown={(e) => e.stopPropagation()}>
-            {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-          </button>
-          <button className="an-node__btn an-node__btn--icon" onClick={(e) => { e.stopPropagation(); if (id) deleteNode(id); }} onMouseDown={(e) => e.stopPropagation()}>
-            <X size={11} />
-          </button>
-        </>
+        <button className="an-node__btn an-node__btn--icon" onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} onMouseDown={(e) => e.stopPropagation()} aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+          {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        </button>
       }
-      footerRight={status === 'success' ? <span className="an-num">RESOLVED·{resultCount}</span> : undefined}
     >
       {!isExpanded ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <span className="mono-meta" style={{ fontSize: 10 }}><span className="an-num">{inputs.length}</span> inputs</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--studio-stone)' }}><span className="an-num">{inputs.length}</span> inputs</span>
+          {status === 'success' && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--studio-stone)' }}><span className="an-num">{resultCount}</span> found</span>}
           {status === 'error' && errorMessage && (
-            <span className="mono-meta" style={{ fontSize: 9, color: 'var(--error)' }}>{errorMessage}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--error)' }}>{errorMessage}</span>
           )}
-          <button className="an-node__btn" onClick={(e) => { e.stopPropagation(); addInput(); }}><Plus size={9} /> ADD</button>
+          <button className="an-node__btn" onClick={(e) => { e.stopPropagation(); addInput(); }} onMouseDown={(e) => e.stopPropagation()}><Plus size={9} /> Add input</button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <div className="an-field-label" style={{ marginBottom: 8 }}>INPUTS</div>
+            <div className="an-field-label" style={{ marginBottom: 8 }}>Inputs</div>
             {inputs.map((input, index) => (
               <div key={input.nodeId} className="an-field" style={{ marginBottom: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span className="mono-meta" style={{ fontSize: 10 }}>Input {String.fromCharCode(65 + index)}</span>
-                  <span className="an-num mono-meta" style={{ fontSize: 10 }}>{input.weight}%</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--studio-stone)' }}>Input {String.fromCharCode(65 + index)}</span>
+                  <span className="an-num" style={{ fontSize: 10 }}>{input.weight}%</span>
                 </div>
                 <input
                   type="range" min={0} max={100} value={input.weight}
@@ -118,26 +112,26 @@ export const OperatorANDNode: React.FC<OperatorANDNodeProps> = ({ data, selected
                   style={{
                     width: '100%', height: 4, appearance: 'none', outline: 'none', cursor: 'pointer',
                     borderRadius: 2,
-                    background: `linear-gradient(to right, var(--signal) 0%, var(--signal) ${input.weight}%, var(--hairline) ${input.weight}%, var(--hairline) 100%)`,
+                    background: `linear-gradient(to right, var(--signal) 0%, var(--signal) ${input.weight}%, var(--studio-line) ${input.weight}%, var(--studio-line) 100%)`,
                   }}
                 />
                 {inputs.length > 2 && (
                   <button className="an-node__btn" style={{ marginTop: 6 }} onClick={(e) => { e.stopPropagation(); removeInput(index); }}>
-                    <X size={9} /> REMOVE
+                    <X size={9} /> Remove
                   </button>
                 )}
               </div>
             ))}
-            <button className="an-node__btn" style={{ width: '100%', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); addInput(); }}>
-              <Plus size={11} /> ADD INPUT
+            <button className="an-node__btn" style={{ width: '100%', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); addInput(); }} onMouseDown={(e) => e.stopPropagation()}>
+              <Plus size={11} /> Add input
             </button>
           </div>
 
           <div>
-            <div className="an-field-label" style={{ marginBottom: 8 }}>LOGIC</div>
+            <div className="an-field-label" style={{ marginBottom: 8 }}>Logic</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {(['weightedSum', 'product'] as const).map((l) => (
-                <label key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--ink-700)', cursor: 'pointer' }}>
+                <label key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--studio-stone)', cursor: 'pointer' }}>
                   <input type="radio" checked={logic === l} onChange={() => setLogic(l)} onClick={(e) => e.stopPropagation()} />
                   {l === 'weightedSum' ? 'Weighted sum' : 'Product'}
                 </label>

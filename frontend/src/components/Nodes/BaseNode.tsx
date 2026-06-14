@@ -4,6 +4,7 @@ import { NodeData, NodeType } from '../../types/nodes';
 import {
   Search, Image as ImageIcon, Type, Layers, Sliders, Filter,
   GitMerge, Combine, Ban, LayoutGrid, Sparkles, ShieldCheck, Palette, Box, Brain, Settings, Stamp,
+  X, Play, Loader2,
 } from 'lucide-react';
 import { getNodeTypeDefinition } from '../../lib/NodeRegistry';
 
@@ -84,16 +85,6 @@ export function getNodeGlyph(type: NodeType | string): React.ComponentType<{ siz
   return map[type as string] || Settings;
 }
 
-/** Short index prefix for the node-index stamp, e.g. P·03 */
-function indexPrefix(type: NodeType | string): string {
-  const map: Record<string, string> = {
-    precedent: 'P', stackedPrecedent: 'P', image: 'I', text: 'T', styleReference: 'S',
-    attributeFilter: 'F', scalar: 'C', operatorAND: 'M', operatorOR: 'M', operatorNOT: 'X',
-    generate: 'G', 'image-gen': 'G', llm: 'L', validate: 'V', results: 'R', collection: 'R',
-  };
-  return map[type as string] || 'N';
-}
-
 /** Map an execution / node status into the 5-state Fuser progression. */
 export function deriveFuserState(data: NodeData): FuserState {
   const exec = (data as any).executionStatus as string | undefined;
@@ -107,6 +98,17 @@ export function deriveFuserState(data: NodeData): FuserState {
   return 'ready';
 }
 
+/** The one primary verb-action per node (rendered as the single Signal button). */
+export interface PrimaryAction {
+  /** Plain verb at rest, e.g. "Run", "Generate", "Validate". */
+  label: string;
+  /** Verb shown while running, e.g. "Generating". Defaults to label. */
+  runningLabel?: string;
+  onClick: (e: React.MouseEvent) => void;
+  running?: boolean;
+  disabled?: boolean;
+}
+
 interface NodeFrameProps {
   data: NodeData;
   selected?: boolean;
@@ -116,9 +118,20 @@ interface NodeFrameProps {
   index?: number;
   /** Optional sub-label under the mono-caps title (plain language). */
   sublabel?: string;
-  /** Optional header-right slot (e.g. RUN / delete controls). */
+  /**
+   * Delete handler — when provided the frame renders a single, legible delete
+   * icon (lucide X, aria-label "Delete node") in the header. Preferred over
+   * passing a bespoke delete button via `headerActions`.
+   */
+  onDelete?: (e: React.MouseEvent) => void;
+  /**
+   * The ONE primary action for this node — rendered as the single Signal
+   * button in the footer with a plain verb ("Run" / "Generate" / "Validate").
+   */
+  primaryAction?: PrimaryAction;
+  /** Optional extra header-right controls (e.g. expand/collapse chevron). */
   headerActions?: React.ReactNode;
-  /** Footer right slot override (defaults to RESOLVED·N / port summary). */
+  /** Footer right slot override (defaults to result count / port summary). */
   footerRight?: React.ReactNode;
   compact?: boolean;
   media?: boolean;
@@ -137,6 +150,8 @@ export const NodeFrame: React.FC<NodeFrameProps> = ({
   state,
   index,
   sublabel,
+  onDelete,
+  primaryAction,
   headerActions,
   footerRight,
   compact,
@@ -159,8 +174,6 @@ export const NodeFrame: React.FC<NodeFrameProps> = ({
     (data as any).executionResult?.results?.length ??
     (Array.isArray((data as any).outputResults) ? (data as any).outputResults.length : undefined);
 
-  const stamp = `${indexPrefix(data.type)}·${String((index ?? 0) + 1).padStart(2, '0')}`;
-
   const classes = [
     'an-node',
     compact ? 'an-node--compact' : '',
@@ -172,39 +185,57 @@ export const NodeFrame: React.FC<NodeFrameProps> = ({
   return (
     <div className={classes} style={{ ['--cat-accent' as any]: accent }}>
       <div className="an-node__body">
-        {/* HEADER */}
+        {/* HEADER — category glyph · plain title (+ optional sublabel) · delete */}
         <div className="an-node__header">
-          <span className="an-node__cat"><Glyph size={12} /></span>
-          <span className="an-node__title">
-            {data.label || nodeDef.label}
-            {sublabel && <span className="an-node__sub">  {sublabel}</span>}
+          <span className="an-node__cat"><Glyph size={15} /></span>
+          <span className="an-node__titlewrap">
+            <span className="an-node__title">{data.label || nodeDef.label}</span>
+            {sublabel && <span className="an-node__sub">{sublabel}</span>}
           </span>
-          {headerActions}
-          <span className="an-node__stamp" title={`${CATEGORY_LABEL[category]} · ${stamp}`}>{stamp}</span>
           <span className="an-node__square" aria-hidden />
+          {headerActions}
+          {onDelete && (
+            <button
+              className="an-node__del"
+              onClick={onDelete}
+              onMouseDown={(e) => e.stopPropagation()}
+              aria-label="Delete node"
+              title="Delete node"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
         {/* CONTENT */}
         <div className="an-node__content">{children}</div>
 
-        {/* FOOTER — mono port / metadata strip */}
-        <div className="an-node__footer">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span className="micro-tick" />
-            {inputPorts.length}IN · {outputPorts.length}OUT
-          </span>
-          {footerRight ?? (
-            fuser === 'resolved' && resolvedCount != null ? (
-              <span className="resolved-tag">RESOLVED·{resolvedCount}</span>
+        {/* FOOTER — only when there's an action or a result to show */}
+        {(footerRight || primaryAction || (fuser === 'resolved' && resolvedCount != null) || fuser === 'stamped') && (
+          <div className="an-node__footer">
+            {footerRight ?? (primaryAction ? (
+              <button
+                className="an-node__btn an-node__btn--signal"
+                onClick={primaryAction.onClick}
+                onMouseDown={(e) => e.stopPropagation()}
+                disabled={primaryAction.disabled || primaryAction.running}
+              >
+                {primaryAction.running
+                  ? <Loader2 size={11} className="animate-spin" />
+                  : <Play size={11} />}
+                {primaryAction.running
+                  ? (primaryAction.runningLabel ?? primaryAction.label)
+                  : primaryAction.label}
+              </button>
+            ) : fuser === 'resolved' && resolvedCount != null ? (
+              <span className="resolved-tag">{resolvedCount} found</span>
             ) : fuser === 'stamped' ? (
               <span className="resolved-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Stamp size={10} /> STAMPED
+                <Stamp size={10} /> Stamped
               </span>
-            ) : (
-              <span>{CATEGORY_LABEL[category]}</span>
-            )
-          )}
-        </div>
+            ) : null)}
+          </div>
+        )}
       </div>
 
       {/* PORTS — 8px ink squares, vertically distributed */}

@@ -39,8 +39,8 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
   {
     id: 'combine-two',
     name: 'Combine two references',
-    description: 'Match references shared by two precedents.',
-    flow: 'P + P → MATCH BOTH → RESULTS',
+    description: 'Find projects that resemble both of your references at once.',
+    flow: 'Two references  →  Match both  →  Results',
     build: () => {
       const a = createPrecedentNode({ x: 0, y: 0 }, emptyPrecedent());
       const b = createPrecedentNode({ x: 0, y: ROW }, emptyPrecedent());
@@ -58,9 +58,9 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
   },
   {
     id: 'like-a-not-b',
-    name: 'Like A but not B',
-    description: 'Keep references like A while excluding those near B.',
-    flow: 'P + P → EXCLUDE → RESULTS',
+    name: 'Like A, but not B',
+    description: 'Keep projects like your first reference, drop anything like the second.',
+    flow: 'Reference A  →  Exclude B  →  Results',
     build: () => {
       const a = createPrecedentNode({ x: 0, y: 0 }, emptyPrecedent());
       const b = createPrecedentNode({ x: 0, y: ROW }, emptyPrecedent());
@@ -78,9 +78,9 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
   },
   {
     id: 'generate-validate',
-    name: 'Generate → Validate',
-    description: 'Generate a render from a precedent, then validate it.',
-    flow: 'P → GENERATE → VALIDATE → RESULTS',
+    name: 'Generate, then check',
+    description: 'Generate a new image from a reference, then find real buildings like it.',
+    flow: 'Reference  →  Generate  →  Check  →  Results',
     build: () => {
       const a = createPrecedentNode({ x: 0, y: ROW / 2 }, emptyPrecedent());
       const gen = createGenerateNode({ x: COL, y: ROW / 2 });

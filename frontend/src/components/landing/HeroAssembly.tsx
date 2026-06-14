@@ -26,22 +26,33 @@ import {
   useState,
   useCallback,
   type FormEvent,
+  type ReactNode,
 } from "react";
 import { useLocation } from "wouter";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from "framer-motion";
 import { ArrowRight, Search as SearchIcon } from "lucide-react";
 import type { HeroPrecedent } from "../../data/heroPrecedents";
-import { LivingGraph } from "./LivingGraph";
+import { AnnotatedSubject } from "./AnnotatedSubject";
+import { heroSubjects } from "../../data/heroPrecedentMap";
 import {
   EASE_EMERGE,
   EASE_PRESS,
   sanitizeTitle,
   clampWords,
   safeArchitect,
+  SEARCH_EXAMPLES,
+  useRotatingIndex,
 } from "./landingShared";
 
 const EYEBROW = "THE INDEX OF THE BUILT WORLD";
-const HEADLINE_LINES = ["Press your idea against", "everything ever built."];
+// Editorial headline. Line 2 carries an italic swell on "everything" — the one
+// place the serif's old-style contrast is allowed to perform.
+const HEADLINE_LINES: ReactNode[] = [
+  "Press your idea against",
+  <>
+    <span className="editorial-em">everything</span> ever built.
+  </>,
+];
 
 export function HeroAssembly({
   precedents,
@@ -101,6 +112,9 @@ export function HeroAssembly({
 
   const hasQuery = query.trim().length > 0;
 
+  // rotating example queries — pause once the visitor starts typing
+  const phIndex = useRotatingIndex(SEARCH_EXAMPLES.length, 3000, hasQuery);
+
   // hero subject: the first fully-credited precedent (architect present)
   const subject =
     precedents.find((p) => safeArchitect(p.architect) !== "Architect unrecorded") ??
@@ -121,12 +135,13 @@ export function HeroAssembly({
       ref={sectionRef}
       style={{
         position: "relative",
-        minHeight: "min(100svh, 880px)",
+        minHeight: "min(100svh, 800px)",
         overflow: "hidden",
         background: "var(--studio-light)",
         backgroundColor: "var(--studio-ground-solid)",
         display: "flex",
         alignItems: "center",
+        paddingBlock: "clamp(72px, 10vh, 120px)",
       }}
     >
       {/* (1b) second ambient lift — fills the dead lower-left quadrant so the
@@ -194,29 +209,27 @@ export function HeroAssembly({
             </span>
           </motion.div>
 
-          {/* headline — off-white, per-line clip reveal */}
+          {/* headline — editorial serif. Lines rise + fade (no overflow clip box,
+              which would shear a serif's ascenders at this tight leading). */}
           <h1
+            className="display-editorial"
             style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(36px, 6vw, 72px)",
-              fontWeight: 600,
+              fontSize: "clamp(38px, 5vw, 68px)",
               lineHeight: 1.02,
-              letterSpacing: "-0.03em",
               color: "var(--studio-ink)",
-              margin: "0 0 22px",
+              margin: "0 0 20px",
             }}
           >
             {HEADLINE_LINES.map((line, i) => (
-              <span key={i} style={{ display: "block", overflow: "hidden" }}>
-                <motion.span
-                  style={{ display: "block" }}
-                  initial={motionOn ? { clipPath: "inset(100% 0 0 0)", y: "0.1em" } : false}
-                  animate={{ clipPath: "inset(0% 0 0 0)", y: 0 }}
-                  transition={motionOn ? { duration: 0.38, ease: EASE_EMERGE, delay: 0.28 + i * 0.09 } : { duration: 0 }}
-                >
-                  {line}
-                </motion.span>
-              </span>
+              <motion.span
+                key={i}
+                style={{ display: "block" }}
+                initial={motionOn ? { opacity: 0, y: "0.18em" } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={motionOn ? { duration: 0.5, ease: EASE_EMERGE, delay: 0.28 + i * 0.1 } : { duration: 0 }}
+              >
+                {line}
+              </motion.span>
             ))}
           </h1>
 
@@ -226,12 +239,12 @@ export function HeroAssembly({
             {...fx(motionOn ? 0.62 : 0, motionOn ? 12 : 0)}
             style={{
               fontFamily: "var(--font-body)",
-              fontSize: 19,
+              fontSize: 18,
               fontWeight: 450,
-              lineHeight: 1.58,
+              lineHeight: 1.55,
               color: "var(--studio-ink)",
-              maxWidth: 552,
-              margin: "0 0 28px",
+              maxWidth: 520,
+              margin: "0 0 24px",
             }}
           >
             Describe what you're after, or drop a reference image. The index
@@ -252,12 +265,11 @@ export function HeroAssembly({
                 gap: 8,
                 background: "rgba(255,255,255,0.05)",
                 borderRadius: "var(--radius-md)",
-                // ink hairline → Signal border settle on resolve (the terminus)
+                // Neutral well: hairline at rest, brightens to a clean light
+                // edge on focus. NO Signal blue — the lone Signal is the button.
                 boxShadow: focused
-                  ? "inset 0 1px 2px rgba(0,0,0,.5), 0 0 0 3px var(--focus-ring), inset 0 0 0 1px var(--signal)"
-                  : resolved
-                    ? "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--signal)"
-                    : "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--studio-line-strong)",
+                  ? "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1.5px var(--studio-ink)"
+                  : "inset 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--studio-line-strong)",
                 transition: "box-shadow 0.4s var(--ease-press)",
                 padding: "6px 6px 6px 16px",
               }}
@@ -268,27 +280,65 @@ export function HeroAssembly({
                 color={focused || resolved ? "var(--studio-ink)" : "var(--studio-stone-dim)"}
                 style={{ flexShrink: 0 }}
               />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                placeholder="Describe a building, or drop a reference image"
-                aria-label="Search the index"
-                className="hero-input"
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  padding: "15px 8px",
-                  fontSize: 15,
-                  fontFamily: "var(--font-body)",
-                  color: "var(--studio-ink)",
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                }}
-              />
+              <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  placeholder=""
+                  aria-label="Search the index — describe a building or drop a reference image"
+                  className="hero-input"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    padding: "15px 8px",
+                    fontSize: 15,
+                    fontFamily: "var(--font-body)",
+                    color: "var(--studio-ink)",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                />
+                {/* rotating example placeholder (crossfade) — only while empty */}
+                {!hasQuery && (
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "0 8px",
+                      pointerEvents: "none",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.span
+                        key={phIndex}
+                        initial={motionOn ? { opacity: 0, y: 7 } : { opacity: 0.001 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={motionOn ? { opacity: 0, y: -7 } : { opacity: 0 }}
+                        transition={{ duration: motionOn ? 0.3 : 0.12, ease: EASE_EMERGE }}
+                        style={{
+                          fontSize: 15,
+                          fontFamily: "var(--font-body)",
+                          color: "var(--studio-stone)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "100%",
+                        }}
+                      >
+                        {SEARCH_EXAMPLES[phIndex]}
+                      </motion.span>
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={!hasQuery}
@@ -322,35 +372,26 @@ export function HeroAssembly({
           </motion.form>
         </div>
 
-        {/* SUBJECT + GRAPH COLUMN */}
-        <div
-          className="hero-stage-col"
-          style={{ position: "relative" }}
-          onPointerEnter={() => setArmToken((t) => t + 1)}
-        >
-          {/* (3) LARGE credited precedent bleeding off edge + cast shadow */}
+        {/* SUBJECT COLUMN — the explicit annotated precedent diagram:
+            one famous subject, pins on its moves, each naming the precedent it
+            resembles ("this came from here"). */}
+        <div className="hero-stage-col" style={{ position: "relative" }}>
           <motion.figure
-            style={{ position: "relative", margin: 0, y: subjectY, zIndex: 1 }}
+            style={{
+              position: "relative",
+              margin: 0,
+              width: "112%",
+              marginLeft: "8%",
+              aspectRatio: "4 / 3",
+              y: subjectY,
+              zIndex: 1,
+            }}
             initial={motionOn ? { opacity: 0, scale: 1.03 } : false}
             animate={{ opacity: 1, scale: 1 }}
             transition={motionOn ? { duration: 0.6, ease: EASE_PRESS, delay: 0.2 } : { duration: 0 }}
           >
-            <HeroSubject subject={subject} />
+            <AnnotatedSubject subjects={heroSubjects} motionOn={motionOn} />
           </motion.figure>
-
-          {/* (4) the living graph layered over/around the subject */}
-          <motion.div
-            className="hero-graph-layer"
-            aria-hidden
-            style={{ position: "absolute", inset: 0, y: graphY, zIndex: 2 }}
-          >
-            <LivingGraph
-              precedents={precedents}
-              motionOn={motionOn}
-              resolved={resolved}
-              armToken={armToken}
-            />
-          </motion.div>
         </div>
       </div>
 

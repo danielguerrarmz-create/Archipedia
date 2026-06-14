@@ -79,17 +79,20 @@ export function NarrativeSection({
               {config.eyebrow}
             </span>
           </motion.div>
-          {/* SECTION tier — held to ~55% of the hero display so it stays
-              clearly subordinate and never out-shouts the hero. */}
+          {/* SECTION tier — editorial serif, one voice with the hero, but held
+              clearly subordinate (smaller, roman not italic) so it never
+              out-shouts the hero's display line. */}
           <motion.h2
             variants={child}
             style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(26px, 3vw, 40px)",
-              fontWeight: 600,
-              lineHeight: 1.12,
-              letterSpacing: "-0.02em",
+              fontFamily: "var(--font-editorial)",
+              fontOpticalSizing: "auto",
+              fontSize: "clamp(27px, 3vw, 42px)",
+              fontWeight: 420,
+              lineHeight: 1.1,
+              letterSpacing: "-0.012em",
               color: "var(--ink-900)",
+              textWrap: "balance",
               margin: "0 0 16px",
             }}
           >

@@ -20,7 +20,8 @@ import '../../styles/canvas.css';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { arePortsCompatible } from '../../lib/NodeRegistry';
 import { AnEdge } from './AnEdge';
-import { Palette } from './Palette';
+import { CanvasRail } from './CanvasRail';
+import { AddNodeModal } from './AddNodeModal';
 import { EmptyCanvas } from './EmptyCanvas';
 import { consumePendingCanvasSeed } from '../../lib/canvasTemplates';
 import { PrecedentNode } from '../Nodes/PrecedentNode';
@@ -53,6 +54,7 @@ import {
   createGenerateNode,
   createValidateNode,
   createStyleReferenceNode,
+  createNodeFromType,
 } from '../../lib/nodeFactory';
 import { SearchResult } from '../../stores/searchStore';
 import { SelectionContextMenu } from '../ContextMenu/SelectionContextMenu';
@@ -98,6 +100,7 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
+  const [showAddNode, setShowAddNode] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   // Expose templates dialog to parent
@@ -443,55 +446,48 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           } catch (error) {
             console.error('Error parsing dropped data:', error);
           }
-        } else if (['text', 'image', 'attributeFilter', 'scalar', 'results', 'operatorAND', 'operatorOR', 'operatorNOT', 'generate', 'validate', 'styleReference'].includes(nodeType)) {
-          // Handle other node types
-          let newNode: Node<NodeData> | null = null;
-          
-          switch (nodeType) {
-            case 'text':
-              newNode = createTextNode(position, '');
-              break;
-            case 'image':
-              newNode = createImageNode(position);
-              break;
-            case 'attributeFilter':
-              newNode = createAttributeFilterNode(position);
-              break;
-            case 'scalar':
-              newNode = createScalarNode(position);
-              break;
-            case 'results':
-              newNode = createResultsNode(position, 0);
-              break;
-            case 'operatorAND':
-              newNode = createOperatorANDNode(position);
-              break;
-            case 'operatorOR':
-              newNode = createOperatorORNode(position);
-              break;
-            case 'operatorNOT':
-              newNode = createOperatorNOTNode(position);
-              break;
-            case 'generate':
-              newNode = createGenerateNode(position);
-              break;
-            case 'validate':
-              newNode = createValidateNode(position);
-              break;
-            case 'styleReference':
-              newNode = createStyleReferenceNode(position);
-              break;
-          }
-          
-          if (newNode) {
-            console.log('[NodeCanvas] Creating node:', nodeType, newNode.type, newNode.data.type);
-            addNodes([newNode]);
-          }
+        } else {
+          // All non-precedent node types share one factory map (see also the
+          // command palette, which adds nodes at viewport centre).
+          const newNode = createNodeFromType(nodeType, position);
+          if (newNode) addNodes([newNode]);
         }
       }
     },
     [addNodes, reactFlowInstance]
   );
+
+  // Command-palette add: drop the node at the current viewport centre, lightly
+  // offset per call so successive adds don't stack exactly on top of each other.
+  const addCountRef = useRef(0);
+  const addNodeAtCenter = useCallback(
+    (type: string) => {
+      if (!reactFlowInstance) return;
+      const rect = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+      const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+      const base = reactFlowInstance.screenToFlowPosition({ x: cx, y: cy });
+      const n = addCountRef.current++;
+      const position = { x: base.x + (n % 4) * 28, y: base.y + (n % 4) * 28 };
+      const newNode = createNodeFromType(type, position);
+      if (newNode) addNodes([newNode]);
+    },
+    [addNodes, reactFlowInstance]
+  );
+
+  // `/` opens the command palette (when not typing into a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (e.key === '/' && !typing) {
+        e.preventDefault();
+        setShowAddNode(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -607,7 +603,7 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
         } as Connection);
       });
       requestAnimationFrame(() => {
-        reactFlowInstance?.fitView({ padding: 0.35 });
+        reactFlowInstance?.fitView({ padding: 0.35, duration: 700 });
       });
     },
     [addNodes, onConnect, reactFlowInstance]
@@ -620,6 +616,11 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
         className="an-canvas-wrap"
         onDragOver={handleDragOver}
         onDrop={handlePaneDrop}
+        onDoubleClick={(e) => {
+          // double-click empty canvas → command palette
+          const el = e.target as HTMLElement;
+          if (el.classList?.contains('react-flow__pane')) setShowAddNode(true);
+        }}
       >
         {/* Static concrete grain — never animated */}
         <div className="an-canvas-grain" aria-hidden />
@@ -656,65 +657,62 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView
-          fitViewOptions={{ padding: 0.35 }}
-          minZoom={0.25}
-          maxZoom={1.5}
+          fitViewOptions={{ padding: 0.35, duration: 700 }}
+          minZoom={0.2}
+          maxZoom={1.75}
           attributionPosition="bottom-left"
+          /* Fluid, Figma/Fuser-style navigation: two-finger / scroll pans,
+             pinch (or ⌘/Ctrl-scroll) zooms, drag empty space pans, double-click
+             opens the palette (so it must not also zoom). */
           panOnDrag={true}
-          panOnScroll={false}
+          panOnScroll={true}
           zoomOnScroll={true}
+          zoomOnPinch={true}
+          zoomOnDoubleClick={false}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
-          connectionLineType={"step" as any}
-          connectionLineStyle={{ stroke: 'var(--signal)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+          connectionLineType={"smoothstep" as any}
+          connectionLineStyle={{ stroke: 'var(--signal)', strokeWidth: 2, strokeLinecap: 'round' }}
           snapToGrid={true}
           snapGrid={[24, 24]}
         >
-          {/* Two-layer modular grid: fine lines + coarser node dots */}
+          {/* Two-layer modular grid on the dark ground: faint light lines + dots */}
           <Background
             id="an-lines"
             variant={BackgroundVariant.Lines}
             gap={24}
-            color="rgba(21,22,26,.05)"
+            color="rgba(241,239,233,.045)"
           />
           <Background
             id="an-dots"
             variant={BackgroundVariant.Dots}
             gap={120}
             size={1.5}
-            color="rgba(21,22,26,.10)"
+            color="rgba(241,239,233,.09)"
           />
+          {/* Minimal controls (zoom −/＋, fit, live %) — no minimap, no attribution */}
           <Controls showZoom showFitView showInteractive={false}>
-            <ControlButton title="Zoom level" onClick={() => reactFlowInstance?.fitView({ padding: 0.35 })}>
+            <ControlButton title="Zoom level" onClick={() => reactFlowInstance?.fitView({ padding: 0.35, duration: 700 })}>
               <ZoomReadout />
             </ControlButton>
           </Controls>
-          <MiniMap
-            pannable
-            zoomable
-            nodeColor={(node: Node<NodeData>) => {
-              const status = (node.data as any)?.executionStatus;
-              const local = (node.data as any)?.status;
-              const selected = (node as any).selected;
-              if (selected || status === 'running' || local === 'generating' || local === 'validating') {
-                return 'var(--signal)';
-              }
-              return 'var(--ink-400)';
-            }}
-            nodeStrokeColor="transparent"
-            maskColor="rgba(21,22,26,0.06)"
-            style={{
-              backgroundColor: 'var(--concrete-100)',
-              boxShadow: 'var(--raised)',
-              borderRadius: 'var(--radius-lg)',
-              border: 'none',
-            }}
-          />
         </ReactFlow>
 
-        {/* ONE unified left rail */}
-        <Palette onSeedTemplate={handleSeedTemplate} reactFlowInstance={reactFlowInstance} />
+        {/* Minimal floating rail (Fuser model) */}
+        <CanvasRail
+          onAddNode={() => setShowAddNode(true)}
+          onTemplates={() => setShowTemplatesDialog(true)}
+          onFit={() => reactFlowInstance?.fitView({ padding: 0.35, duration: 700 })}
+        />
+
+        {/* Command palette — compact popover anchored beside the rail */}
+        <AddNodeModal
+          open={showAddNode}
+          onClose={() => setShowAddNode(false)}
+          onAdd={addNodeAtCenter}
+          onSeedTemplate={handleSeedTemplate}
+        />
 
         {/* Empty-state: starter templates */}
         {nodes.length === 0 && <EmptyCanvas onSeed={handleSeedTemplate} />}

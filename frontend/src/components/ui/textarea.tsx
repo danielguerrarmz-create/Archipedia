@@ -14,7 +14,7 @@ if (typeof document !== "undefined") {
     s.textContent = `
       .an-textarea::placeholder { color: var(--ink-400); }
       .an-textarea:focus {
-        box-shadow: var(--deboss), 0 0 0 3px var(--focus-ring), inset 0 0 0 1px var(--signal);
+        box-shadow: var(--deboss), inset 0 0 0 1px var(--ink-700);
       }
       .an-textarea[aria-invalid="true"] {
         box-shadow: var(--deboss), inset 0 0 0 1px var(--error);

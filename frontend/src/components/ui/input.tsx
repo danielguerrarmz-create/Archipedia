@@ -5,7 +5,7 @@ import { cn } from "./utils";
 /*
  * Concrete & Signal input — debossed well.
  * bg concrete-0, deboss shadow, h40, radius-md.
- * Focus = deboss + 3px focus-ring + inset signal hairline.
+ * Focus = deboss + a neutral ink inner hairline (no blue, no ring rectangle).
  * Error = inset error hairline + aria-invalid.
  */
 
@@ -15,7 +15,7 @@ if (typeof document !== "undefined" && !document.getElementById("an-input-styles
   s.textContent = `
     .an-input::placeholder { color: var(--ink-400); }
     .an-input:focus {
-      box-shadow: var(--deboss), 0 0 0 3px var(--focus-ring), inset 0 0 0 1px var(--signal);
+      box-shadow: var(--deboss), inset 0 0 0 1px var(--ink-700);
     }
     .an-input[aria-invalid="true"] {
       box-shadow: var(--deboss), inset 0 0 0 1px var(--error);

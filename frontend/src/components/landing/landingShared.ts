@@ -107,3 +107,52 @@ export function useCountUp(target: number, motionOn: boolean, durationMs = 1000)
 /* ── Transition presets ────────────────────────────────────────────────── */
 export const settle: Transition = { duration: DUR.d2, ease: EASE_PRESS };
 export const emerge: Transition = { duration: DUR.d3, ease: EASE_EMERGE };
+
+/**
+ * SEARCH_EXAMPLES — the rotating hero placeholder pool. Each line is a real,
+ * specific precedent query that shows the engine's range: typology + material +
+ * climate + structure, and a couple of named-architect probes. Kept concrete so
+ * a first-time visitor immediately understands what they can ask for.
+ */
+export const SEARCH_EXAMPLES: string[] = [
+  "Brutalist civic hall with deep brise-soleil",
+  "Brick warehouse reborn as a public library",
+  "Timber gridshell roof over a market hall",
+  "House cantilevered off a steep forest slope",
+  "Courtyard housing behind perforated screens",
+  "Tropical museum shaped for cross-ventilation",
+  "Mass-timber office tower, structure left exposed",
+  "Rammed-earth retreat in an arid landscape",
+  "Pavilion floating over a reflecting pool",
+  "Concrete chapel lit only from above",
+  "Stepped terraces with planted balconies",
+  "Vaulted glass-and-steel railway canopy",
+  "Stone monastery around a cloistered court",
+  "Folded-plate concrete roof over a sports hall",
+  "Waterfront culture house with a public roof",
+  "Undulating brick vaults, à la Eladio Dieste",
+  "Bamboo school raised above a flood plain",
+  "Corten pavilion set in a sculpture garden",
+  "Adaptive-reuse loft inside a grain silo",
+  "Housing megastructure linked by sky bridges",
+];
+
+/**
+ * useRotatingIndex — advance an index through `count` every `intervalMs`.
+ * Pauses while `paused` is true (e.g. the field has a value). Under reduced
+ * motion it still rotates (text change is not vestibular motion) — the consumer
+ * just skips the crossfade. Uses a stable interval; resets cleanly on deps.
+ */
+export function useRotatingIndex(
+  count: number,
+  intervalMs: number,
+  paused: boolean,
+): number {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (paused || count <= 1) return;
+    const id = setInterval(() => setI((n) => (n + 1) % count), intervalMs);
+    return () => clearInterval(id);
+  }, [count, intervalMs, paused]);
+  return i;
+}

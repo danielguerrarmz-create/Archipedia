@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Handle, Position } from 'reactflow';
 import { GenerateNodeData, GeneratedImageData } from '../../types/nodes';
-import { X, Play, Sparkles, Check } from 'lucide-react';
+import { Sparkles, Check } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { NodeFrame, FuserState } from './BaseNode';
 
@@ -56,20 +56,8 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
       media
       noHandles
       sublabel="Generate concept"
-      headerActions={
-        <>
-          <button
-            className="an-node__btn an-node__btn--signal"
-            onClick={handleRun}
-            onMouseDown={(e) => e.stopPropagation()}
-            disabled={isGenerating || !prompt.trim()}
-            title="Generate"
-          >
-            <Play size={9} /> {isGenerating ? 'GENERATING' : 'GENERATE'}
-          </button>
-          <button className="an-node__btn an-node__btn--icon" onClick={(e) => { e.stopPropagation(); if (id) deleteNode(id); }} onMouseDown={(e) => e.stopPropagation()}><X size={11} /></button>
-        </>
-      }
+      onDelete={(e) => { e.stopPropagation(); if (id) deleteNode(id); }}
+      primaryAction={{ label: 'Generate', runningLabel: 'Generating', onClick: handleRun, running: isGenerating, disabled: !prompt.trim() }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div>
@@ -83,7 +71,7 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
             className="an-field"
             style={{
               width: '100%', height: 70, resize: 'none', border: 'none', outline: 'none',
-              fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-900)',
+              fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--studio-ink)',
             }}
           />
         </div>
@@ -95,7 +83,6 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
               className={`an-node__btn${style === value ? ' an-node__btn--signal' : ''}`}
               onClick={(e) => { e.stopPropagation(); setStyle(value); if (id) updateNode(id, { style: value }); }}
               onMouseDown={(e) => e.stopPropagation()}
-              style={style === value ? { boxShadow: 'var(--deboss)' } : undefined}
             >
               {label}
             </button>
@@ -106,7 +93,7 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             className="an-field"
-            style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-700)', border: 'none' }}
+            style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--studio-ink)', border: 'none' }}
           >
             <option value={1}>×1</option>
             <option value={2}>×2</option>
@@ -127,16 +114,16 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
                   style={{
                     position: 'relative', aspectRatio: img.url ? '1' : 'auto', minHeight: img.url ? undefined : 60,
                     overflow: 'hidden', padding: 0, cursor: 'pointer',
-                    boxShadow: isSel ? '0 0 0 1.5px var(--signal), var(--deboss)' : 'var(--deboss)',
+                    boxShadow: isSel ? '0 0 0 1.5px var(--signal)' : undefined,
                   }}
                 >
                   {img.url ? (
                     <img src={img.url} alt={`Generated concept ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--ink-400)' }}>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--studio-stone)' }}>
                       <Sparkles size={16} />
                       {img.description && (
-                        <span className="mono-meta" style={{ fontSize: 8, textAlign: 'center', lineHeight: 1.2, maxHeight: 32, overflow: 'hidden' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--studio-stone)', textAlign: 'center', lineHeight: 1.2, maxHeight: 32, overflow: 'hidden' }}>
                           {img.description.slice(0, 60)}...
                         </span>
                       )}
@@ -154,7 +141,7 @@ export const GenerateNode: React.FC<GenerateNodeProps> = ({ data, selected, id }
         )}
 
         {status === 'error' && error && (
-          <div className="an-field" style={{ boxShadow: 'var(--deboss), inset 0 0 0 1.5px var(--error)', color: 'var(--error)', fontSize: 10 }}>
+          <div className="an-field" style={{ boxShadow: 'inset 0 0 0 1px var(--error)', color: 'var(--error)', fontSize: 10 }}>
             <div style={{ fontWeight: 600, marginBottom: 4 }}>Generation failed</div>
             <div style={{ opacity: 0.85 }}>{error}</div>
           </div>

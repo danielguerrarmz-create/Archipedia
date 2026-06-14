@@ -191,3 +191,30 @@ export function createStyleReferenceNode(
   });
 }
 
+/**
+ * createNodeFromType — single source of truth mapping a node-type key to its
+ * factory. Used by BOTH the drag-drop pane handler and the command palette
+ * (click-to-add), so the two add paths never drift. Returns null for unknown
+ * types (e.g. 'precedent', which needs a project payload — created elsewhere).
+ */
+export function createNodeFromType(
+  type: string,
+  position: { x: number; y: number }
+): Node<NodeData> | null {
+  switch (type) {
+    case 'text': return createTextNode(position, '');
+    case 'image': return createImageNode(position);
+    case 'attributeFilter': return createAttributeFilterNode(position);
+    case 'scalar': return createScalarNode(position);
+    case 'results': return createResultsNode(position, 0);
+    case 'operatorAND': return createOperatorANDNode(position);
+    case 'operatorOR': return createOperatorORNode(position);
+    case 'operatorNOT': return createOperatorNOTNode(position);
+    case 'generate': return createGenerateNode(position);
+    case 'validate': return createValidateNode(position);
+    case 'styleReference': return createStyleReferenceNode(position);
+    case 'precedent': return createPrecedentNode(position, []);
+    default: return null;
+  }
+}
+

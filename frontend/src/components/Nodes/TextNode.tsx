@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import { TextNodeData } from '../../types/nodes';
-import { X, Play, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
+import { NodeFrame, FuserState } from './BaseNode';
 
 interface TextNodeProps {
   data: TextNodeData;
@@ -10,335 +10,77 @@ interface TextNodeProps {
   id?: string;
 }
 
-export const TextNode: React.FC<TextNodeProps> = ({
-  data,
-  selected,
-  id
-}) => {
+export const TextNode: React.FC<TextNodeProps> = ({ data, selected, id }) => {
   const { deleteNode, executeFromNode, updateNode } = useCanvasStore();
   const [textValue, setTextValue] = useState(data.content || '');
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (id) {
-      deleteNode(id);
-    }
-  };
-
   const handleRun = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (id) {
-      // Make the UI responsive immediately
-      updateNode(id, { executionStatus: 'running', executionError: undefined });
-      await executeFromNode(id);
-    }
+    if (!id) return;
+    updateNode(id, { executionStatus: 'running', executionError: undefined });
+    await executeFromNode(id);
   };
 
-  // Execution status
   const status = (data as any).executionStatus as string | undefined;
   const err = ((data as any).executionError as string | undefined) || undefined;
   const results = (data as any).executionResult?.results;
   const resultCount = Array.isArray(results) ? results.length : 0;
 
-  // Calculate positions for connection handles
-  const inputHandleY = 60; // After header
-  const outputHandleY = 170; // After content section (tuned for smaller default size)
+  const fuser: FuserState =
+    status === 'running' ? 'running'
+    : status === 'error' ? 'error'
+    : status === 'success' ? 'resolved'
+    : textValue.trim() ? 'ready' : 'empty';
 
   return (
-    <div
-      className="rounded-lg overflow-visible cursor-move group transition-all"
-      style={{
-        width: '280px',
-        minHeight: '260px',
-        backgroundColor: 'var(--node-bg)',
-        border: '1px solid var(--hairline)',
-        borderRadius: '12px',
-        boxShadow: selected ? '0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss)' : 'var(--emboss)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: selected ? 50 : 10,
-        
-        fontFamily: 'var(--font-primary)',
-        position: 'relative',
-      }}
+    <NodeFrame
+      data={data}
+      selected={selected}
+      index={(data as any).__index}
+      state={fuser}
+      sublabel="Describe a concept"
+      onDelete={(e) => { e.stopPropagation(); if (id) deleteNode(id); }}
+      primaryAction={{ label: 'Run', runningLabel: 'Running', onClick: handleRun, running: status === 'running' }}
+      noHandles
     >
-      {/* Connection Handle - INPUT (Left side) */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '-20px',
-          top: `${inputHandleY}px`,
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          zIndex: 10,
-        }}
-      >
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="input"
-          style={{
-            width: '40px',
-            height: '40px',
-            background: 'transparent',
-            border: 'none',
-            position: 'relative',
-          }}
-        />
-        <div
-          style={{
-            width: '12px',
-            height: '12px',
-            background: 'var(--concrete-200)',
-            border: '2px solid #FFFFFF',
-            borderRadius: 'var(--radius-sm)',
-            position: 'absolute',
-            pointerEvents: 'none',
-          }}
-        />
-      </div>
-
-      {/* Connection Handle - OUTPUT (Right side) */}
-      <div
-        style={{
-          position: 'absolute',
-          right: '-20px',
-          top: `${outputHandleY}px`,
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          zIndex: 10,
-        }}
-      >
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="output"
-          style={{
-            width: '40px',
-            height: '40px',
-            background: 'transparent',
-            border: 'none',
-            position: 'relative',
-          }}
-        />
-        <div
-          style={{
-            width: '12px',
-            height: '12px',
-            background: 'var(--concrete-200)',
-            border: '2px solid #FFFFFF',
-            borderRadius: 'var(--radius-sm)',
-            position: 'absolute',
-            pointerEvents: 'none',
-          }}
-        />
-      </div>
-
-      {/* Header */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--concrete-200)',
-          backgroundColor: 'var(--concrete-200)',
-          borderTopLeftRadius: '12px',
-          borderTopRightRadius: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'relative',
-        }}
-      >
-        <h3
-          style={{
-            fontFamily: 'var(--font-primary)',
-            fontSize: '10px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            margin: 0,
-            color: '#000000',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          TEXT
-        </h3>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          {/* Status icon */}
-          {status === 'running' && <Loader2 size={14} className="animate-spin" />}
-          {status === 'error' && <AlertTriangle size={14} />}
-          {status === 'success' && <CheckCircle2 size={14} />}
-          <button
-            onClick={handleRun}
-            onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.05)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              padding: '4px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '9px',
-              color: '#000000',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-            }}
-          >
-            <Play size={10} />
-            RUN
-          </button>
-          <button
-            onClick={handleDelete}
-            onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.05)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.background = 'rgba(255,0,0,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-            }}
-          >
-            <X size={14} color="#000000" />
-          </button>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <section
-        style={{
-          flex: '1',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: 'var(--font-primary)',
-            fontSize: '10px',
-            fontWeight: 400,
-            color: '#000000',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            marginBottom: '8px',
-          }}
-        >
-          CONTENT:
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="an-field-label">Text</div>
         <textarea
           value={textValue}
           onChange={(e) => {
             const next = e.target.value;
             setTextValue(next);
-            if (id) {
-              // Keep the store in sync so workflow execution sees the latest content.
-              updateNode(id, { content: next });
-            }
+            if (id) updateNode(id, { content: next });
           }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          placeholder="Enter text content..."
+          placeholder="Enter text content…"
+          className="an-field"
           style={{
-            width: '100%',
-            padding: '10px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontFamily: 'Monaco, monospace',
-            resize: 'vertical',
-            minHeight: '110px',
-            flex: '1',
-            background: '#fafafa',
-            outline: 'none',
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = 'var(--concrete-200)';
-            e.target.style.background = 'white';
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = '#e0e0e0';
-            e.target.style.background = '#fafafa';
+            width: '100%', minHeight: 96, resize: 'vertical', border: 'none', outline: 'none',
+            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--studio-ink)',
           }}
         />
 
-        {/* Execution summary / errors */}
         {status === 'error' && (
-          <div
-            style={{
-              marginTop: '10px',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid rgba(255,0,0,0.25)',
-              backgroundColor: 'rgba(255,0,0,0.06)',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              color: 'rgba(0,0,0,0.8)',
-              lineHeight: 1.35,
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>Run failed</div>
+          <div className="an-field" style={{ boxShadow: 'inset 0 0 0 1px var(--error)', color: 'var(--error)', fontSize: 10, lineHeight: 1.4 }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Run failed</div>
             <div style={{ opacity: 0.85 }}>{err || 'Unknown error'}</div>
-            <div style={{ opacity: 0.6, marginTop: '6px' }}>
-              Tip: make sure the backend is running on <code>http://localhost:8000</code> (or set <code>VITE_API_BASE_URL</code>).
+            <div style={{ opacity: 0.6, marginTop: 6 }}>
+              Make sure the backend is running on <code>http://localhost:8000</code>.
             </div>
           </div>
         )}
 
         {status === 'success' && resultCount > 0 && (
-          <div
-            style={{
-              marginTop: '10px',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid rgba(0,0,0,0.08)',
-              backgroundColor: 'rgba(245, 241, 232, 0.3)',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              color: 'rgba(0,0,0,0.75)',
-              textAlign: 'center',
-            }}
-          >
+          <div className="an-field" style={{ fontSize: 10, color: 'var(--studio-stone)', textAlign: 'center' }}>
             Found {resultCount} matching projects
           </div>
         )}
-      </section>
-    </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} id="input" style={{ top: '50%' }} />
+      <Handle type="source" position={Position.Right} id="output" style={{ top: '50%' }} />
+    </NodeFrame>
   );
 };

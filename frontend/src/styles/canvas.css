@@ -1,61 +1,96 @@
 /* ============================================================================
-   ARCHIPEDIA — "CONCRETE & SIGNAL"  ·  Canvas + nodes layer (D7/D8)
-   Imported from NodeCanvas.tsx. Builds on tokens.css (owned by lead — do not
-   edit there). Everything here is canvas/node/board specific. No glass/blur,
-   no candy fills, depth = emboss/deboss + hairlines, Signal < 5% of pixels.
+   ARCHIPEDIA — "CONCRETE & SIGNAL"  ·  Canvas + nodes layer  (DARK STUDIO)
+   The canvas is the dark "studio ground" — same family as the hero + header so
+   the whole product reads black and cohesive (à la Fuser / Flora). Depth here
+   is NOT light-surface emboss/deboss; it is: a lifted dark card + a faint top
+   highlight + a soft cast shadow + a hairline edge. Signal stays < 5% of pixels
+   (selection / running / the one primary action). Class names are unchanged so
+   every node component keeps working.
    ========================================================================== */
 
-/* ── CANVAS SHELL ───────────────────────────────────────────────────────── */
+/* Canvas-scoped dark design variables (built on the studio-* family). */
 .an-canvas-wrap {
+  --cv-ground: #0c0b09;            /* deepest ground (darker = more card contrast) */
+  --cv-ground-2: #15140f;          /* faint plane */
+  --cv-card: #232118;              /* node card surface — clearly lifted off the ground */
+  --cv-card-2: #2b2920;            /* lifted header / chip surface */
+  --cv-sunken: #131210;            /* inset wells / fields */
+  --cv-ink: #f3f1ea;               /* primary text on dark */
+  --cv-stone: #b4b0a4;             /* secondary text */
+  --cv-stone-dim: #7a766d;         /* tertiary / meta */
+  --cv-line: rgba(243, 241, 234, 0.14);
+  --cv-line-strong: rgba(243, 241, 234, 0.26);
+  --cv-top-hi: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* a real "levitation" shadow so cards float above the grid */
+  --cv-cast: 0 18px 40px -18px rgba(0, 0, 0, 0.92), 0 6px 14px -8px rgba(0, 0, 0, 0.7);
+  /* nodes are roomy enough that labels never clip */
+  --node-w: 300px;
+  --node-w-compact: 208px;
+
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: var(--concrete-50);
+  background-color: var(--cv-ground);
+  background-image:
+    radial-gradient(120% 90% at 18% 0%, rgba(255, 246, 228, 0.05) 0%, rgba(255, 246, 228, 0.015) 30%, rgba(0, 0, 0, 0) 60%),
+    radial-gradient(100% 80% at 100% 100%, rgba(31, 63, 255, 0.04) 0%, rgba(0, 0, 0, 0) 55%);
 }
 
-/* Static concrete grain over the canvas — never animated. */
+/* Static film grain over the dark ground for texture/depth — never animated. */
 .an-canvas-grain {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.04;
-  mix-blend-mode: multiply;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* react-flow renders its panes above; keep grain below interactive layers */
 .an-canvas-wrap .react-flow { z-index: 2; }
 
-/* ── REACT-FLOW CONTROLS — mono zoom readout ────────────────────────────── */
+/* React-Flow controls — dark, minimal */
+.an-canvas-wrap .react-flow__controls {
+  box-shadow: var(--cv-cast);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+}
+.an-canvas-wrap .react-flow__controls-button {
+  background: var(--cv-card);
+  border-bottom: 1px solid var(--cv-line);
+  color: var(--cv-stone);
+  width: 26px; height: 26px;
+}
+.an-canvas-wrap .react-flow__controls-button:hover { background: var(--cv-card-2); color: var(--cv-ink); }
+.an-canvas-wrap .react-flow__controls-button svg { fill: currentColor; }
+/* hide the React Flow attribution badge bottom-left */
+.an-canvas-wrap .react-flow__attribution { display: none !important; }
+
 .an-zoom-readout {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-500);
-  background: var(--concrete-100);
-  box-shadow: var(--raised);
-  border-radius: var(--radius-md);
-  padding: 4px 8px;
+  color: var(--cv-stone);
+  background: var(--cv-card);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
   user-select: none;
   pointer-events: none;
 }
 
-/* ── EDGES — overrides for the custom AnEdge ────────────────────────────── */
+/* ── EDGES — wires on dark ───────────────────────────────────────────────── */
 .an-edge-path {
   fill: none;
-  stroke: var(--hairline-strong);
+  stroke: var(--cv-line-strong);
   stroke-width: 1.5px;
   transition: stroke var(--dur-1) var(--ease-press), stroke-width var(--dur-1) var(--ease-press);
 }
 .an-edge-path.is-selected { stroke: var(--signal); stroke-width: 2px; }
-.an-edge-path.is-invalid {
-  stroke: var(--error);
-  stroke-dasharray: 4 4;
-}
-/* connect = wire draws via dashoffset over --dur-3 */
+.an-edge-path.is-invalid { stroke: var(--error); stroke-dasharray: 4 4; }
 @keyframes an-wire-draw {
   from { stroke-dashoffset: var(--an-wire-len, 600); }
   to { stroke-dashoffset: 0; }
@@ -64,7 +99,6 @@
   stroke-dasharray: var(--an-wire-len, 600);
   animation: an-wire-draw var(--dur-3) var(--ease-emerge) forwards;
 }
-/* run = traveling-dash signal loader along the wire */
 @keyframes an-wire-travel { to { stroke-dashoffset: -16; } }
 .an-edge-path.is-running {
   stroke: var(--signal);
@@ -72,68 +106,70 @@
   stroke-dasharray: 6 10;
   animation: an-wire-travel 0.6s linear infinite;
 }
-/* union nub at the target endpoint — flashes signal once then settles */
 @keyframes an-union-flash {
   0% { fill: var(--signal); transform: scale(1.6); }
   60% { fill: var(--signal); transform: scale(1); }
-  100% { fill: var(--ink-700); transform: scale(1); }
+  100% { fill: var(--cv-stone); transform: scale(1); }
 }
-.an-edge-union { fill: var(--ink-700); transform-box: fill-box; transform-origin: center; }
+.an-edge-union { fill: var(--cv-stone); transform-box: fill-box; transform-origin: center; }
 .an-edge-union.is-fresh { animation: an-union-flash var(--dur-2) var(--ease-emerge) forwards; }
 .an-edge-union.is-selected { fill: var(--signal); }
 .an-edge-union.is-running { fill: var(--signal); }
 
-/* ── BASE NODE — seat + body, 5-state Fuser progression ─────────────────── */
+/* ── BASE NODE — one cohesive dark card for EVERY node type ──────────────── */
 .an-node {
   position: relative;
   font-family: var(--font-body);
-  /* the seat: debossed concrete tray the body presses into */
-  background: var(--seat-bg);
-  box-shadow: var(--deboss);
+  background: transparent;
   border-radius: calc(var(--radius-md) + 2px);
-  padding: 3px;
-  transition: box-shadow var(--dur-2) var(--ease-press);
+  padding: 0;
 }
 .an-node__body {
   position: relative;
   width: var(--node-w);
-  background: var(--node-bg);
-  box-shadow: var(--emboss);
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+  box-shadow: var(--cv-top-hi), var(--cv-cast);
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: box-shadow var(--dur-2) var(--ease-press),
+              border-color var(--dur-2) var(--ease-press),
               background var(--dur-2) var(--ease-press);
 }
 .an-node--compact .an-node__body { width: var(--node-w-compact); }
 .an-node--media .an-node__body { border-radius: var(--radius-lg); }
 
-/* STATE: EMPTY — sunken body, dashed hairline */
-.an-node.is-empty .an-node__body {
-  background: var(--concrete-sunken);
-  box-shadow: var(--deboss);
-  outline: 1px dashed var(--hairline-strong);
-  outline-offset: -3px;
+/* entrance — nodes settle in (rise + fade + faint scale) so the canvas feels
+   alive rather than popping in statically. Runs once on mount. */
+@keyframes an-node-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* STATE: RUNNING — body presses in (deboss) */
-.an-node.is-running .an-node__body {
-  box-shadow: var(--deboss);
-  background: var(--concrete-100);
-}
-/* STATE: RESOLVED — settles to emboss (default) */
-.an-node.is-resolved .an-node__body { box-shadow: var(--emboss); }
-/* STATE: STAMPED — permanent deboss, the mark is set */
-.an-node.is-stamped .an-node__body {
-  box-shadow: var(--deboss);
-  background: var(--concrete-sunken);
-}
-/* STATE: ERROR — emboss + inset error hairline */
-.an-node.is-error .an-node__body {
-  box-shadow: var(--emboss), inset 0 0 0 1.5px var(--error);
-}
+.an-node__body { animation: an-node-in var(--dur-3) var(--ease-emerge) both; }
 
-/* SELECTION is orthogonal and always wins */
+/* STATE: EMPTY — recessed, dashed hairline (waiting for input) */
+.an-node.is-empty .an-node__body {
+  background: var(--cv-sunken);
+  border-style: dashed;
+  border-color: var(--cv-line-strong);
+  box-shadow: none;
+}
+/* STATE: RUNNING — signal edge + lift */
+.an-node.is-running .an-node__body {
+  border-color: var(--signal);
+  box-shadow: var(--cv-top-hi), var(--cv-cast), 0 0 0 1px var(--signal), 0 0 22px -6px rgba(31, 63, 255, 0.5);
+}
+/* STATE: RESOLVED — settled card (default look) */
+.an-node.is-resolved .an-node__body { border-color: var(--cv-line-strong); }
+/* STATE: STAMPED — committed; quiet brighter edge */
+.an-node.is-stamped .an-node__body { border-color: var(--cv-line-strong); background: var(--cv-card-2); }
+/* STATE: ERROR */
+.an-node.is-error .an-node__body { border-color: var(--error); box-shadow: var(--cv-cast), 0 0 0 1px var(--error); }
+
+/* SELECTION always wins */
 .an-node.is-selected .an-node__body {
-  box-shadow: 0 0 0 1.5px var(--signal), 0 0 0 4px var(--focus-ring), var(--emboss);
+  border-color: var(--signal);
+  box-shadow: var(--cv-top-hi), var(--cv-cast), 0 0 0 1px var(--signal), 0 0 0 4px rgba(31, 63, 255, 0.18);
 }
 
 /* ── NODE HEADER ────────────────────────────────────────────────────────── */
@@ -141,76 +177,92 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--concrete-100);
+  padding: 9px var(--space-3);
+  border-bottom: 1px solid var(--cv-line);
+  background: var(--cv-card-2);
 }
 .an-node__cat {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px; height: 18px;
+  width: 26px; height: 26px;
   border-radius: var(--radius-sm);
-  background: var(--concrete-sunken);
-  box-shadow: var(--deboss);
-  color: var(--cat-accent, var(--ink-700));
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line-strong);
+  color: var(--cat-accent, var(--cv-ink));
   flex-shrink: 0;
 }
+.an-node__titlewrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
 .an-node__title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-700);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cv-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
 }
 .an-node__sub {
   font-family: var(--font-body);
-  font-size: 10px;
-  letter-spacing: 0;
+  font-size: 11px;
   text-transform: none;
-  color: var(--ink-400);
+  letter-spacing: 0;
+  color: var(--cv-stone);
   font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* node-index stamp e.g. P·03 */
+/* clean ghost delete (no boxy button) */
+.an-node__del {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--cv-stone-dim); border-radius: var(--radius-sm);
+  transition: color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press);
+}
+.an-node__del:hover { color: var(--cv-ink); background: rgba(255,255,255,0.07); }
 .an-node__stamp {
   font-family: var(--font-mono);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
-  color: var(--ink-500);
-  background: var(--concrete-sunken);
-  box-shadow: var(--deboss);
+  color: var(--cv-stone);
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line);
   border-radius: var(--radius-sm);
   padding: 2px 5px;
   flex-shrink: 0;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.85);
 }
-/* header status square — the Node mark */
+/* header status dot — the Node mark */
 .an-node__square {
-  width: 9px; height: 9px;
-  border-radius: var(--radius-sm);
-  background: var(--ink-700);
+  width: 8px; height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--cv-stone);
   flex-shrink: 0;
   transition: background var(--dur-1) var(--ease-press);
 }
-.an-node.is-empty .an-node__square { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-400); }
+.an-node.is-empty .an-node__square { background: transparent; box-shadow: inset 0 0 0 1.5px var(--cv-stone-dim); }
 .an-node.is-error .an-node__square { background: var(--error); }
-@keyframes an-square-pulse { 0%,100% { background: var(--ink-700); } 50% { background: var(--signal); } }
+@keyframes an-square-pulse { 0%,100% { background: var(--cv-stone); } 50% { background: var(--signal); } }
 .an-node.is-running .an-node__square { animation: an-square-pulse 1s var(--ease-press) infinite; }
-@keyframes an-square-flash { 0% { background: var(--signal); } 100% { background: var(--ink-700); } }
+@keyframes an-square-flash { 0% { background: var(--signal); } 100% { background: var(--cv-stone); } }
 .an-node.is-resolved .an-node__square { animation: an-square-flash var(--dur-2) var(--ease-emerge) forwards; }
 
 /* ── NODE BODY + FIELDS ─────────────────────────────────────────────────── */
-.an-node__content { padding: var(--space-3); }
-.an-node__content .an-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.an-node__content { padding: var(--space-3); color: var(--cv-stone); }
+.an-node__content .an-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--cv-ink); }
 .an-field {
-  background: var(--concrete-sunken);
-  box-shadow: var(--deboss);
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line);
   border-radius: var(--radius-sm);
   padding: var(--space-2);
 }
@@ -219,62 +271,66 @@
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-400);
+  color: var(--cv-stone-dim);
 }
 
-/* ── NODE FOOTER — mono port / metadata strip ───────────────────────────── */
+/* ── NODE FOOTER — port / metadata strip ────────────────────────────────── */
 .an-node__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border-top: 1px solid var(--hairline);
-  background: var(--concrete-100);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: var(--ink-400);
+  padding: 8px var(--space-3);
+  border-top: 1px solid var(--cv-line);
+  background: var(--cv-card-2);
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--cv-stone);
 }
 .an-node__footer .micro-tick {
   width: 6px; height: 2px; border-radius: 1px;
-  background: var(--cat-accent, var(--ink-400));
+  background: var(--cat-accent, var(--cv-stone-dim));
   display: inline-block;
 }
-.an-node__footer .resolved-tag { color: var(--ink-500); }
+.an-node__footer .resolved-tag { color: var(--cv-stone); }
 
-/* ── PORTS / HANDLES (8px ink squares come from tokens.css) ─────────────── */
+/* ── PORTS / HANDLES — a clean hollow ring that fills Signal on connect ──── */
 .an-node .react-flow__handle {
-  width: var(--port-size);
-  height: var(--port-size);
-  border-radius: var(--radius-sm);
-  background: var(--port-fill);
-  border: 1px solid var(--concrete-50);
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-pill);
+  background: var(--cv-ground);
+  border: 2px solid var(--cv-stone);
+  box-shadow: 0 0 0 3px var(--cv-card);  /* halo separates the port from the card edge */
+  transition: border-color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press), transform var(--dur-1) var(--ease-press);
 }
-.an-node.is-running .react-flow__handle { background: var(--signal); }
+.an-node .react-flow__handle:hover { border-color: var(--signal); background: var(--signal); transform: scale(1.25); }
+.an-node.is-running .react-flow__handle,
+.react-flow__handle-connecting,
+.react-flow__handle-valid { border-color: var(--signal); background: var(--signal); }
 
-/* node-level controls (run / delete / expand) — pressable, no candy */
+/* node-level controls (run / delete / expand) */
 .an-node__btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-  background: var(--concrete-100);
-  box-shadow: var(--emboss);
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--cv-line);
   border-radius: var(--radius-sm);
-  color: var(--ink-700);
+  color: var(--cv-ink);
   cursor: pointer;
-  padding: 3px 7px;
+  padding: 4px 9px;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: box-shadow var(--dur-1) var(--ease-press);
+  transition: background var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press);
 }
-.an-node__btn:hover { box-shadow: var(--deboss); }
-.an-node__btn:active { box-shadow: var(--deboss); }
-.an-node__btn--icon { padding: 4px; }
-.an-node__btn--signal { color: var(--signal); }
-.an-node__btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: var(--emboss); }
+.an-node__btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--cv-line-strong); }
+.an-node__btn:active { background: rgba(255, 255, 255, 0.04); }
+.an-node__btn--icon { padding: 5px; }
+/* the ONE primary action per node — Signal */
+.an-node__btn--signal { color: #fff; background: var(--signal); border-color: transparent; }
+.an-node__btn--signal:hover { background: var(--signal-hover); border-color: transparent; }
+.an-node__btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── EMPTY CANVAS ───────────────────────────────────────────────────────── */
 .an-empty {
@@ -291,128 +347,47 @@
 }
 .an-empty__inner { pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
 .an-empty__heading {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink-900);
+  font-family: var(--font-editorial);
+  font-optical-sizing: auto;
+  font-size: 30px;
+  font-weight: 420;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
   margin: 0;
 }
-.an-empty__eyebrow { color: var(--ink-400); }
+.an-empty__eyebrow { color: var(--cv-stone-dim); }
 .an-empty__templates { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; max-width: 720px; }
 .an-template-card {
   width: 200px;
   text-align: left;
-  background: var(--concrete-100);
-  box-shadow: var(--emboss);
-  border: none;
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+  box-shadow: var(--cv-top-hi), var(--cv-cast);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  transition: box-shadow var(--dur-1) var(--ease-press);
+  transition: border-color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press);
 }
-.an-template-card:hover { box-shadow: var(--deboss); }
-.an-template-card:active { box-shadow: var(--deboss); }
+.an-template-card:hover { border-color: var(--cv-line-strong); background: var(--cv-card-2); }
 .an-template-card__name {
   font-family: var(--font-display);
   font-size: 14px; font-weight: 600;
-  color: var(--ink-900); letter-spacing: -0.01em;
+  color: var(--cv-ink); letter-spacing: -0.01em;
 }
-.an-template-card__desc { font-size: 12px; color: var(--ink-500); line-height: 1.4; }
+.an-template-card__desc { font-size: 12px; color: var(--cv-stone); line-height: 1.4; }
 .an-template-card__flow {
   display: flex; align-items: center; gap: 4px; margin-top: var(--space-1);
-  font-family: var(--font-mono); font-size: 10px; color: var(--ink-400);
+  font-family: var(--font-mono); font-size: 10px; color: var(--cv-stone-dim);
   letter-spacing: 0.04em;
 }
 
-/* ── PALETTE (left rail) ────────────────────────────────────────────────── */
-.an-palette {
-  position: absolute;
-  top: var(--space-4);
-  left: var(--space-4);
-  bottom: var(--space-4);
-  width: 240px;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  background: var(--concrete-100);
-  box-shadow: var(--raised);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-.an-palette__tabs { display: flex; border-bottom: 1px solid var(--hairline); }
-.an-palette__tab {
-  flex: 1;
-  padding: 10px 0;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-400);
-  transition: color var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press);
-}
-.an-palette__tab.is-active { color: var(--ink-900); border-bottom-color: var(--signal); }
-.an-palette__body { flex: 1; overflow-y: auto; padding: var(--space-3); }
-.an-palette__group { margin-bottom: var(--space-4); }
-.an-palette__group-head {
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-400);
-  margin-bottom: var(--space-2);
-  display: flex; align-items: center; gap: var(--space-2);
-}
-.an-palette__group-head .micro-tick { width: 8px; height: 2px; border-radius: 1px; background: var(--cat-accent, var(--ink-400)); }
-
-/* a mini debossed node-chip */
-.an-chip {
-  display: flex; align-items: center; gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-2);
-  margin-bottom: var(--space-2);
-  background: var(--concrete-sunken);
-  box-shadow: var(--deboss);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: grab;
-  text-align: left;
-  transition: box-shadow var(--dur-1) var(--ease-press);
-}
-.an-chip:hover { box-shadow: var(--emboss); }
-.an-chip:active { cursor: grabbing; }
-.an-chip__glyph {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  background: var(--concrete-100);
-  box-shadow: var(--emboss);
-  color: var(--cat-accent, var(--ink-700));
-}
-.an-chip__label { font-size: 12px; color: var(--ink-700); font-weight: 500; }
-.an-chip__sub { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; color: var(--ink-400); text-transform: uppercase; }
-.an-palette__lib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
-.an-palette__lib-cell {
-  aspect-ratio: 4/3; border-radius: var(--radius-sm); overflow: hidden;
-  cursor: grab; position: relative; background: var(--concrete-sunken); box-shadow: var(--deboss);
-}
-.an-palette__lib-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.an-palette__empty { text-align: center; padding: var(--space-6) var(--space-3); color: var(--ink-400); font-size: 12px; }
+/* ── (legacy palette styles retired — replaced by CanvasRail + AddNodeModal) ── */
 
 /* ── tldraw / boards overrides ──────────────────────────────────────────── */
 .tl-container { --color-selected: var(--signal); }
-.tl-background { background-color: var(--concrete-50) !important; }
-@keyframes an-stamp-press {
-  0% { transform: scale(1.04); box-shadow: var(--emboss); }
-  55% { box-shadow: 0 0 0 1.5px var(--signal), var(--deboss); }
-  100% { transform: scale(1); box-shadow: var(--deboss); }
-}
-.an-board-card.is-stamping { animation: an-stamp-press var(--dur-2) var(--ease-press) forwards; }
 
 @media (prefers-reduced-motion: reduce) {
   .an-edge-path.is-drawing,
@@ -420,7 +395,7 @@
   .an-edge-union.is-fresh,
   .an-node.is-running .an-node__square,
   .an-node.is-resolved .an-node__square,
-  .an-board-card.is-stamping {
+  .an-node__body {
     animation: none !important;
   }
   .an-edge-path.is-drawing { stroke-dasharray: none; }

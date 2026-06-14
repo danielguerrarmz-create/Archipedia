@@ -39,15 +39,20 @@ Self-hosted via **Fontsource** (see [`src/lib/fonts.ts`](src/lib/fonts.ts)) — 
 
 | Role | Face | Token | Use |
 |---|---|---|---|
-| **Display** | Archivo Variable | `--font-display` | Headings, wordmark — Swiss neo-grotesk |
+| **Editorial** | Fraunces Variable (opsz) | `--font-editorial` | **Hero + landing section display lines only** — high-contrast old-style serif; the "architecture monograph" voice that gives the Swiss-grotesk shell its editorial character |
+| **Display** | Archivo Variable | `--font-display` | App/page headings, wordmark, sub-heads — Swiss neo-grotesk |
 | **Body** | Hanken Grotesk Variable | `--font-body` | UI + prose — humane, legible |
 | **Mono** | Spline Sans Mono | `--font-mono` | Metadata, counts, IDs, coordinates — instrument annotation |
+
+**Editorial serif usage.** Reserved for the *marketing/landing* display register, NOT the app chrome (which stays Archivo grotesk for its instrument feel). Apply via `.display-editorial` (opsz 144, weight ~380, tracking −0.018em, leading ~1.0). One italic swell per dark band is allowed via `.editorial-em` — the hero ("*everything*") and the FinalCTA ("*a feeling*") use it as a deliberate matching bracket. Section titles use the serif at weight ~420, roman (not italic), clearly subordinate to the hero scale. Rationale: an all-grotesk page read as generic tech; editorial/architecture/premium products need serif↔sans contrast (validated against the `ui-ux-pro-max` design-intelligence skill — "Classic Elegant / Luxury Minimalist" pairings, "Exaggerated Minimalism").
 
 **Type scale** (px / line-height / weight / tracking; rem base 16px):
 
 | Token | Use | Face | Size / LH | Wt | Tracking | Case |
 |---|---|---|---|---|---|---|
-| display-1 | Hero | display | 72 / 1.02 | 600 | −0.03em | sentence |
+| editorial-hero | Landing hero | **editorial** | clamp(38–68) / 1.02 | 380 | −0.018em | sentence |
+| editorial-section | Landing section title | **editorial** | clamp(27–42) / 1.1 | 420 | −0.012em | sentence |
+| display-1 | App hero | display | 72 / 1.02 | 600 | −0.03em | sentence |
 | display-2 | Section hero | display | 52 / 1.05 | 600 | −0.025em | sentence |
 | h1 | Page title | display | 36 / 1.1 | 600 | −0.02em | sentence |
 | h2 | Section | display | 28 / 1.15 | 500 | −0.015em | sentence |

@@ -53,7 +53,7 @@ function Stat({ metric, motionOn, divider }: { metric: Metric; motionOn: boolean
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "20px 0 20px 24px",
+        padding: "32px 0 32px 24px",
         borderLeft: divider ? "1px solid var(--hairline)" : "none",
         marginLeft: divider ? -1 : 0,
       }}
@@ -65,7 +65,7 @@ function Stat({ metric, motionOn, divider }: { metric: Metric; motionOn: boolean
           className="mono"
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 20,
+            fontSize: 25,
             fontWeight: 500,
             color: "var(--ink-900)",
             fontVariantNumeric: "tabular-nums",

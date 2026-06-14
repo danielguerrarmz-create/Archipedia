@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { useLocation } from 'wouter';
 import { ResultsNodeData, PrecedentProject } from '../../types/nodes';
-import { X, Play } from 'lucide-react';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { toAbsoluteUrl } from '../../lib/navigatorApi';
 import { NodeFrame, FuserState } from './BaseNode';
@@ -73,21 +72,18 @@ export const ResultsNode: React.FC<ResultsNodeProps> = ({ data, selected, id }) 
       state={fuser}
       media
       noHandles
-      headerActions={
-        <>
-          <button className="an-node__btn" onClick={handleRun} onMouseDown={(e) => e.stopPropagation()} disabled={status === 'running'} title="Run"><Play size={9} /> RUN</button>
-          <button className="an-node__btn an-node__btn--icon" onClick={(e) => { e.stopPropagation(); if (id) deleteNode(id); }} onMouseDown={(e) => e.stopPropagation()}><X size={11} /></button>
-        </>
-      }
+      sublabel="Matching projects"
+      onDelete={(e) => { e.stopPropagation(); if (id) deleteNode(id); }}
+      primaryAction={{ label: 'Run', runningLabel: 'Running', onClick: handleRun, running: status === 'running' }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div className="an-field" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="an-field-label">RESULTS</span>
-          <span className="an-num mono-meta" style={{ fontSize: 11, color: 'var(--ink-700)' }}>{resultCount}</span>
+          <span className="an-field-label">Results</span>
+          <span className="an-num" style={{ fontSize: 11 }}>{resultCount}</span>
         </div>
 
         {errorMessage && (
-          <div className="mono-meta" style={{ fontSize: 10, color: 'var(--error)' }}>{errorMessage}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--error)' }}>{errorMessage}</div>
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
