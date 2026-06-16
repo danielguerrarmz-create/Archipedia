@@ -96,7 +96,7 @@ export function EclecticHero({
   ];
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 900px)");
+    const mq = window.matchMedia("(min-width: 768px)");
     const update = () => setCanDrag(mq.matches);
     update();
     mq.addEventListener("change", update);
@@ -130,7 +130,7 @@ export function EclecticHero({
   const interactive = canDrag && size.w > 0;
 
   return (
-    <section className="eh-root">
+    <section className="eh-root" aria-label="Archipedia — precedent search for the built environment">
       <div className="grain" aria-hidden style={{ position: "absolute", inset: 0, opacity: 0.5, pointerEvents: "none", mixBlendMode: "multiply" }} />
       <div className="eh-grid-bg" aria-hidden />
 
@@ -146,7 +146,7 @@ export function EclecticHero({
 
         {/* the message — pinned, static */}
         <div className="eh-note">
-          <Pushpin size={40} tilt={notePin.tilt} style={{ position: "absolute", top: -30, left: `${notePin.pinX}%`, transform: "translateX(-50%)", zIndex: 7 }} />
+          <Pushpin size={40} tilt={notePin.tilt} seed={9} style={{ position: "absolute", top: -30, left: `${notePin.pinX}%`, transform: "translateX(-50%)", zIndex: 7 }} />
           <motion.div
             className="eh-note-inner"
             initial={motionOn ? { opacity: 0, y: 16, rotate: -1.5, scale: 0.98 } : false}
@@ -178,7 +178,8 @@ export function EclecticHero({
           </motion.div>
         </div>
 
-        {/* pinned precedents */}
+        {/* pinned precedents — decorative illustration; content is available
+            via ProofStrip and search results, so each card is aria-hidden */}
         {cards.map(({ slot, precedent, rot, pinX, tilt, pinSize }, i) => (
           <PinCard
             key={`${precedent.id}-${i}`}
@@ -247,6 +248,10 @@ export function EclecticHero({
         }
         .eh-scroll:hover { background: #000; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 4px rgba(21,22,26,0.5), 0 0 0 1px rgba(21,22,26,0.45); }
         .eh-scroll:active { transform: translateY(1px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
+        .eh-scroll:focus-visible {
+          outline: none;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 2px rgba(21,22,26,0.45), 0 0 0 1px rgba(21,22,26,0.35), 0 0 0 3px var(--focus-ring);
+        }
         .eh-scroll-chev { display: inline-flex; }
         .eh-skip {
           background: none; border: none; padding: 4px 0; cursor: pointer;
@@ -255,6 +260,11 @@ export function EclecticHero({
           transition: color var(--dur-1) var(--ease-press);
         }
         .eh-skip:hover { color: var(--ink-900); }
+        .eh-skip:focus-visible {
+          outline: none;
+          border-radius: var(--radius-sm);
+          box-shadow: 0 0 0 2px var(--focus-ring);
+        }
 
         /* ── cards ──────────────────────────────────────────────────────── */
         .eh-card {
@@ -262,12 +272,20 @@ export function EclecticHero({
           background: var(--concrete-0); padding: 8px;
           box-shadow: 0 1px 1px rgba(21,22,26,0.06), 0 12px 26px -12px rgba(21,22,26,0.3), 0 0 0 1px var(--hairline);
         }
-        /* mobile: short static pinned gallery */
-        @media (max-width: 899px) {
-          .eh-card:nth-of-type(n+4) { display: none; }
+        /* mobile: deliberate static pinned mini-board */
+        @media (max-width: 767px) {
+          .eh-card:nth-of-type(n+3) { display: none; }
+          .eh-board { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-top: 32px; }
+          .eh-card { position: relative; --cw: clamp(132px, 40vw, 168px); }
+          .eh-card:nth-of-type(1) { transform: rotate(-3deg); margin-right: -18px; z-index: 5; }
+          .eh-card:nth-of-type(2) { transform: rotate(2.5deg); margin-top: 22px; z-index: 4; }
+          .eh-scroll { padding: 13px 18px; }
+          .eh-skip { padding: 13px 0; }
         }
-        @media (min-width: 900px) {
-          .eh-root { display: flex; align-items: center; min-height: min(100svh, 820px); }
+        @media (min-width: 768px) {
+          /* Fill the viewport (minus the 60px sticky top bar) so the proof-strip
+             below the hero stays off-screen on first paint, even on tall displays. */
+          .eh-root { display: flex; align-items: center; min-height: calc(100svh - 60px); }
           .eh-board { display: block; height: min(82svh, 720px); }
           .eh-note { position: absolute; left: clamp(20px,5vw,48px); top: 50%; transform: translateY(-50%); width: 420px; }
           .eh-card { position: absolute; cursor: grab; }
@@ -325,6 +343,7 @@ function PinCard({
   return (
     <motion.figure
       className="eh-card"
+      aria-hidden="true"
       style={{ "--cw": `${slot.w}px`, x: mv.x, y: mv.y, ...desktopPos } as React.CSSProperties}
       drag={canDrag}
       dragConstraints={boardRef}
@@ -336,7 +355,7 @@ function PinCard({
       whileHover={canDrag ? { rotate: 0, scale: 1.04, zIndex: 40 } : undefined}
       whileDrag={{ rotate: 0, scale: 1.06, zIndex: 60 }}
     >
-      <Pushpin size={pinSize} tilt={tilt} style={{ position: "absolute", top: -(pinSize * 0.74), left: `${pinX}%`, transform: "translateX(-50%)", zIndex: 8 }} />
+      <Pushpin size={pinSize} tilt={tilt} seed={index + 1} style={{ position: "absolute", top: -(pinSize * 0.74), left: `${pinX}%`, transform: "translateX(-50%)", zIndex: 8 }} />
       <div style={{ position: "relative", aspectRatio: "4 / 3", overflow: "hidden", background: "var(--concrete-200)" }}>
         {!errored ? (
           <img
@@ -358,7 +377,8 @@ function PinCard({
         <span style={{ display: "block", fontFamily: "var(--font-display)", fontWeight: 650, fontSize: 12.5, lineHeight: 1.15, letterSpacing: "-0.01em", color: "var(--ink-900)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {clampWords(precedent.title, 4)}
         </span>
-        <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--ink-500)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {/* ink-700 on concrete-0 (card bg) is ~10.5:1 — passes at this small size */}
+        <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--ink-700)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {safeArchitect(precedent.architect)} · {precedent.country || "—"}
         </span>
       </figcaption>

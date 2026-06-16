@@ -22,6 +22,7 @@ import { ErrorPanel } from '../components/ErrorPanel';
 import { Skeleton } from '../components/ui/skeleton'; // side-effect: injects an-skeleton CSS
 import { searchByText, searchByImageFile, searchHybrid, searchByMultipleImages, searchByImageId, toAbsoluteUrl, SearchError } from '../lib/navigatorApi';
 import { addToHistory } from '../lib/searchHistory';
+import { consumePendingImageSearch } from '../lib/pendingImageSearch';
 
 type SortOption = 'best' | 'visual' | 'semantic';
 
@@ -111,9 +112,15 @@ export function ClassicSearchPage() {
     window.history.replaceState(null, '', newUrl);
   }, [query, filters.typology, filters.country, emphasis]);
 
-  // Auto-search if query is present on mount (from landing page redirect)
+  // On mount, honor a hand-off from the landing page. A dropped/picked
+  // reference image (parked in pendingImageSearch — it can't ride the URL)
+  // takes priority and runs an image search; otherwise fall back to the
+  // initial `?q=` text query.
   useEffect(() => {
-    if (initialQuery.trim()) {
+    const pendingImage = consumePendingImageSearch();
+    if (pendingImage) {
+      performSearch(initialQuery, pendingImage, initialEmphasis);
+    } else if (initialQuery.trim()) {
       performSearch(initialQuery, null, initialEmphasis);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

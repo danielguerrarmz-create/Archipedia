@@ -18,6 +18,7 @@ export function PinnedCard({
   pinXPct = 50,
   tilt = -18,
   pinSize = 32,
+  seed = 0,
   badge,
   eager,
 }: {
@@ -29,6 +30,7 @@ export function PinnedCard({
   pinXPct?: number;
   tilt?: number;
   pinSize?: number;
+  seed?: number;
   badge?: ReactNode;
   eager?: boolean;
 }) {
@@ -47,6 +49,7 @@ export function PinnedCard({
       <Pushpin
         size={pinSize}
         tilt={tilt}
+        seed={seed}
         style={{ position: "absolute", top: -pinSize * 0.74, left: `${pinXPct}%`, transform: "translateX(-50%)", zIndex: 6 }}
       />
       <div style={{ position: "relative" }}>
@@ -61,7 +64,8 @@ export function PinnedCard({
             </span>
           )}
           {meta && (
-            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--ink-500)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            /* ink-700 on concrete-0 card bg is ~10.5:1 — passes at 9.5px */
+            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--ink-700)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {meta}
             </span>
           )}

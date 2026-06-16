@@ -76,7 +76,7 @@ export function SearchLandingPage() {
         index: "01",
         eyebrow: "SEARCH",
         title: "Describe it. The index answers.",
-        reveal: "connector",
+        reveal: "plain",
         body:
           "Plain language in, real buildings out. The engine reads each project's geometry and material rather than its caption — so a rough description still lands you on the precedents that matter.",
         metaLine: (

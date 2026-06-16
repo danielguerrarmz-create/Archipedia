@@ -8,6 +8,7 @@
  */
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { Thumb } from "./Thumb";
 import { Pushpin } from "./Pushpin";
 import { sanitizeTitle, clampWords, IN_VIEW_ONCE, EASE_PRESS } from "./landingShared";
@@ -15,15 +16,18 @@ import type { HeroPrecedent } from "../../data/heroPrecedents";
 
 /* Port coordinates live in a shared 0–100 percentage space so the SVG wires and
    the HTML node ports always line up regardless of the box's pixel size. */
+/* Single coordinate source (0–100% canvas space) shared by BOTH the node
+   placement and the wire endpoints, so wires always land exactly on ports.
+   The three precedents fan into ONE Generate input; Generate fans out to the
+   result. inX is the right edge of an input node (left 5% + width 21%). */
+const INPUT_CYS = [20, 50, 80]; // vertical centers of the 3 input nodes
 const PORTS = {
-  in1: { x: 32, y: 27 },
-  in2: { x: 32, y: 52 },
-  in3: { x: 32, y: 77 },
-  genL1: { x: 44, y: 48 },
-  genL2: { x: 44, y: 54 },
-  genL3: { x: 44, y: 60 },
-  genR: { x: 60, y: 54 },
-  outL: { x: 70, y: 50 },
+  in1: { x: 26, y: INPUT_CYS[0] },
+  in2: { x: 26, y: INPUT_CYS[1] },
+  in3: { x: 26, y: INPUT_CYS[2] },
+  genIn: { x: 44, y: 50 },
+  genOut: { x: 60, y: 50 },
+  outIn: { x: 70, y: 50 },
 };
 
 export function ComposeCanvasVignette({ precedents }: { precedents: HeroPrecedent[] }) {
@@ -48,7 +52,7 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
   return (
     <div ref={ref} style={{ position: "relative" }}>
       {/* the product window is itself pinned to the wall (a visual artifact) */}
-      <Pushpin size={36} tilt={-16} style={{ position: "absolute", top: -26, left: "44%", transform: "translateX(-50%)", zIndex: 6 }} />
+      <Pushpin size={36} tilt={-16} seed={4} style={{ position: "absolute", top: -26, left: "44%", transform: "translateX(-50%)", zIndex: 6 }} />
       <div
         style={{
           position: "relative",
@@ -75,7 +79,7 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
             background: "var(--concrete-100)",
           }}
         >
-          <span className="mono-caps" style={{ color: "var(--ink-700)", fontSize: 10 }}>UNTITLED BOARD</span>
+          <span className="mono-caps" style={{ color: "var(--ink-700)", fontSize: 10 }}>PRECEDENT STUDY — 01</span>
           <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
             <span style={{ width: 7, height: 7, borderRadius: "var(--radius-sm)", background: "var(--ink-300)" }} />
             <span style={{ width: 7, height: 7, borderRadius: "var(--radius-sm)", background: "var(--ink-300)" }} />
@@ -87,12 +91,12 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
         <div className="modular-grid" style={{ position: "absolute", inset: "34px 0 0 0" }}>
           {/* wires + ports (percentage space) */}
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 2, overflow: "visible" }}>
-            {wire(`M${PORTS.in1.x} ${PORTS.in1.y} H38 V${PORTS.genL1.y} H${PORTS.genL1.x}`, 0.15)}
-            {wire(`M${PORTS.in2.x} ${PORTS.in2.y} H40 V${PORTS.genL2.y} H${PORTS.genL2.x}`, 0.28)}
-            {wire(`M${PORTS.in3.x} ${PORTS.in3.y} H38 V${PORTS.genL3.y} H${PORTS.genL3.x}`, 0.41)}
-            {wire(`M${PORTS.genR.x} ${PORTS.genR.y} H65 V${PORTS.outL.y} H${PORTS.outL.x}`, 0.62)}
-            {/* union nubs at the merge points */}
-            {[PORTS.genL1, PORTS.genL2, PORTS.genL3, PORTS.genR, PORTS.outL].map((p, i) => (
+            {wire(`M${PORTS.in1.x} ${PORTS.in1.y} H36 V${PORTS.genIn.y} H${PORTS.genIn.x}`, 0.15)}
+            {wire(`M${PORTS.in2.x} ${PORTS.in2.y} H${PORTS.genIn.x}`, 0.28)}
+            {wire(`M${PORTS.in3.x} ${PORTS.in3.y} H36 V${PORTS.genIn.y} H${PORTS.genIn.x}`, 0.41)}
+            {wire(`M${PORTS.genOut.x} ${PORTS.genOut.y} H${PORTS.outIn.x}`, 0.62)}
+            {/* union nubs at the merge / connection points */}
+            {[PORTS.genIn, PORTS.genOut, PORTS.outIn].map((p, i) => (
               <motion.rect
                 key={i}
                 x={p.x - 1}
@@ -119,8 +123,9 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
               style={{
                 position: "absolute",
                 left: "5%",
-                top: `${12 + i * 25}%`,
-                width: "26%",
+                top: `${INPUT_CYS[i]}%`,
+                y: "-50%",
+                width: "21%",
                 zIndex: 3,
                 background: "var(--concrete-100)",
                 boxShadow: "var(--raised)",
@@ -145,25 +150,29 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
             style={{
               position: "absolute",
               left: "44%",
-              top: "44%",
-              transform: "translateY(-50%)",
+              top: "50%",
+              y: "-50%",
               width: "16%",
               minWidth: 92,
               zIndex: 3,
-              background: "var(--ink-900)",
+              // the one functional accent — mirrors the app's signal Generate button
+              background: "var(--signal)",
               color: "#fff",
               borderRadius: "var(--radius-md)",
               boxShadow: "var(--emboss)",
               padding: "10px 8px",
-              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
             }}
           >
-            <span className="mono-caps" style={{ color: "#fff", fontSize: 10, letterSpacing: "0.12em" }}>Generate</span>
-            {/* input ports */}
-            {[28, 50, 72].map((top) => (
-              <span key={top} style={{ position: "absolute", left: -4, top: `${top}%`, marginTop: -3, width: 7, height: 7, borderRadius: "var(--radius-sm)", background: "#fff" }} />
-            ))}
-            <span style={{ position: "absolute", right: -4, top: "50%", width: 7, height: 7, marginTop: -3, borderRadius: "var(--radius-sm)", background: "#fff" }} />
+            <Sparkles size={11} strokeWidth={2} style={{ flexShrink: 0 }} aria-hidden />
+            <span className="mono-caps" style={{ color: "#fff", fontSize: 10, letterSpacing: "0.1em" }}>Generate</span>
+            {/* single input port — the three precedents fan in here */}
+            <span style={{ position: "absolute", left: -4, top: "50%", marginTop: -3, width: 7, height: 7, borderRadius: "var(--radius-sm)", background: "#fff" }} />
+            {/* output port */}
+            <span style={{ position: "absolute", right: -4, top: "50%", marginTop: -3, width: 7, height: 7, borderRadius: "var(--radius-sm)", background: "#fff" }} />
           </motion.div>
 
           {/* output (generated) node */}
@@ -175,7 +184,7 @@ export function ComposeCanvasVignette({ precedents }: { precedents: HeroPreceden
               position: "absolute",
               left: "70%",
               top: "50%",
-              transform: "translateY(-50%)",
+              y: "-50%",
               width: "26%",
               zIndex: 3,
               background: "var(--concrete-0)",

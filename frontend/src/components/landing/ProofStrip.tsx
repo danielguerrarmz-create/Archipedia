@@ -1,25 +1,43 @@
 /**
- * ProofStrip — a thin hairline band of mono metrics that COUNT UP on enter,
- * divided by AxisTick-style node dividers. No logo wall.
+ * ProofStrip — a thin hairline band of three mono metrics that COUNT UP on
+ * enter, centered on the page. Deliberately minimal: no image card, no prose —
+ * just the corpus numbers. The "every result carries its source" provenance
+ * promise lives in the footer and the CITE narrative beat, not here.
  */
 import { useCountUp } from "./landingShared";
 import { Node } from "../motif";
 
+/* ── Corpus metrics ─────────────────────────────────────────────────────────
+   corpusCount: 669 is the last-known indexed project count (projects.csv rows).
+   TODO: wire to a /stats endpoint in navigatorApi.ts when it exists.        */
 interface Metric {
   value: number;
   suffix?: string;
   label: string;
 }
 
-const METRICS: Metric[] = [
-  { value: 13411, label: "BUILT PROJECTS" },
-  { value: 41, label: "TYPOLOGIES" },
-  { value: 92, label: "COUNTRIES" },
-];
+function buildMetrics(corpusCount: number): Metric[] {
+  return [
+    { value: corpusCount, label: "INDEXED PROJECTS" },
+    { value: 41, label: "TYPOLOGIES" },
+    { value: 92, label: "COUNTRIES" },
+  ];
+}
 
-export function ProofStrip({ motionOn }: { motionOn: boolean }) {
+/* ── Component ──────────────────────────────────────────────────────────── */
+export function ProofStrip({
+  motionOn,
+  // 669 is the last-known index size; wire to a backend /stats endpoint later
+  corpusCount = 669,
+}: {
+  motionOn: boolean;
+  corpusCount?: number;
+}) {
+  const metrics = buildMetrics(corpusCount);
+
   return (
     <section
+      aria-label="Corpus metrics"
       style={{
         borderTop: "1px solid var(--hairline)",
         borderBottom: "1px solid var(--hairline)",
@@ -32,11 +50,13 @@ export function ProofStrip({ motionOn }: { motionOn: boolean }) {
           margin: "0 auto",
           padding: "0 clamp(20px, 5vw, 48px)",
           display: "flex",
-          alignItems: "stretch",
+          alignItems: "center",
+          justifyContent: "center",
           flexWrap: "wrap",
+          rowGap: 0,
         }}
       >
-        {METRICS.map((m, i) => (
+        {metrics.map((m, i) => (
           <Stat key={m.label} metric={m} motionOn={motionOn} divider={i > 0} />
         ))}
       </div>
@@ -44,18 +64,26 @@ export function ProofStrip({ motionOn }: { motionOn: boolean }) {
   );
 }
 
-function Stat({ metric, motionOn, divider }: { metric: Metric; motionOn: boolean; divider: boolean }) {
+/* ── Stat cell ──────────────────────────────────────────────────────────── */
+function Stat({
+  metric,
+  motionOn,
+  divider,
+}: {
+  metric: Metric;
+  motionOn: boolean;
+  divider: boolean;
+}) {
   const { ref, value } = useCountUp(metric.value, motionOn);
   return (
     <div
       style={{
-        flex: "1 1 180px",
+        flex: "0 0 auto",
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "32px 0 32px 24px",
+        padding: "18px clamp(20px, 3vw, 40px)",
         borderLeft: divider ? "1px solid var(--hairline)" : "none",
-        marginLeft: divider ? -1 : 0,
       }}
     >
       <Node size={6} />
@@ -74,7 +102,8 @@ function Stat({ metric, motionOn, divider }: { metric: Metric; motionOn: boolean
         >
           {value}
         </span>
-        <span className="mono-caps" style={{ color: "var(--ink-500)" }}>
+        {/* ink-700 on concrete-50 is ~8.4:1 — comfortably above 4.5:1 at this small size */}
+        <span className="mono-caps" style={{ color: "var(--ink-700)" }}>
           {metric.label}
         </span>
       </div>

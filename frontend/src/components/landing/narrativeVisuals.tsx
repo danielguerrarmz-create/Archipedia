@@ -45,6 +45,7 @@ export function SearchGridVisual({ precedents }: { precedents: HeroPrecedent[] }
           pinXPct={GRID_PINS[i].pinXPct}
           tilt={GRID_PINS[i].tilt}
           pinSize={28}
+          seed={i + 1}
           eager={i < 3}
           badge={<MatchStamp score={SCORES[i]} noSignal />}
         />
@@ -66,7 +67,7 @@ export function CompareVisual({ precedents }: { precedents: HeroPrecedent[] }) {
         paddingTop: 18,
       }}
     >
-      <PinnedCard thumb={a.thumb} title={clampWords(a.title, 4)} meta={a.country || "—"} rot={-2.5} pinXPct={44} tilt={-18} eager />
+      <PinnedCard thumb={a.thumb} title={clampWords(a.title, 4)} meta={a.country || "—"} rot={-2.5} pinXPct={44} tilt={-18} seed={2} eager />
       {/* connector + MatchStamp between */}
       <div
         style={{
@@ -87,7 +88,7 @@ export function CompareVisual({ precedents }: { precedents: HeroPrecedent[] }) {
           <MatchStamp score={0.91} reason="Strong visual proximity" noSignal />
         </div>
       </div>
-      <PinnedCard thumb={b.thumb} title={clampWords(b.title, 4)} meta={b.country || "—"} rot={2.5} pinXPct={56} tilt={16} eager />
+      <PinnedCard thumb={b.thumb} title={clampWords(b.title, 4)} meta={b.country || "—"} rot={2.5} pinXPct={56} tilt={16} seed={5} eager />
     </div>
   );
 }
@@ -108,7 +109,7 @@ export function CiteVisual({ precedents }: { precedents: HeroPrecedent[] }) {
       }}
     >
       {/* the sheet itself is pinned to the wall (a visual artifact, not text) */}
-      <Pushpin size={34} tilt={14} style={{ position: "absolute", top: -25, left: "58%", transform: "translateX(-50%)", zIndex: 5 }} />
+      <Pushpin size={34} tilt={14} seed={6} style={{ position: "absolute", top: -25, left: "58%", transform: "translateX(-50%)", zIndex: 5 }} />
       {/* sheet header */}
       <div
         style={{
