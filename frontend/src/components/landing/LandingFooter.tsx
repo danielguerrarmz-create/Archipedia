@@ -74,6 +74,19 @@ export function LandingFooter() {
             <p className="mono-meta" style={{ color: "var(--studio-stone)", maxWidth: 250, lineHeight: 1.55 }}>
               The index of the built world.
             </p>
+            <p
+              style={{
+                marginTop: 14,
+                maxWidth: 300,
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "var(--studio-stone)",
+              }}
+            >
+              Every result carries its source — architect, project, location,
+              year. Real, cited buildings; never invented.
+            </p>
 
             {/* Led by Pear Design (LinkedIn only for now) */}
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
