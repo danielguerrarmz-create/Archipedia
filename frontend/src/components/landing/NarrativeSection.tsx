@@ -49,16 +49,35 @@ export function NarrativeSection({
   return (
     <section
       style={{
+        position: "relative",
+        overflow: "hidden",
         background: "var(--concrete-50)",
         padding: "clamp(64px, 11vh, 128px) 0",
       }}
     >
+      {/* the pin-board wall, carried down from the hero (gently faded at edges) */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: 0.4,
+          backgroundImage:
+            "linear-gradient(rgba(21,22,26,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(21,22,26,0.04) 1px, transparent 1px)",
+          backgroundSize: "30px 30px, 30px 30px",
+          WebkitMaskImage: "linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%)",
+          maskImage: "linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%)",
+        }}
+      />
       <motion.div
         ref={ref}
         variants={container}
         initial="hidden"
         animate={inView ? "show" : "hidden"}
         style={{
+          position: "relative",
+          zIndex: 1,
           maxWidth: "var(--container-max)",
           margin: "0 auto",
           padding: "0 clamp(20px, 5vw, 48px)",

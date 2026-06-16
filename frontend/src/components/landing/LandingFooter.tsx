@@ -155,7 +155,7 @@ export function LandingFooter() {
             © {year} ARCHIPEDIA
           </span>
           <span className="mono-caps" style={{ color: "var(--studio-stone-dim)" }}>
-            EVERY BUILDING LEAVES A MARK
+            EVERY DESIGN LEAVES A MARK
           </span>
         </div>
       </div>

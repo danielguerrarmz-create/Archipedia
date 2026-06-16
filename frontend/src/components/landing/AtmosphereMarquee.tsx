@@ -2,7 +2,7 @@
  * AtmosphereMarquee — full-bleed band: two opposing rows of all real thumbs
  * (~40s loop, pause on hover). A hovered tile lifts +2px and reveals a mono
  * ARCHITECT · PROJECT · YEAR caption. Concrete vignette top/bottom + grain.
- * Centered overlay tagline: "Every building leaves a mark."
+ * Centered overlay tagline: "Every design leaves a mark."
  *
  * Reduced motion: rows render as a static, non-animating strip (no translate
  * loop), hover lift/caption preserved.
@@ -167,7 +167,7 @@ export function AtmosphereMarquee({
             textShadow: "0 1px 0 rgba(255,255,255,.8)",
           }}
         >
-          Every building leaves a mark.
+          Every design leaves a mark.
         </h2>
       </div>
     </section>

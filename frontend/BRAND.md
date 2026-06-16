@@ -1,8 +1,9 @@
 # Archipedia — Brand Identity Playbook
 ### "Concrete & Signal"
 
-> **North-star — "Every building leaves a mark."**
-> Archipedia is the *index of the built world*: a place where a half-formed idea gets pressed against thousands of real, standing buildings until the relevant ones surface. Not a gallery of finished renders — an instrument for the **messy middle**: the searching, comparing, connecting, and collecting that happens *before* a design is resolved.
+> **North-star — "Every design leaves a mark."**
+> (Inclusive of everyone shaping the built environment — architecture, landscape, urbanism.)
+> Archipedia is the *index of the built world*: a place where a half-formed idea gets pressed against thousands of real, standing projects until the relevant ones surface. Not a gallery of finished renders — an instrument for the **messy middle**: the searching, comparing, connecting, and collecting that happens *before* a design is resolved.
 
 This is the single source of truth for the Archipedia interface. The system tokens live in [`src/styles/tokens.css`](src/styles/tokens.css); the reusable brand grammar lives in [`src/components/motif/`](src/components/motif/). Build to the names here verbatim.
 
@@ -194,4 +195,4 @@ A single generative geometry runs through the whole brand (Fuser's base + connec
 
 ---
 
-*Concrete & Signal expresses "every building leaves a mark" by making the entire instrument matte, monochrome, and physically pressed — reserving a single International Klein Blue for the exact moments meaning appears. Swiss precision (Archivo + strict grid + small radii), Fuser materiality (the emboss/stamp + node-connector-union grammar), and Flora flow (generous space, humane body, settle-don't-slide motion), married into one system.*
+*Concrete & Signal expresses "every design leaves a mark" by making the entire instrument matte, monochrome, and physically pressed — reserving a single International Klein Blue for the exact moments meaning appears. Swiss precision (Archivo + strict grid + small radii), Fuser materiality (the emboss/stamp + node-connector-union grammar), and Flora flow (generous space, humane body, settle-don't-slide motion), married into one system.*

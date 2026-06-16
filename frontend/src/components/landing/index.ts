@@ -1,5 +1,8 @@
 export { LandingTopBar } from "./LandingTopBar";
-export { HeroAssembly } from "./HeroAssembly";
+export { EclecticHero } from "./EclecticHero";
+export { Preloader } from "./Preloader";
+export { Pushpin } from "./Pushpin";
+export { PinnedCard } from "./PinnedCard";
 export { ProofStrip } from "./ProofStrip";
 export { NarrativeSection, type NarrativeConfig } from "./NarrativeSection";
 export { ComposeCanvasVignette } from "./ComposeCanvasVignette";

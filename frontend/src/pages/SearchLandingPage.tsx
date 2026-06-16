@@ -14,7 +14,8 @@ import { heroPrecedents, type HeroPrecedent } from "../data/heroPrecedents";
 import { searchByText } from "../lib/navigatorApi";
 import {
   LandingTopBar,
-  HeroAssembly,
+  Preloader,
+  EclecticHero,
   ProofStrip,
   NarrativeSection,
   type NarrativeConfig,
@@ -37,7 +38,8 @@ function useEnhancedPrecedents(): HeroPrecedent[] {
       try {
         const res = await searchByText("civic concrete", { topK: 12, pageSize: 12 });
         const live = (res.results || [])
-          .filter((r) => r.thumb_url)
+          // HTTPS-only: never let a non-https thumb_url reach an <img src>
+          .filter((r) => r.thumb_url && /^https:\/\//.test(r.thumb_url))
           .map<HeroPrecedent>((r, i) => ({
             id: r.project_id || `live_${i}`,
             thumb: r.thumb_url as string,
@@ -133,14 +135,20 @@ export function SearchLandingPage() {
 
   return (
     <div style={{ background: "var(--concrete-50)", minHeight: "100vh" }}>
+      <Preloader />
       <LandingTopBar />
-      <HeroAssembly precedents={precedents} motionOn={motionOn} />
+      <EclecticHero precedents={precedents} motionOn={motionOn} />
       <ProofStrip motionOn={motionOn} />
-      {narratives.map((cfg) => (
-        <NarrativeSection key={cfg.index} config={cfg} motionOn={motionOn} />
-      ))}
-      <AtmosphereMarquee precedents={precedents} motionOn={motionOn} />
+      {/* The how-it-works tutorial the hero scrolls into. */}
+      <div id="how-it-works">
+        {narratives.map((cfg) => (
+          <NarrativeSection key={cfg.index} config={cfg} motionOn={motionOn} />
+        ))}
+      </div>
+      {/* "Ready to start?" search entry — placed right after the tutorial, above
+          the "Every design leaves a mark" marquee (less scrolling to reach it). */}
       <FinalCTA motionOn={motionOn} />
+      <AtmosphereMarquee precedents={precedents} motionOn={motionOn} />
       <LandingFooter />
     </div>
   );

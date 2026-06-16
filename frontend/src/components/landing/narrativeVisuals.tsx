@@ -9,6 +9,8 @@
  */
 import { Thumb } from "./Thumb";
 import { MatchStamp } from "../motif";
+import { PinnedCard } from "./PinnedCard";
+import { Pushpin } from "./Pushpin";
 import {
   sanitizeTitle,
   clampWords,
@@ -18,33 +20,34 @@ import type { HeroPrecedent } from "../../data/heroPrecedents";
 
 /* ── 01 SEARCH ─────────────────────────────────────────────────────────── */
 const SCORES = [0.94, 0.88, 0.83, 0.79, 0.74, 0.68];
+// stable, varied pin positions/tilts/rotations so the grid reads "pinned up"
+const GRID_PINS = [
+  { rot: -2.5, pinXPct: 42, tilt: -18 },
+  { rot: 2, pinXPct: 58, tilt: 16 },
+  { rot: -1.5, pinXPct: 47, tilt: -20 },
+  { rot: 2.5, pinXPct: 61, tilt: 14 },
+  { rot: -2, pinXPct: 38, tilt: -15 },
+  { rot: 1.8, pinXPct: 55, tilt: 19 },
+];
 
 export function SearchGridVisual({ precedents }: { precedents: HeroPrecedent[] }) {
   const six = precedents.slice(0, 6);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "26px 18px", paddingTop: 14 }}>
       {six.map((p, i) => (
-        <div
+        <PinnedCard
           key={p.id}
-          style={{
-            position: "relative",
-            background: "var(--concrete-100)",
-            borderRadius: "var(--radius-md)",
-            boxShadow: "var(--raised)",
-            overflow: "hidden",
-          }}
-        >
-          <Thumb
-            src={p.thumb}
-            alt={sanitizeTitle(p.title)}
-            aspect={1.5}
-            radius="0"
-            eager={i < 3}
-          />
-          <div style={{ position: "absolute", left: 6, bottom: 6 }}>
-            <MatchStamp score={SCORES[i]} noSignal />
-          </div>
-        </div>
+          thumb={p.thumb}
+          title={clampWords(p.title, 3)}
+          meta={p.country || "—"}
+          aspect={1.5}
+          rot={GRID_PINS[i].rot}
+          pinXPct={GRID_PINS[i].pinXPct}
+          tilt={GRID_PINS[i].tilt}
+          pinSize={28}
+          eager={i < 3}
+          badge={<MatchStamp score={SCORES[i]} noSignal />}
+        />
       ))}
     </div>
   );
@@ -60,9 +63,10 @@ export function CompareVisual({ precedents }: { precedents: HeroPrecedent[] }) {
         gridTemplateColumns: "1fr auto 1fr",
         alignItems: "center",
         gap: 0,
+        paddingTop: 18,
       }}
     >
-      <CompareTile p={a} />
+      <PinnedCard thumb={a.thumb} title={clampWords(a.title, 4)} meta={a.country || "—"} rot={-2.5} pinXPct={44} tilt={-18} eager />
       {/* connector + MatchStamp between */}
       <div
         style={{
@@ -83,41 +87,7 @@ export function CompareVisual({ precedents }: { precedents: HeroPrecedent[] }) {
           <MatchStamp score={0.91} reason="Strong visual proximity" noSignal />
         </div>
       </div>
-      <CompareTile p={b} />
-    </div>
-  );
-}
-
-function CompareTile({ p }: { p: HeroPrecedent }) {
-  return (
-    <div
-      style={{
-        background: "var(--concrete-100)",
-        borderRadius: "var(--radius-md)",
-        boxShadow: "var(--raised)",
-        overflow: "hidden",
-      }}
-    >
-      <Thumb src={p.thumb} alt={sanitizeTitle(p.title)} aspect={1.5} radius="0" eager />
-      <div style={{ padding: "10px 12px" }}>
-        <div
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--ink-900)",
-            letterSpacing: "-0.01em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {clampWords(p.title, 5)}
-        </div>
-        <div className="mono-meta" style={{ marginTop: 3 }}>
-          {p.country || "—"}
-        </div>
-      </div>
+      <PinnedCard thumb={b.thumb} title={clampWords(b.title, 4)} meta={b.country || "—"} rot={2.5} pinXPct={56} tilt={16} eager />
     </div>
   );
 }
@@ -128,13 +98,17 @@ export function CiteVisual({ precedents }: { precedents: HeroPrecedent[] }) {
   return (
     <div
       style={{
+        position: "relative",
         background: "var(--concrete-0)",
         borderRadius: "var(--radius-lg)",
         boxShadow: "var(--elev-modal)",
         padding: "clamp(20px, 3vw, 32px)",
         maxWidth: 560,
+        transform: "rotate(-0.8deg)",
       }}
     >
+      {/* the sheet itself is pinned to the wall (a visual artifact, not text) */}
+      <Pushpin size={34} tilt={14} style={{ position: "absolute", top: -25, left: "58%", transform: "translateX(-50%)", zIndex: 5 }} />
       {/* sheet header */}
       <div
         style={{

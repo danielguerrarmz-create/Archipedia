@@ -33,7 +33,9 @@ export function LandingTopBar() {
         zIndex: 50,
         background: "var(--studio-ground-solid)",
         borderBottom: `1px solid ${scrolled ? "var(--studio-line-strong)" : "var(--studio-line)"}`,
-        boxShadow: scrolled ? "0 1px 24px rgba(0,0,0,0.4)" : "none",
+        // a faint grounding shadow even at rest so the dark bar visibly SITS on
+        // the light concrete hero instead of clipping against it with a hard edge
+        boxShadow: scrolled ? "0 1px 24px rgba(0,0,0,0.4)" : "0 1px 3px rgba(21,22,26,0.12)",
         transition: "border-color var(--dur-2) var(--ease-press), box-shadow var(--dur-2) var(--ease-press)",
       }}
     >
@@ -63,6 +65,7 @@ export function LandingTopBar() {
           }}
         >
           <span
+            data-wordmark
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 600,
