@@ -316,6 +316,41 @@ select:focus-visible,
   background: rgba(31, 63, 255, 0.08);
 }
 
+/* ── CLERK (auth widget) — neutral focus, no decorative blue ────────────────
+   Why this lives in CSS and not in the Clerk `appearance.elements` object:
+   Clerk's style-object API does NOT honor nested '&:focus'/'&:hover' keys, so a
+   focused field falls back to Clerk's DEFAULT focus ring — a box-shadow derived
+   from `colorPrimary` (= --signal), i.e. a blue Klein ring. We keep
+   colorPrimary = --signal for the primary button fill, but neutralize the input
+   ring here, targeting Clerk's stable light-DOM `cl-` classes.
+
+   Specificity/cascade: Clerk injects its own focus rule WITHOUT `!important`, so
+   our `!important` declarations win regardless of stylesheet order. tokens.css
+   is also imported LAST (see main.tsx), so even the non-!important fallbacks win
+   on source order. A focused Clerk input therefore cannot show a blue ring. */
+.cl-formFieldInput:focus,
+.cl-formFieldInput:focus-visible {
+  outline: none !important;
+  border-color: var(--ink-700) !important;   /* focus = darken own border */
+  box-shadow: var(--deboss) !important;       /* keep the debossed well, no ring */
+}
+/* Chrome/Safari autofill repaints the field yellow/blue and can redraw a ring;
+   pin it back to the debossed well + neutral focus border. */
+.cl-formFieldInput:-webkit-autofill,
+.cl-formFieldInput:-webkit-autofill:focus {
+  box-shadow: var(--deboss), inset 0 0 0 1000px var(--concrete-sunken) !important;
+  -webkit-text-fill-color: var(--ink-900) !important;
+  border-color: var(--ink-700) !important;
+}
+/* The lone Signal button: keep the fill, but its keyboard-focus ring must be
+   neutral ink (--focus-ring), never a Signal/blue glow. */
+.cl-formButtonPrimary { background-color: var(--signal) !important; }
+.cl-formButtonPrimary:hover { background-color: var(--signal-hover) !important; }
+.cl-formButtonPrimary:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--focus-ring) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
