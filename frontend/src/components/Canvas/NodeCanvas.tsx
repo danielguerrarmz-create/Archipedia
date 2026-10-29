@@ -1,18 +1,29 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
+  BackgroundVariant,
   Controls,
+  ControlButton,
   MiniMap,
   NodeTypes,
+  EdgeTypes,
   Connection,
   Node,
   NodeMouseHandler,
   ReactFlowInstance,
   Edge,
   EdgeMouseHandler,
+  useStore,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import '../../styles/canvas.css';
 import { useCanvasStore } from '../../stores/canvasStore';
+import { arePortsCompatible } from '../../lib/NodeRegistry';
+import { AnEdge } from './AnEdge';
+import { CanvasRail } from './CanvasRail';
+import { AddNodeModal } from './AddNodeModal';
+import { EmptyCanvas } from './EmptyCanvas';
+import { consumePendingCanvasSeed } from '../../lib/canvasTemplates';
 import { PrecedentNode } from '../Nodes/PrecedentNode';
 import { TextNode } from '../Nodes/TextNode';
 import { ImageNode } from '../Nodes/ImageNode';
@@ -43,6 +54,7 @@ import {
   createGenerateNode,
   createValidateNode,
   createStyleReferenceNode,
+  createNodeFromType,
 } from '../../lib/nodeFactory';
 import { SearchResult } from '../../stores/searchStore';
 import { SelectionContextMenu } from '../ContextMenu/SelectionContextMenu';
@@ -65,6 +77,16 @@ const nodeTypes: NodeTypes = {
   default: TextNode,
 };
 
+const edgeTypes: EdgeTypes = {
+  anEdge: AnEdge,
+};
+
+/** A mono zoom readout that reflects the live react-flow zoom. */
+const ZoomReadout: React.FC = () => {
+  const zoom = useStore((s) => s.transform[2]);
+  return <div className="an-zoom-readout">{Math.round(zoom * 100)}%</div>;
+};
+
 interface NodeCanvasProps {
   initialPrecedents?: SearchResult[];
   onOpenTemplates?: () => void;
@@ -78,6 +100,8 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
+  const [showAddNode, setShowAddNode] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   // Expose templates dialog to parent
   useEffect(() => {
@@ -124,6 +148,19 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
       addNodes([precedentNode]);
     }
   }, [initialPrecedents, nodes.length, addNodes]);
+
+  // "Open in canvas" hand-off: a Precedent seed stashed by openProjectInCanvas().
+  useEffect(() => {
+    if (nodes.length !== 0) return;
+    const seed = consumePendingCanvasSeed();
+    if (seed && seed.length > 0) {
+      const node = createPrecedentNode({ x: 120, y: 200 }, seed);
+      (node as any).selected = true;
+      addNodes([node]);
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConnect = useCallback(
     (connection: Connection) => {
@@ -280,7 +317,6 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
     setShowMultiplyDialog(true);
   }, []);
 
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
@@ -410,55 +446,48 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           } catch (error) {
             console.error('Error parsing dropped data:', error);
           }
-        } else if (['text', 'image', 'attributeFilter', 'scalar', 'results', 'operatorAND', 'operatorOR', 'operatorNOT', 'generate', 'validate', 'styleReference'].includes(nodeType)) {
-          // Handle other node types
-          let newNode: Node<NodeData> | null = null;
-          
-          switch (nodeType) {
-            case 'text':
-              newNode = createTextNode(position, '');
-              break;
-            case 'image':
-              newNode = createImageNode(position);
-              break;
-            case 'attributeFilter':
-              newNode = createAttributeFilterNode(position);
-              break;
-            case 'scalar':
-              newNode = createScalarNode(position);
-              break;
-            case 'results':
-              newNode = createResultsNode(position, 0);
-              break;
-            case 'operatorAND':
-              newNode = createOperatorANDNode(position);
-              break;
-            case 'operatorOR':
-              newNode = createOperatorORNode(position);
-              break;
-            case 'operatorNOT':
-              newNode = createOperatorNOTNode(position);
-              break;
-            case 'generate':
-              newNode = createGenerateNode(position);
-              break;
-            case 'validate':
-              newNode = createValidateNode(position);
-              break;
-            case 'styleReference':
-              newNode = createStyleReferenceNode(position);
-              break;
-          }
-          
-          if (newNode) {
-            console.log('[NodeCanvas] Creating node:', nodeType, newNode.type, newNode.data.type);
-            addNodes([newNode]);
-          }
+        } else {
+          // All non-precedent node types share one factory map (see also the
+          // command palette, which adds nodes at viewport centre).
+          const newNode = createNodeFromType(nodeType, position);
+          if (newNode) addNodes([newNode]);
         }
       }
     },
     [addNodes, reactFlowInstance]
   );
+
+  // Command-palette add: drop the node at the current viewport centre, lightly
+  // offset per call so successive adds don't stack exactly on top of each other.
+  const addCountRef = useRef(0);
+  const addNodeAtCenter = useCallback(
+    (type: string) => {
+      if (!reactFlowInstance) return;
+      const rect = reactFlowWrapperRef.current?.getBoundingClientRect();
+      const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+      const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+      const base = reactFlowInstance.screenToFlowPosition({ x: cx, y: cy });
+      const n = addCountRef.current++;
+      const position = { x: base.x + (n % 4) * 28, y: base.y + (n % 4) * 28 };
+      const newNode = createNodeFromType(type, position);
+      if (newNode) addNodes([newNode]);
+    },
+    [addNodes, reactFlowInstance]
+  );
+
+  // `/` opens the command palette (when not typing into a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (e.key === '/' && !typing) {
+        e.preventDefault();
+        setShowAddNode(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -509,49 +538,93 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
     [selectedNodeForMultiply, addNodes]
   );
 
-  // Custom edge styles based on hover and selection
+  // All edges adopt the custom AnEdge; styling is driven by class/state inside it.
   const styledEdges = useMemo(() => {
     return edges.map((edge) => {
       const edgeId = edge.id || `${edge.source}-${edge.sourceHandle || ''}-${edge.target}-${edge.targetHandle || ''}`;
-      const isHovered = hoveredEdgeId === edgeId;
       const isSelected = selectedEdgeId === edgeId;
-      const strokeColor = isSelected || isHovered ? '#FF0000' : '#CCCCCC';
-      const strokeWidth = isSelected ? 3 : isHovered ? 2.5 : 2;
+      const srcNode = nodes.find((n) => n.id === edge.source);
+      const running = (srcNode?.data as any)?.executionStatus === 'running';
 
       return {
         ...edge,
         id: edgeId,
-        style: {
-          ...edge.style,
-          stroke: strokeColor,
-          strokeWidth,
-        },
+        type: 'anEdge',
+        data: { ...(edge.data || {}), running },
         selected: isSelected,
       };
     });
-  }, [edges, hoveredEdgeId, selectedEdgeId]);
+  }, [edges, selectedEdgeId, nodes]);
 
   const defaultEdgeOptions = useMemo(
     () => ({
-      style: { strokeWidth: 2, stroke: '#CCCCCC' },
-      type: 'smoothstep',
+      type: 'anEdge',
       animated: false,
     }),
     []
+  );
+
+  // Type-aware connection validation wired into react-flow.
+  const isValidConnection = useCallback(
+    (connection: Connection): boolean => {
+      if (!connection.source || !connection.target) return false;
+      if (connection.source === connection.target) return false;
+      const src = nodes.find((n) => n.id === connection.source);
+      const tgt = nodes.find((n) => n.id === connection.target);
+      if (!src || !tgt) return false;
+      // If either port id is unknown to the registry, fall back to permissive.
+      return arePortsCompatible(
+        (src.data as any).type,
+        connection.sourceHandle || 'output',
+        (tgt.data as any).type,
+        connection.targetHandle || 'input'
+      );
+    },
+    [nodes]
+  );
+
+  // Stable per-canvas index so each node can show a P·NN stamp.
+  const nodeIndexById = useMemo(() => {
+    const m: Record<string, number> = {};
+    nodes.forEach((n, i) => { m[n.id] = i; });
+    return m;
+  }, [nodes]);
+
+  // EmptyCanvas hands us a pre-wired starter graph; stamp it + fit.
+  const handleSeedTemplate = useCallback(
+    (seed: { nodes: Node<NodeData>[]; edges: Array<Partial<Connection>> }) => {
+      addNodes(seed.nodes);
+      seed.edges.forEach((edge) => {
+        onConnect({
+          source: edge.source || null,
+          target: edge.target || null,
+          sourceHandle: edge.sourceHandle || null,
+          targetHandle: edge.targetHandle || null,
+        } as Connection);
+      });
+      requestAnimationFrame(() => {
+        reactFlowInstance?.fitView({ padding: 0.35, duration: 700 });
+      });
+    },
+    [addNodes, onConnect, reactFlowInstance]
   );
 
   return (
     <>
       <div
         ref={reactFlowWrapperRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#F5F1E8',
-        }}
+        className="an-canvas-wrap"
         onDragOver={handleDragOver}
         onDrop={handlePaneDrop}
+        onDoubleClick={(e) => {
+          // double-click empty canvas → command palette
+          const el = e.target as HTMLElement;
+          if (el.classList?.contains('react-flow__pane')) setShowAddNode(true);
+        }}
       >
+        {/* Static concrete grain — never animated */}
+        <div className="an-canvas-grain" aria-hidden />
+
         <ReactFlow
           nodes={nodes.map(node => {
             const nodeData = node.data as any;
@@ -560,6 +633,7 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
             // Selected nodes cannot be dragged (for slider interaction)
             return {
               ...node,
+              data: { ...nodeData, __index: nodeIndexById[node.id] ?? 0 },
               draggable: !selectedNodes.includes(node.id) && !isGrouped ? true : !selectedNodes.includes(node.id),
             };
           })}
@@ -575,53 +649,75 @@ export const NodeCanvas: React.FC<NodeCanvasProps> = ({ initialPrecedents = [], 
           onPaneClick={handlePaneClick}
           onPaneContextMenu={handlePaneContextMenu}
           onNodeContextMenu={handleNodeContextMenu}
+          isValidConnection={isValidConnection}
           selectNodesOnDrag={false}
           selectionOnDrag={true}
           onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView
-          minZoom={0.1}
-          maxZoom={2}
+          fitViewOptions={{ padding: 0.35, duration: 700 }}
+          minZoom={0.2}
+          maxZoom={1.75}
           attributionPosition="bottom-left"
+          /* Fluid, Figma/Fuser-style navigation: two-finger / scroll pans,
+             pinch (or ⌘/Ctrl-scroll) zooms, drag empty space pans, double-click
+             opens the palette (so it must not also zoom). */
           panOnDrag={true}
-          panOnScroll={false}
+          panOnScroll={true}
           zoomOnScroll={true}
+          zoomOnPinch={true}
+          zoomOnDoubleClick={false}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
           connectionLineType={"smoothstep" as any}
-          snapToGrid={false}
-          snapGrid={[20, 20]}
+          connectionLineStyle={{ stroke: 'var(--signal)', strokeWidth: 2, strokeLinecap: 'round' }}
+          snapToGrid={true}
+          snapGrid={[24, 24]}
         >
-          <Background color="#E8E4D9" gap={20} />
-          <Controls />
-          <MiniMap
-            nodeColor={(node: Node<NodeData>) => {
-              const colors: Record<string, string> = {
-                precedent: '#FFC800',
-                stackedPrecedent: '#FFC800',
-                text: '#F5F1E8',
-                image: '#64B5FF',
-                'image-gen': '#4CAF50',
-                llm: '#4CAF50',
-                attributeFilter: '#FFC800',
-                scalar: '#32C864',
-                operatorAND: '#FF9F43',
-                operatorOR: '#9D7BE8',
-                operatorNOT: '#FF6B6B',
-                collection: '#9D7BE8',
-              };
-              return colors[node.type || 'default'] || '#CCCCCC';
-            }}
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid #CCCCCC',
-            }}
+          {/* Two-layer modular grid on the dark ground: faint light lines + dots */}
+          <Background
+            id="an-lines"
+            variant={BackgroundVariant.Lines}
+            gap={24}
+            color="rgba(241,239,233,.045)"
           />
+          <Background
+            id="an-dots"
+            variant={BackgroundVariant.Dots}
+            gap={120}
+            size={1.5}
+            color="rgba(241,239,233,.09)"
+          />
+          {/* Minimal controls (zoom −/＋, fit, live %) — no minimap, no attribution */}
+          <Controls showZoom showFitView showInteractive={false}>
+            <ControlButton title="Zoom level" onClick={() => reactFlowInstance?.fitView({ padding: 0.35, duration: 700 })}>
+              <ZoomReadout />
+            </ControlButton>
+          </Controls>
         </ReactFlow>
+
+        {/* Minimal floating rail (Fuser model) */}
+        <CanvasRail
+          onAddNode={() => setShowAddNode(true)}
+          onTemplates={() => setShowTemplatesDialog(true)}
+          onFit={() => reactFlowInstance?.fitView({ padding: 0.35, duration: 700 })}
+        />
+
+        {/* Command palette — compact popover anchored beside the rail */}
+        <AddNodeModal
+          open={showAddNode}
+          onClose={() => setShowAddNode(false)}
+          onAdd={addNodeAtCenter}
+          onSeedTemplate={handleSeedTemplate}
+        />
+
+        {/* Empty-state: starter templates */}
+        {nodes.length === 0 && <EmptyCanvas onSeed={handleSeedTemplate} />}
       </div>
-      
+
       {showMultiplyDialog && (
         <MultiplyOutputsDialog
           open={showMultiplyDialog}

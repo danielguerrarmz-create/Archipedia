@@ -1,98 +1,119 @@
 // src/components/DataQualityIndicator.tsx
-// This component is used for the Circular Dial on the Project Detail Page
-import { CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { useState } from "react";
+import { Node } from "./motif/Node";
+
+/*
+ * DataQualityIndicator — Concrete & Signal.
+ * Status is redundant: glyph + mono-caps word, never color alone (WCAG 1.4.1).
+ *
+ * verified   → filled Node / success color
+ * sourced    → Node + connector line / ink-700
+ * estimated  → hollow Node / warn color
+ * missing    → open Node ring / ink-400
+ *
+ * Tooltip: concrete-0 raised panel, NOT glass.
+ */
 
 interface DataQualityIndicatorProps {
   type: "verified" | "sourced" | "estimated" | "missing";
   source?: string;
 }
 
+const TIER_CONFIG = {
+  verified: {
+    label: "Verified",
+    nodeColor: "var(--success)",
+    filled: true,
+    textColor: "var(--success)",
+    showConnector: false,
+  },
+  sourced: {
+    label: "Sourced",
+    nodeColor: "var(--ink-700)",
+    filled: true,
+    textColor: "var(--ink-700)",
+    showConnector: true,
+  },
+  estimated: {
+    label: "Estimated",
+    nodeColor: "var(--warn)",
+    filled: false,
+    textColor: "var(--warn)",
+    showConnector: false,
+  },
+  missing: {
+    label: "Missing",
+    nodeColor: "var(--ink-400)",
+    filled: false,
+    textColor: "var(--ink-400)",
+    showConnector: false,
+  },
+};
+
 export function DataQualityIndicator({ type, source }: DataQualityIndicatorProps) {
   const [isHovered, setIsHovered] = useState(false);
-  
-  const config = {
-    verified: {
-      icon: CheckCircle,
-      color: "#10B981",
-      label: "Verified",
-    },
-    sourced: {
-      icon: Info,
-      color: "#3B82F6",
-      label: "Sourced",
-    },
-    estimated: {
-      icon: AlertTriangle,
-      color: "#F59E0B",
-      label: "Estimated",
-    },
-    missing: {
-      icon: AlertTriangle,
-      color: "#EF4444",
-      label: "Missing",
-    },
-  };
-
-  // Fallback for unknown types
-  const configEntry = config[type] || config.missing;
-  const { icon: Icon, color, label } = configEntry;
+  const config = TIER_CONFIG[type] ?? TIER_CONFIG.missing;
 
   return (
-    <div 
-      className="relative inline-block"
+    <div
+      style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Icon size={14} style={{ color }} />
-      
+      {/* Node glyph */}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+        <Node size={8} filled={config.filled} color={config.nodeColor} title={config.label} />
+        {config.showConnector && (
+          <span
+            aria-hidden
+            style={{ display: "inline-block", width: 6, height: 1.5, background: config.nodeColor, opacity: 0.7 }}
+          />
+        )}
+      </span>
+      {/* Mono-caps word (always visible — not color alone) */}
+      <span className="mono-caps" style={{ fontSize: 10, color: config.textColor }}>
+        {config.label}
+      </span>
+
+      {/* Tooltip */}
       {isHovered && source && (
         <div
-          className="absolute z-50 rounded-lg shadow-lg"
           style={{
+            position: "absolute",
             bottom: "calc(100% + 8px)",
             left: "50%",
             transform: "translateX(-50%)",
-            minWidth: "200px",
-            maxWidth: "300px",
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(0,0,0,0.1)",
-            padding: "12px 16px",
-            whiteSpace: "nowrap"
+            minWidth: 180,
+            maxWidth: 280,
+            background: "var(--concrete-0)",
+            boxShadow: "var(--raised)",
+            borderRadius: "var(--radius-md)",
+            padding: "10px 14px",
+            zIndex: 50,
           }}
         >
-          <div style={{
-            fontFamily: "var(--font-primary)",
-            fontSize: "13px",
-            color: "#000000",
-            fontWeight: 500,
-            marginBottom: "4px"
-          }}>
-            {label}
-          </div>
-          <div style={{
-            fontFamily: "var(--font-primary)",
-            fontSize: "12px",
-            color: "rgba(0,0,0,0.6)",
-            whiteSpace: "normal"
-          }}>
-            {source}
-          </div>
-          {/* Triangle pointer */}
           <div
             style={{
-              position: "absolute",
-              top: "100%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 0,
-              height: 0,
-              borderLeft: "6px solid transparent",
-              borderRight: "6px solid transparent",
-              borderTop: "6px solid rgba(255, 255, 255, 0.9)",
+              fontFamily: "var(--font-body)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--ink-900)",
+              marginBottom: 4,
             }}
-          />
+          >
+            {config.label}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 12,
+              color: "var(--ink-500)",
+              whiteSpace: "normal",
+              lineHeight: 1.5,
+            }}
+          >
+            {source}
+          </div>
         </div>
       )}
     </div>

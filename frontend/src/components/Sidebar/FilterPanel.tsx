@@ -116,7 +116,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       border: '1px solid #CCCCCC',
                       borderRadius: '4px',
                       cursor: 'pointer',
-                      accentColor: '#FFC800',
+                      accentColor: 'var(--signal)',
                     }}
                   />
                   {type}
@@ -169,7 +169,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       border: '1px solid #CCCCCC',
                       borderRadius: '4px',
                       cursor: 'pointer',
-                      accentColor: '#FFC800',
+                      accentColor: 'var(--signal)',
                     }}
                   />
                   {climate}

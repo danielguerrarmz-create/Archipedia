@@ -161,33 +161,37 @@ export const NodePaletteSidebar: React.FC<NodePaletteSidebarProps> = ({
             style={{
               width: '100%',
               height: '40px',
-              borderRadius: '8px',
-              backgroundColor: node.color,
-              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--concrete-100)',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
               padding: '0 12px',
-              cursor: 'pointer',
-              transition: 'all 200ms ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              cursor: 'grab',
+              transition: 'box-shadow var(--dur-1) var(--ease-press), transform var(--dur-1) var(--ease-press)',
+              boxShadow: 'var(--emboss)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+              e.currentTarget.style.backgroundColor = 'var(--concrete-200)';
               e.currentTarget.style.transform = 'translateX(2px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+              e.currentTarget.style.backgroundColor = 'var(--concrete-100)';
               e.currentTarget.style.transform = 'translateX(0)';
             }}
           >
-            <IconComponent size={16} color="#000000" strokeWidth={1.5} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 'var(--radius-sm)', background: 'var(--concrete-sunken)', boxShadow: 'var(--deboss)', flexShrink: 0 }}>
+              <IconComponent size={14} color="var(--ink-700)" strokeWidth={1.75} />
+            </span>
             <span
               style={{
-                fontFamily: 'var(--font-primary)',
+                fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
-                fontWeight: 400,
-                color: '#000000',
+                fontWeight: 500,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--ink-700)',
                 flex: 1,
                 textAlign: 'left',
               }}

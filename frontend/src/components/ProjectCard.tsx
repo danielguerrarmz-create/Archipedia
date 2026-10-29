@@ -2,6 +2,13 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState } from "react";
 import { Link } from "wouter";
 
+/*
+ * ProjectCard — Concrete & Signal.
+ * concrete-0, radius-lg, raised. Image 4:3. Hover lift + image scale.
+ * Title = display; architect = mono-caps; meta = mono-meta tabular.
+ * Keywords = chip style (concrete-100 + hairline).
+ */
+
 interface ProjectCardProps {
   id: string;
   name: string;
@@ -29,53 +36,120 @@ export function ProjectCard({
 
   return (
     <Link href={`/project/${id}`}>
-      <button 
-        className="w-full group overflow-hidden bg-[var(--bg-neutral)] transition-all duration-250 hover:scale-[1.02]"
+      <button
+        style={{
+          width: "100%",
+          background: "var(--concrete-0)",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: isHovered
+            ? "var(--raised), 0 8px 24px rgba(21,22,26,0.10)"
+            : "var(--raised)",
+          border: "none",
+          cursor: "pointer",
+          overflow: "hidden",
+          textAlign: "left",
+          transform: isHovered ? "translateY(-2px)" : "none",
+          transition:
+            "box-shadow var(--dur-2) var(--ease-emerge), transform var(--dur-2) var(--ease-emerge)",
+          padding: 0,
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={() => onCardClick?.(id)}
       >
-        <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+        {/* Image 4:3 */}
+        <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", overflow: "hidden" }}>
           <ImageWithFallback
             src={imageUrl}
             alt={name}
-            className="w-full h-full object-cover"
-          />
-          
-          {/* Hover overlay */}
-          <div 
-            className="absolute inset-0 transition-opacity duration-250"
             style={{
-              opacity: isHovered ? 1 : 0,
-              background: "rgba(0,0,0,0.1)"
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transform: isHovered ? "scale(1.03)" : "scale(1)",
+              transition: "transform var(--dur-2) var(--ease-emerge)",
             }}
           />
-          
-          {matchPercentage && (
-            <div className="absolute top-4 right-4 px-3 py-1 bg-[var(--text-primary)] text-white caption">
-              {matchPercentage}%
+
+          {matchPercentage != null && (
+            <div
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                padding: "2px 8px",
+                background: "var(--concrete-0)",
+                boxShadow: "var(--emboss)",
+                borderRadius: "var(--radius-sm)",
+              }}
+            >
+              <span
+                className="mono-meta"
+                style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-700)" }}
+              >
+                {matchPercentage}%
+              </span>
             </div>
           )}
         </div>
-        
-        <div className="p-4 bg-white text-left">
-          <h3 className="body-l mb-1">{name}</h3>
-          <p className="caption mb-2">{architect}</p>
-          
+
+        {/* Content */}
+        <div style={{ padding: "12px 16px 14px" }}>
+          <h3
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 15,
+              fontWeight: 600,
+              color: "var(--ink-900)",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.25,
+              margin: "0 0 3px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {name}
+          </h3>
+          <p
+            className="mono-caps"
+            style={{ margin: "0 0 6px", fontSize: 10 }}
+          >
+            {architect}
+          </p>
+
           {keywords.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {keywords.slice(0, 3).map((keyword, index) => (
-                <span key={index} className="caption bg-[var(--bg-neutral)] px-2 py-1">
-                  {keyword}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+              {keywords.slice(0, 3).map((kw, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    fontWeight: 500,
+                    letterSpacing: "0.06em",
+                    padding: "2px 8px",
+                    background: "var(--concrete-100)",
+                    borderRadius: "var(--radius-sm)",
+                    boxShadow: "0 0 0 1px var(--hairline)",
+                    color: "var(--ink-700)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {kw}
                 </span>
               ))}
             </div>
           )}
-          
-          <div className="flex items-center gap-2">
-            <span className="caption">{location}</span>
-            <span className="caption">•</span>
-            <span className="caption">{year}</span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span className="mono-meta" style={{ fontVariantNumeric: "tabular-nums" }}>
+              {location}
+            </span>
+            <span style={{ color: "var(--ink-300)" }}>·</span>
+            <span className="mono-meta" style={{ fontVariantNumeric: "tabular-nums" }}>
+              {year}
+            </span>
           </div>
         </div>
       </button>

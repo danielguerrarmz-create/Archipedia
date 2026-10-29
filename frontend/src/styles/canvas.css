@@ -1,0 +1,402 @@
+/* ============================================================================
+   ARCHIPEDIA — "CONCRETE & SIGNAL"  ·  Canvas + nodes layer  (DARK STUDIO)
+   The canvas is the dark "studio ground" — same family as the hero + header so
+   the whole product reads black and cohesive (à la Fuser / Flora). Depth here
+   is NOT light-surface emboss/deboss; it is: a lifted dark card + a faint top
+   highlight + a soft cast shadow + a hairline edge. Signal stays < 5% of pixels
+   (selection / running / the one primary action). Class names are unchanged so
+   every node component keeps working.
+   ========================================================================== */
+
+/* Canvas-scoped dark design variables (built on the studio-* family). */
+.an-canvas-wrap {
+  --cv-ground: #0c0b09;            /* deepest ground (darker = more card contrast) */
+  --cv-ground-2: #15140f;          /* faint plane */
+  --cv-card: #232118;              /* node card surface — clearly lifted off the ground */
+  --cv-card-2: #2b2920;            /* lifted header / chip surface */
+  --cv-sunken: #131210;            /* inset wells / fields */
+  --cv-ink: #f3f1ea;               /* primary text on dark */
+  --cv-stone: #b4b0a4;             /* secondary text */
+  --cv-stone-dim: #7a766d;         /* tertiary / meta */
+  --cv-line: rgba(243, 241, 234, 0.14);
+  --cv-line-strong: rgba(243, 241, 234, 0.26);
+  --cv-top-hi: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* a real "levitation" shadow so cards float above the grid */
+  --cv-cast: 0 18px 40px -18px rgba(0, 0, 0, 0.92), 0 6px 14px -8px rgba(0, 0, 0, 0.7);
+  /* nodes are roomy enough that labels never clip */
+  --node-w: 300px;
+  --node-w-compact: 208px;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: var(--cv-ground);
+  background-image:
+    radial-gradient(120% 90% at 18% 0%, rgba(255, 246, 228, 0.05) 0%, rgba(255, 246, 228, 0.015) 30%, rgba(0, 0, 0, 0) 60%),
+    radial-gradient(100% 80% at 100% 100%, rgba(31, 63, 255, 0.04) 0%, rgba(0, 0, 0, 0) 55%);
+}
+
+/* Static film grain over the dark ground for texture/depth — never animated. */
+.an-canvas-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.an-canvas-wrap .react-flow { z-index: 2; }
+
+/* React-Flow controls — dark, minimal */
+.an-canvas-wrap .react-flow__controls {
+  box-shadow: var(--cv-cast);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+}
+.an-canvas-wrap .react-flow__controls-button {
+  background: var(--cv-card);
+  border-bottom: 1px solid var(--cv-line);
+  color: var(--cv-stone);
+  width: 26px; height: 26px;
+}
+.an-canvas-wrap .react-flow__controls-button:hover { background: var(--cv-card-2); color: var(--cv-ink); }
+.an-canvas-wrap .react-flow__controls-button svg { fill: currentColor; }
+/* hide the React Flow attribution badge bottom-left */
+.an-canvas-wrap .react-flow__attribution { display: none !important; }
+
+.an-zoom-readout {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cv-stone);
+  background: var(--cv-card);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── EDGES — wires on dark ───────────────────────────────────────────────── */
+.an-edge-path {
+  fill: none;
+  stroke: var(--cv-line-strong);
+  stroke-width: 1.5px;
+  transition: stroke var(--dur-1) var(--ease-press), stroke-width var(--dur-1) var(--ease-press);
+}
+.an-edge-path.is-selected { stroke: var(--signal); stroke-width: 2px; }
+.an-edge-path.is-invalid { stroke: var(--error); stroke-dasharray: 4 4; }
+@keyframes an-wire-draw {
+  from { stroke-dashoffset: var(--an-wire-len, 600); }
+  to { stroke-dashoffset: 0; }
+}
+.an-edge-path.is-drawing {
+  stroke-dasharray: var(--an-wire-len, 600);
+  animation: an-wire-draw var(--dur-3) var(--ease-emerge) forwards;
+}
+@keyframes an-wire-travel { to { stroke-dashoffset: -16; } }
+.an-edge-path.is-running {
+  stroke: var(--signal);
+  stroke-width: 2px;
+  stroke-dasharray: 6 10;
+  animation: an-wire-travel 0.6s linear infinite;
+}
+@keyframes an-union-flash {
+  0% { fill: var(--signal); transform: scale(1.6); }
+  60% { fill: var(--signal); transform: scale(1); }
+  100% { fill: var(--cv-stone); transform: scale(1); }
+}
+.an-edge-union { fill: var(--cv-stone); transform-box: fill-box; transform-origin: center; }
+.an-edge-union.is-fresh { animation: an-union-flash var(--dur-2) var(--ease-emerge) forwards; }
+.an-edge-union.is-selected { fill: var(--signal); }
+.an-edge-union.is-running { fill: var(--signal); }
+
+/* ── BASE NODE — one cohesive dark card for EVERY node type ──────────────── */
+.an-node {
+  position: relative;
+  font-family: var(--font-body);
+  background: transparent;
+  border-radius: calc(var(--radius-md) + 2px);
+  padding: 0;
+}
+.an-node__body {
+  position: relative;
+  width: var(--node-w);
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+  box-shadow: var(--cv-top-hi), var(--cv-cast);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: box-shadow var(--dur-2) var(--ease-press),
+              border-color var(--dur-2) var(--ease-press),
+              background var(--dur-2) var(--ease-press);
+}
+.an-node--compact .an-node__body { width: var(--node-w-compact); }
+.an-node--media .an-node__body { border-radius: var(--radius-lg); }
+
+/* entrance — nodes settle in (rise + fade + faint scale) so the canvas feels
+   alive rather than popping in statically. Runs once on mount. */
+@keyframes an-node-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.an-node__body { animation: an-node-in var(--dur-3) var(--ease-emerge) both; }
+
+/* STATE: EMPTY — recessed, dashed hairline (waiting for input) */
+.an-node.is-empty .an-node__body {
+  background: var(--cv-sunken);
+  border-style: dashed;
+  border-color: var(--cv-line-strong);
+  box-shadow: none;
+}
+/* STATE: RUNNING — signal edge + lift */
+.an-node.is-running .an-node__body {
+  border-color: var(--signal);
+  box-shadow: var(--cv-top-hi), var(--cv-cast), 0 0 0 1px var(--signal), 0 0 22px -6px rgba(31, 63, 255, 0.5);
+}
+/* STATE: RESOLVED — settled card (default look) */
+.an-node.is-resolved .an-node__body { border-color: var(--cv-line-strong); }
+/* STATE: STAMPED — committed; quiet brighter edge */
+.an-node.is-stamped .an-node__body { border-color: var(--cv-line-strong); background: var(--cv-card-2); }
+/* STATE: ERROR */
+.an-node.is-error .an-node__body { border-color: var(--error); box-shadow: var(--cv-cast), 0 0 0 1px var(--error); }
+
+/* SELECTION always wins */
+.an-node.is-selected .an-node__body {
+  border-color: var(--signal);
+  box-shadow: var(--cv-top-hi), var(--cv-cast), 0 0 0 1px var(--signal), 0 0 0 4px rgba(31, 63, 255, 0.18);
+}
+
+/* ── NODE HEADER ────────────────────────────────────────────────────────── */
+.an-node__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px var(--space-3);
+  border-bottom: 1px solid var(--cv-line);
+  background: var(--cv-card-2);
+}
+.an-node__cat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line-strong);
+  color: var(--cat-accent, var(--cv-ink));
+  flex-shrink: 0;
+}
+.an-node__titlewrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.an-node__title {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cv-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.an-node__sub {
+  font-family: var(--font-body);
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--cv-stone);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* clean ghost delete (no boxy button) */
+.an-node__del {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--cv-stone-dim); border-radius: var(--radius-sm);
+  transition: color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press);
+}
+.an-node__del:hover { color: var(--cv-ink); background: rgba(255,255,255,0.07); }
+.an-node__stamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--cv-stone);
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line);
+  border-radius: var(--radius-sm);
+  padding: 2px 5px;
+  flex-shrink: 0;
+}
+/* header status dot — the Node mark */
+.an-node__square {
+  width: 8px; height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--cv-stone);
+  flex-shrink: 0;
+  transition: background var(--dur-1) var(--ease-press);
+}
+.an-node.is-empty .an-node__square { background: transparent; box-shadow: inset 0 0 0 1.5px var(--cv-stone-dim); }
+.an-node.is-error .an-node__square { background: var(--error); }
+@keyframes an-square-pulse { 0%,100% { background: var(--cv-stone); } 50% { background: var(--signal); } }
+.an-node.is-running .an-node__square { animation: an-square-pulse 1s var(--ease-press) infinite; }
+@keyframes an-square-flash { 0% { background: var(--signal); } 100% { background: var(--cv-stone); } }
+.an-node.is-resolved .an-node__square { animation: an-square-flash var(--dur-2) var(--ease-emerge) forwards; }
+
+/* ── NODE BODY + FIELDS ─────────────────────────────────────────────────── */
+.an-node__content { padding: var(--space-3); color: var(--cv-stone); }
+.an-node__content .an-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--cv-ink); }
+.an-field {
+  background: var(--cv-sunken);
+  border: 1px solid var(--cv-line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+.an-field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cv-stone-dim);
+}
+
+/* ── NODE FOOTER — port / metadata strip ────────────────────────────────── */
+.an-node__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 8px var(--space-3);
+  border-top: 1px solid var(--cv-line);
+  background: var(--cv-card-2);
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--cv-stone);
+}
+.an-node__footer .micro-tick {
+  width: 6px; height: 2px; border-radius: 1px;
+  background: var(--cat-accent, var(--cv-stone-dim));
+  display: inline-block;
+}
+.an-node__footer .resolved-tag { color: var(--cv-stone); }
+
+/* ── PORTS / HANDLES — a clean hollow ring that fills Signal on connect ──── */
+.an-node .react-flow__handle {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-pill);
+  background: var(--cv-ground);
+  border: 2px solid var(--cv-stone);
+  box-shadow: 0 0 0 3px var(--cv-card);  /* halo separates the port from the card edge */
+  transition: border-color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press), transform var(--dur-1) var(--ease-press);
+}
+.an-node .react-flow__handle:hover { border-color: var(--signal); background: var(--signal); transform: scale(1.25); }
+.an-node.is-running .react-flow__handle,
+.react-flow__handle-connecting,
+.react-flow__handle-valid { border-color: var(--signal); background: var(--signal); }
+
+/* node-level controls (run / delete / expand) */
+.an-node__btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--cv-line);
+  border-radius: var(--radius-sm);
+  color: var(--cv-ink);
+  cursor: pointer;
+  padding: 4px 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press);
+}
+.an-node__btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--cv-line-strong); }
+.an-node__btn:active { background: rgba(255, 255, 255, 0.04); }
+.an-node__btn--icon { padding: 5px; }
+/* the ONE primary action per node — Signal */
+.an-node__btn--signal { color: #fff; background: var(--signal); border-color: transparent; }
+.an-node__btn--signal:hover { background: var(--signal-hover); border-color: transparent; }
+.an-node__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── EMPTY CANVAS ───────────────────────────────────────────────────────── */
+.an-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  text-align: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.an-empty__inner { pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
+.an-empty__heading {
+  font-family: var(--font-editorial);
+  font-optical-sizing: auto;
+  font-size: 30px;
+  font-weight: 420;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
+  margin: 0;
+}
+.an-empty__eyebrow { color: var(--cv-stone-dim); }
+.an-empty__templates { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; max-width: 720px; }
+.an-template-card {
+  width: 200px;
+  text-align: left;
+  background: var(--cv-card);
+  border: 1px solid var(--cv-line);
+  box-shadow: var(--cv-top-hi), var(--cv-cast);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press);
+}
+.an-template-card:hover { border-color: var(--cv-line-strong); background: var(--cv-card-2); }
+.an-template-card__name {
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 600;
+  color: var(--cv-ink); letter-spacing: -0.01em;
+}
+.an-template-card__desc { font-size: 12px; color: var(--cv-stone); line-height: 1.4; }
+.an-template-card__flow {
+  display: flex; align-items: center; gap: 4px; margin-top: var(--space-1);
+  font-family: var(--font-mono); font-size: 10px; color: var(--cv-stone-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ── (legacy palette styles retired — replaced by CanvasRail + AddNodeModal) ── */
+
+/* ── tldraw / boards overrides ──────────────────────────────────────────── */
+.tl-container { --color-selected: var(--signal); }
+
+@media (prefers-reduced-motion: reduce) {
+  .an-edge-path.is-drawing,
+  .an-edge-path.is-running,
+  .an-edge-union.is-fresh,
+  .an-node.is-running .an-node__square,
+  .an-node.is-resolved .an-node__square,
+  .an-node__body {
+    animation: none !important;
+  }
+  .an-edge-path.is-drawing { stroke-dasharray: none; }
+}

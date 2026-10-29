@@ -27,7 +27,7 @@ export const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
           fontFamily: 'var(--font-primary)',
           fontSize: '11px',
           fontWeight: 400,
-          backgroundColor: mode === 'search' ? '#FFC800' : 'transparent',
+          backgroundColor: mode === 'search' ? 'var(--signal)' : 'transparent',
           color: '#000000',
           cursor: 'pointer',
           transition: 'all 200ms ease',

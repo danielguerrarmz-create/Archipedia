@@ -1,7 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { Bookmark, Search, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Bookmark, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MatchReasonBadge } from './MatchReasonBadge';
 import { useSelectionStore } from '../../stores/selectionStore';
+import { Node } from '../motif/Node';
+
+/*
+ * SearchResultCard — Concrete & Signal.
+ * concrete-0 card, radius-lg, raised (no blur).
+ * Image 3:2; hover lifts via raised shadow + translateY(-2px) + image scale 1.03.
+ * Selected = 2px signal ring (Node-square checkbox lit, NOT terracotta).
+ * Title = display h3 sentence-case; architect = body-sm ink-700;
+ * location·year = mono-meta tabular; tags = concrete-100 chips.
+ * Hover actions (Save / Search-like-this) = icon-buttons (emboss), not glass circles.
+ */
 
 export interface ProjectImage {
   image_id: string;
@@ -18,10 +29,10 @@ export interface SearchResultData {
   image_id: string;
   thumb_url: string;
   image_url: string;
-  images?: ProjectImage[]; // Multiple images for the project
+  images?: ProjectImage[];
   score: number;
-  match_reason?: string;  // Human-readable explanation from backend
-  matched_attrs?: string[];  // List of matched attribute strings from backend
+  match_reason?: string;
+  matched_attrs?: string[];
   badges?: {
     typology?: string[];
     country?: string[];
@@ -31,7 +42,7 @@ export interface SearchResultData {
 
 interface SearchResultCardProps {
   result: SearchResultData;
-  index?: number; // Index in results array for shift-click range selection
+  index?: number;
   onOpen: (result: SearchResultData, currentImageIndex?: number) => void;
   onSave: (result: SearchResultData, currentImage?: ProjectImage) => void;
   onSearchLikeThis: (result: SearchResultData, currentImage?: ProjectImage) => void;
@@ -53,48 +64,49 @@ export function SearchResultCard({
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Selection state
-  const { 
-    isSelected, 
-    toggleSelection, 
-    isSelectionMode, 
-    lastSelectedIndex, 
-    setLastSelectedIndex 
-  } = useSelectionStore();
-  const isProjectSelected = isSelected(result.project_id);
-  
-  const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    // Shift+click for range selection
-    if (e.shiftKey && lastSelectedIndex !== null && onShiftSelect) {
-      onShiftSelect(lastSelectedIndex, index);
-    } else {
-      toggleSelection(result);
-      setLastSelectedIndex(index);
-    }
-  }, [result, index, lastSelectedIndex, toggleSelection, setLastSelectedIndex, onShiftSelect]);
 
-  // Build images array - use provided images or fallback to single image
-  const images: ProjectImage[] = result.images && result.images.length > 0
-    ? result.images
-    : [{ image_id: result.image_id, thumb_url: result.thumb_url, image_url: result.image_url }];
+  const { isSelected, toggleSelection, isSelectionMode, lastSelectedIndex, setLastSelectedIndex } =
+    useSelectionStore();
+  const isProjectSelected = isSelected(result.project_id);
+
+  const handleCheckboxClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (e.shiftKey && lastSelectedIndex !== null && onShiftSelect) {
+        onShiftSelect(lastSelectedIndex, index);
+      } else {
+        toggleSelection(result);
+        setLastSelectedIndex(index);
+      }
+    },
+    [result, index, lastSelectedIndex, toggleSelection, setLastSelectedIndex, onShiftSelect],
+  );
+
+  const images: ProjectImage[] =
+    result.images && result.images.length > 0
+      ? result.images
+      : [{ image_id: result.image_id, thumb_url: result.thumb_url, image_url: result.image_url }];
 
   const currentImage = images[currentImageIndex];
   const hasMultipleImages = images.length > 1;
 
-  const handlePrevImage = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-    setImageError(false);
-  }, [images.length]);
+  const handlePrevImage = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+      setImageError(false);
+    },
+    [images.length],
+  );
 
-  const handleNextImage = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    setImageError(false);
-  }, [images.length]);
+  const handleNextImage = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      setImageError(false);
+    },
+    [images.length],
+  );
 
   const badges = [
     ...(result.badges?.typology || []),
@@ -106,51 +118,40 @@ export function SearchResultCard({
     <div
       style={{
         position: 'relative',
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        borderRadius: '12px',
-        border: isProjectSelected 
-          ? '2px solid var(--accent)' 
-          : '1px solid rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-        transition: 'all 200ms ease',
-        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+        background: 'var(--concrete-0)',
+        borderRadius: 'var(--radius-lg)',
         boxShadow: isProjectSelected
-          ? '0 4px 16px rgba(182, 68, 36, 0.2)'
+          ? `0 0 0 2px var(--signal), var(--raised)`
           : isHovered
-          ? '0 8px 24px rgba(0,0,0,0.12)'
-          : '0 2px 8px rgba(0,0,0,0.06)',
+          ? `var(--raised), 0 8px 24px rgba(21,22,26,0.10)`
+          : 'var(--raised)',
+        overflow: 'hidden',
+        transition: 'box-shadow var(--dur-2) var(--ease-emerge), transform var(--dur-2) var(--ease-emerge)',
+        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
         cursor: 'pointer',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => onOpen(result)}
+      onClick={() => onOpen(result, currentImageIndex)}
     >
-      {/* Image */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          paddingBottom: '66.67%',
-          backgroundColor: 'rgba(0,0,0,0.05)',
-          overflow: 'hidden',
-        }}
-      >
+      {/* Image — 3:2 ratio */}
+      <div style={{ position: 'relative', width: '100%', paddingBottom: '66.67%', overflow: 'hidden' }}>
         {!imageError ? (
           <img
             src={currentImage.thumb_url || currentImage.image_url}
             alt={result.project_title}
             draggable
             onDragStart={(e) => {
-              // Set custom data for internal drag-and-drop to search bar
               e.dataTransfer.setData('text/uri-list', currentImage.thumb_url || currentImage.image_url);
-              e.dataTransfer.setData('application/x-archipedia-image', JSON.stringify({
-                url: currentImage.thumb_url || currentImage.image_url,
-                image_id: currentImage.image_id,
-                project_id: result.project_id,
-                project_title: result.project_title
-              }));
+              e.dataTransfer.setData(
+                'application/x-archipedia-image',
+                JSON.stringify({
+                  url: currentImage.thumb_url || currentImage.image_url,
+                  image_id: currentImage.image_id,
+                  project_id: result.project_id,
+                  project_title: result.project_title,
+                }),
+              );
               e.dataTransfer.effectAllowed = 'copy';
             }}
             style={{
@@ -160,8 +161,8 @@ export function SearchResultCard({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              transition: 'transform 300ms ease',
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+              transition: 'transform var(--dur-2) var(--ease-emerge)',
+              transform: isHovered ? 'scale(1.03)' : 'scale(1)',
               cursor: 'grab',
             }}
             onError={() => setImageError(true)}
@@ -170,138 +171,135 @@ export function SearchResultCard({
           <div
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
+              inset: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'rgba(0,0,0,0.3)',
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '12px',
+              background: 'var(--concrete-100)',
             }}
           >
-            Image unavailable
+            <span className="mono-meta" style={{ color: 'var(--ink-400)' }}>
+              Image unavailable
+            </span>
           </div>
         )}
 
-        {/* Image Navigation Arrows - Always visible when multiple images */}
+        {/* Multi-image nav arrows */}
         {hasMultipleImages && (
           <>
             <button
               onClick={handlePrevImage}
               style={{
                 position: 'absolute',
-                left: '8px',
+                left: 8,
                 top: '50%',
                 transform: 'translateY(-50%)',
                 padding: '4px',
-                backgroundColor: 'transparent',
+                background: 'var(--concrete-0)',
+                boxShadow: 'var(--emboss)',
                 border: 'none',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'opacity 150ms ease',
-                opacity: 0.3,
+                opacity: 0.5,
+                transition: 'opacity var(--dur-1)',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.3')}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.5'; }}
             >
-              <ChevronLeft size={24} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
+              <ChevronLeft size={18} style={{ color: 'var(--ink-700)' }} />
             </button>
             <button
               onClick={handleNextImage}
               style={{
                 position: 'absolute',
-                right: '8px',
+                right: 8,
                 top: '50%',
                 transform: 'translateY(-50%)',
                 padding: '4px',
-                backgroundColor: 'transparent',
+                background: 'var(--concrete-0)',
+                boxShadow: 'var(--emboss)',
                 border: 'none',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'opacity 150ms ease',
-                opacity: 0.3,
+                opacity: 0.5,
+                transition: 'opacity var(--dur-1)',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.3')}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.5'; }}
             >
-              <ChevronRight size={24} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
+              <ChevronRight size={18} style={{ color: 'var(--ink-700)' }} />
             </button>
           </>
         )}
 
-        {/* Image Indicator Dots - Always visible when multiple images */}
+        {/* Image indicator dots (node squares) */}
         {hasMultipleImages && (
           <div
             style={{
               position: 'absolute',
-              bottom: '40px',
+              bottom: 36,
               left: '50%',
               transform: 'translateX(-50%)',
               display: 'flex',
-              gap: '5px',
+              gap: 4,
             }}
           >
             {images.map((_, idx) => (
-              <div
+              <Node
                 key={idx}
-                style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  backgroundColor: idx === currentImageIndex ? 'white' : 'rgba(255,255,255,0.4)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                  transition: 'all 150ms ease',
-                }}
+                size={5}
+                filled={idx === currentImageIndex}
+                color={idx === currentImageIndex ? 'var(--concrete-0)' : 'rgba(255,255,255,0.45)'}
               />
             ))}
           </div>
         )}
 
-        {/* Selection Checkbox - visible on hover or when in selection mode */}
+        {/* Selection checkbox (Node-square) */}
         {enableSelection && (isHovered || isSelectionMode || isProjectSelected) && (
           <button
             onClick={handleCheckboxClick}
             title={isProjectSelected ? 'Deselect' : 'Select for export'}
             style={{
               position: 'absolute',
-              top: '8px',
-              left: '8px',
-              width: '24px',
-              height: '24px',
-              borderRadius: '6px',
-              backgroundColor: isProjectSelected ? 'var(--accent)' : 'rgba(255,255,255,0.95)',
-              border: isProjectSelected ? 'none' : '2px solid rgba(0,0,0,0.2)',
+              top: 8,
+              left: 8,
+              width: 24,
+              height: 24,
+              borderRadius: 'var(--radius-sm)',
+              background: isProjectSelected ? 'var(--signal)' : 'var(--concrete-0)',
+              boxShadow: 'var(--emboss)',
+              border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 150ms ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               zIndex: 10,
             }}
           >
             {isProjectSelected && (
-              <Check size={14} style={{ color: 'white', strokeWidth: 3 }} />
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden>
+                <path d="M1 4.5L4.5 8L11 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             )}
           </button>
         )}
 
-        {/* Hover Actions */}
+        {/* Hover actions — icon buttons, NOT glass circles */}
         {isHovered && (
           <div
             style={{
               position: 'absolute',
-              top: '8px',
-              right: '8px',
+              top: 8,
+              right: 8,
               display: 'flex',
-              gap: '6px',
+              gap: 6,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -309,24 +307,23 @@ export function SearchResultCard({
               onClick={() => onSave(result, currentImage)}
               title="Save to board"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                backgroundColor: isSaved ? 'var(--accent)' : 'rgba(255,255,255,0.95)',
+                width: 32,
+                height: 32,
+                borderRadius: 'var(--radius-sm)',
+                background: isSaved ? 'var(--signal)' : 'var(--concrete-0)',
+                boxShadow: 'var(--emboss)',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 150ms ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               }}
             >
               <Bookmark
-                size={16}
+                size={14}
                 style={{
-                  color: isSaved ? 'white' : '#000',
-                  fill: isSaved ? 'white' : 'none',
+                  color: isSaved ? '#fff' : 'var(--ink-700)',
+                  fill: isSaved ? '#fff' : 'none',
                 }}
               />
             </button>
@@ -334,97 +331,100 @@ export function SearchResultCard({
               onClick={() => onSearchLikeThis(result, currentImage)}
               title="Search like this"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(255,255,255,0.95)',
+                width: 32,
+                height: 32,
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--concrete-0)',
+                boxShadow: 'var(--emboss)',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 150ms ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               }}
             >
-              <Search size={16} style={{ color: '#000' }} />
+              <Search size={14} style={{ color: 'var(--ink-700)' }} />
             </button>
           </div>
         )}
 
-        {/* Match Score Badge */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '8px',
-            left: '8px',
-          }}
-        >
+        {/* Match score badge — positioned bottom-left */}
+        <div style={{ position: 'absolute', bottom: 8, left: 8 }}>
           <MatchReasonBadge
             score={result.score}
             reason={result.match_reason}
             typology={result.badges?.typology?.[0]}
             country={result.badges?.country?.[0]}
             matchedAttrs={result.matched_attrs}
+            noSignal
           />
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '14px 16px' }}>
+      <div style={{ padding: '12px 16px 14px' }}>
         <h3
           style={{
-            fontFamily: 'var(--font-primary)',
-            fontSize: '15px',
+            fontFamily: 'var(--font-display)',
+            fontSize: 15,
             fontWeight: 600,
-            color: '#000',
+            color: 'var(--ink-900)',
             margin: 0,
-            marginBottom: '4px',
-            lineHeight: 1.3,
+            marginBottom: 3,
+            lineHeight: 1.25,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            letterSpacing: '-0.01em',
           }}
         >
           {result.project_title}
         </h3>
         <p
           style={{
-            fontFamily: 'var(--font-secondary)',
-            fontSize: '13px',
-            color: 'rgba(0,0,0,0.6)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+            color: 'var(--ink-700)',
             margin: 0,
-            marginBottom: '8px',
+            marginBottom: 6,
           }}
         >
           {result.architect}
         </p>
         <p
+          className="mono-meta"
           style={{
-            fontFamily: 'var(--font-secondary)',
-            fontSize: '12px',
-            color: 'rgba(0,0,0,0.5)',
             margin: 0,
-            marginBottom: badges.length > 0 ? '10px' : 0,
+            marginBottom: badges.length > 0 ? 8 : 0,
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {result.location_display}
-          {result.year && ` · ${result.year}`}
+          {result.year && (
+            <>
+              <span style={{ margin: '0 5px', opacity: 0.4 }}>·</span>
+              {result.year}
+            </>
+          )}
         </p>
 
-        {/* Badges */}
+        {/* Chips */}
         {badges.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {badges.map((badge, idx) => (
               <span
                 key={idx}
                 style={{
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '10px',
-                  padding: '4px 8px',
-                  backgroundColor: 'rgba(0,0,0,0.05)',
-                  borderRadius: '4px',
-                  color: 'rgba(0,0,0,0.6)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  fontWeight: 500,
+                  letterSpacing: '0.06em',
+                  padding: '2px 8px',
+                  background: 'var(--concrete-100)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: '0 0 0 1px var(--hairline)',
+                  color: 'var(--ink-700)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {badge}
@@ -436,4 +436,3 @@ export function SearchResultCard({
     </div>
   );
 }
-

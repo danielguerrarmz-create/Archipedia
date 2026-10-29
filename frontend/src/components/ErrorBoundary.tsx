@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { ErrorPanel } from './ErrorPanel';
 
 interface Props {
   children: ReactNode;
@@ -25,18 +26,14 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', fontFamily: 'monospace' }}>
-          <h1>Something went wrong.</h1>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.error && this.state.error.toString()}
-            <br />
-            {this.state.error?.stack}
-          </details>
-        </div>
+        <ErrorPanel
+          message="Something went wrong"
+          detail={this.state.error?.message}
+          onRetry={() => this.setState({ hasError: false, error: undefined })}
+        />
       );
     }
 
     return this.props.children;
   }
 }
-

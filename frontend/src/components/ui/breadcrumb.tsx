@@ -1,31 +1,48 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot@1.1.2";
-import { ChevronRight, MoreHorizontal } from "lucide-react@0.487.0";
+import { MoreHorizontal } from "lucide-react@0.487.0";
+import { Node } from "../motif/Node";
 
 import { cn } from "./utils";
+
+/*
+ * Concrete & Signal breadcrumb.
+ * Separators = AxisTick Node squares (6px, ink-400) instead of chevrons.
+ */
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
+function BreadcrumbList({ className, style, ...props }: React.ComponentProps<"ol">) {
   return (
     <ol
       data-slot="breadcrumb-list"
-      className={cn(
-        "text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
-        className,
-      )}
+      className={cn(className)}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 6,
+        fontFamily: "var(--font-body)",
+        fontSize: "13px",
+        color: "var(--ink-500)",
+        listStyle: "none",
+        padding: 0,
+        margin: 0,
+        ...style,
+      }}
       {...props}
     />
   );
 }
 
-function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
+function BreadcrumbItem({ className, style, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-item"
       className={cn("inline-flex items-center gap-1.5", className)}
+      style={style}
       {...props}
     />
   );
@@ -34,6 +51,7 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
 function BreadcrumbLink({
   asChild,
   className,
+  style,
   ...props
 }: React.ComponentProps<"a"> & {
   asChild?: boolean;
@@ -43,20 +61,29 @@ function BreadcrumbLink({
   return (
     <Comp
       data-slot="breadcrumb-link"
-      className={cn("hover:text-foreground transition-colors", className)}
+      className={cn(className)}
+      style={{
+        color: "var(--ink-500)",
+        textDecoration: "none",
+        transition: "color var(--dur-1)",
+        ...style,
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink-900)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink-500)"; }}
       {...props}
     />
   );
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({ className, style, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="breadcrumb-page"
       role="link"
       aria-disabled="true"
       aria-current="page"
-      className={cn("text-foreground font-normal", className)}
+      className={cn(className)}
+      style={{ color: "var(--ink-900)", fontWeight: 500, ...style }}
       {...props}
     />
   );
@@ -65,6 +92,7 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
 function BreadcrumbSeparator({
   children,
   className,
+  style,
   ...props
 }: React.ComponentProps<"li">) {
   return (
@@ -72,16 +100,18 @@ function BreadcrumbSeparator({
       data-slot="breadcrumb-separator"
       role="presentation"
       aria-hidden="true"
-      className={cn("[&>svg]:size-3.5", className)}
+      className={cn(className)}
+      style={{ display: "inline-flex", alignItems: "center", ...style }}
       {...props}
     >
-      {children ?? <ChevronRight />}
+      {children ?? <Node size={6} filled color="var(--ink-400)" />}
     </li>
   );
 }
 
 function BreadcrumbEllipsis({
   className,
+  style,
   ...props
 }: React.ComponentProps<"span">) {
   return (
@@ -89,11 +119,12 @@ function BreadcrumbEllipsis({
       data-slot="breadcrumb-ellipsis"
       role="presentation"
       aria-hidden="true"
-      className={cn("flex size-9 items-center justify-center", className)}
+      className={cn("inline-flex items-center justify-center", className)}
+      style={{ width: 32, height: 32, ...style }}
       {...props}
     >
-      <MoreHorizontal className="size-4" />
-      <span className="sr-only">More</span>
+      <MoreHorizontal style={{ width: 16, height: 16 }} />
+      <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>More</span>
     </span>
   );
 }

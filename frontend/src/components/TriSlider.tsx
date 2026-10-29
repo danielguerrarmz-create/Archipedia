@@ -68,7 +68,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
                 height: '6px',
                 borderRadius: '3px',
                 appearance: 'none',
-                background: `linear-gradient(to right, #FFC800 0%, #FFC800 ${visualValue}%, rgba(255, 200, 0, 0.2) ${visualValue}%, rgba(255, 200, 0, 0.2) 100%)`,
+                background: `linear-gradient(to right, var(--signal) 0%, var(--signal) ${visualValue}%, rgba(31, 63, 255, 0.2) ${visualValue}%, rgba(31, 63, 255, 0.2) 100%)`,
                 outline: 'none',
                 cursor: 'pointer',
               }}
@@ -192,7 +192,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
           }
           
           .tri-slider-yellow::-webkit-slider-thumb {
-            border: 2px solid #FFC800;
+            border: 2px solid var(--signal);
           }
           
           .tri-slider-blue::-webkit-slider-thumb {
@@ -214,7 +214,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
           }
           
           .tri-slider-yellow::-moz-range-thumb {
-            border: 2px solid #FFC800;
+            border: 2px solid var(--signal);
           }
           
           .tri-slider-blue::-moz-range-thumb {
@@ -259,7 +259,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
               height: '8px',
               borderRadius: '4px',
               appearance: 'none',
-              background: `linear-gradient(to right, #FFC800 0%, #FFC800 ${visualValue}%, rgba(255, 200, 0, 0.2) ${visualValue}%, rgba(255, 200, 0, 0.2) 100%)`,
+              background: `linear-gradient(to right, var(--signal) 0%, var(--signal) ${visualValue}%, rgba(31, 63, 255, 0.2) ${visualValue}%, rgba(31, 63, 255, 0.2) 100%)`,
               outline: 'none',
               cursor: 'pointer',
             }}
@@ -375,7 +375,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
         }
         
         .tri-slider-yellow::-webkit-slider-thumb {
-          border: 2px solid #FFC800;
+          border: 2px solid var(--signal);
         }
         
         .tri-slider-blue::-webkit-slider-thumb {
@@ -397,7 +397,7 @@ export const TriSlider: React.FC<TriSliderProps> = ({
         }
         
         .tri-slider-yellow::-moz-range-thumb {
-          border: 2px solid #FFC800;
+          border: 2px solid var(--signal);
         }
         
         .tri-slider-blue::-moz-range-thumb {

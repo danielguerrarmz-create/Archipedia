@@ -1,5 +1,10 @@
 import { useLocation } from "wouter";
-import { LensFrame } from "./LensFrame";
+import { AxisTick } from "./motif/AxisTick";
+import { Node } from "./motif/Node";
+
+/*
+ * Footer — top edge = AxisTick, no glass, concrete-0 surface.
+ */
 
 interface FooterProps {
   variant?: "default" | "minimal";
@@ -8,79 +13,117 @@ interface FooterProps {
 
 export function Footer({ variant = "default", logoLink = "/" }: FooterProps) {
   const [, setLocation] = useLocation();
+  const isMinimal = variant === "minimal";
 
   return (
-    <footer 
-      className="fixed bottom-0 left-0 right-0 flex justify-center"
+    <footer
       style={{
-        padding: "0",
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 50,
+        display: "flex",
+        justifyContent: "center",
       }}
     >
-      <div 
+      <div
         style={{
-          width: variant === "minimal" ? "60%" : "50%",
-          maxWidth: variant === "minimal" ? "800px" : "600px",
-          minWidth: variant === "minimal" ? "400px" : "320px",
+          width: isMinimal ? "60%" : "50%",
+          maxWidth: isMinimal ? 800 : 600,
+          minWidth: isMinimal ? 400 : 320,
+          background: "var(--concrete-0)",
+          boxShadow: "var(--raised)",
+          borderRadius: "var(--radius-lg) var(--radius-lg) 0 0",
           overflow: "hidden",
         }}
       >
-        <LensFrame 
-          className={variant === "minimal" ? "px-4 rounded-t-lg" : "px-2 rounded-t-lg"}
+        {/* Top edge = AxisTick */}
+        <AxisTick
           style={{
-            paddingTop: variant === "minimal" ? "6px" : "2px",
-            paddingBottom: variant === "minimal" ? "6px" : "2px",
+            padding: "0 16px",
+            marginBottom: 0,
+          }}
+        />
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: isMinimal ? "8px 16px" : "4px 12px",
           }}
         >
-          <div className="flex justify-between items-center">
-            <button 
-              onClick={() => setLocation(logoLink)}
-              className="text-left hover:opacity-70 transition-opacity"
-              style={{ 
-                fontFamily: "var(--font-primary)", 
-                color: "#000000",
-                paddingLeft: variant === "minimal" ? "8px" : "4px",
+          {/* Wordmark */}
+          <button
+            type="button"
+            onClick={() => setLocation(logoLink)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              textAlign: "left",
+              padding: 0,
+              opacity: 0.9,
+              transition: "opacity var(--dur-1)",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: isMinimal ? 14 : 9,
+                fontWeight: 600,
+                color: "var(--ink-900)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
               }}
             >
-              <div style={{ fontSize: variant === "minimal" ? "14px" : "8px", fontWeight: 400 }}>
-                ARCHIPEDIA
-              </div>
-              <div style={{ fontSize: variant === "minimal" ? "10px" : "6px", fontWeight: 300 }}>
-                PEAR.DESIGN
-              </div>
-            </button>
+              Archipedia
+            </div>
+            <div
+              className="mono-meta"
+              style={{
+                fontSize: isMinimal ? 9 : 7,
+                color: "var(--ink-400)",
+              }}
+            >
+              PEAR.DESIGN
+            </div>
+          </button>
 
-            <button
-              onClick={() => setLocation("/enterprise")}
-              className="relative hover-underline"
-              style={{ 
-                fontFamily: "var(--font-primary)",
-                fontSize: variant === "minimal" ? "10px" : "6px",
-                fontWeight: 300,
-                color: "#000000",
-                paddingRight: variant === "minimal" ? "8px" : "4px",
-              }}
-            >
-              Curious?
-            </button>
-          </div>
-        </LensFrame>
+          {/* Curious link */}
+          <button
+            type="button"
+            onClick={() => setLocation("/enterprise")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              fontFamily: "var(--font-body)",
+              fontSize: isMinimal ? 11 : 8,
+              fontWeight: 400,
+              color: "var(--ink-500)",
+              transition: "color var(--dur-1)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.color = "var(--ink-900)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.color = "var(--ink-500)";
+            }}
+          >
+            Curious?
+          </button>
+        </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        .hover-underline::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          width: 0%;
-          height: 1px;
-          background-color: var(--accent);
-          transition: width 200ms ease;
-          transform: translateX(-50%);
-        }
-        .hover-underline:hover::after { width: 100%; }
-      `}} />
     </footer>
   );
 }

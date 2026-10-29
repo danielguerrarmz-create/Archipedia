@@ -1,0 +1,20 @@
+{
+  "generated": "2026-10-28",
+  "metric": "cosine",
+  "model": "DINOv2 ViT-B/14 768-d",
+  "corpus_projects": 669,
+  "demo_projects": 267,
+  "vectors": {
+    "file": "vectors.bin",
+    "scales": "scales.bin",
+    "dtype": "int8",
+    "dim": 768,
+    "rows": 1066,
+    "per_project": "projects[k].v = [first_row, count]"
+  },
+  "anchors": {
+    "closest_other_median": 0.79,
+    "random_pair_median": 0.19
+  },
+  "method": "Cosine similarity between stored DINOv2 index vectors, computed in the browser: a project scores its best match over the up-to-4 images its card shows; assemblies fuse streams by explicit weights."
+}

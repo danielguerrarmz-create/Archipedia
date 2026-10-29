@@ -1,7 +1,36 @@
+import type { CSSProperties } from 'react';
 import { useParams, Link, useLocation } from 'wouter';
 import { useBoardStore, BoardBlock, ReferenceBlock, TextBlock, DividerBlock } from '../stores/boardStore';
-import { ArrowLeft, Edit3, Download, Share2, ExternalLink, Calendar } from 'lucide-react';
+import { Edit3, Download, Share2, ExternalLink, Calendar } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { AppHeader } from '../components/AppHeader';
+
+const boardGhostBtn: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 8,
+  padding: '9px 16px',
+  background: 'var(--concrete-100)',
+  boxShadow: 'var(--emboss)',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-body)',
+  fontSize: 14,
+  color: 'var(--ink-700)',
+};
+
+const boardSignalBtn: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 8,
+  padding: '9px 16px',
+  background: 'var(--signal)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-body)',
+  fontSize: 14,
+  fontWeight: 500,
+  boxShadow: 'var(--emboss)',
+};
 
 export function BoardViewPage() {
   const params = useParams<{ id: string }>();
@@ -14,19 +43,19 @@ export function BoardViewPage() {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="text-center">
-          <h2 style={{ fontFamily: 'var(--font-primary)', fontSize: '24px', marginBottom: '16px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '16px' }}>
             Board Not Found
           </h2>
-          <p style={{ fontFamily: 'var(--font-secondary)', fontSize: '14px', color: 'rgba(0,0,0,0.6)', marginBottom: '24px' }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink-500)', marginBottom: '24px' }}>
             This board may have been deleted or the link is incorrect.
           </p>
           <Link href="/search">
             <button style={{
-              fontFamily: 'var(--font-primary)',
-              backgroundColor: 'var(--accent)',
+              fontFamily: 'var(--font-display)',
+              backgroundColor: 'var(--signal)',
               color: 'white',
               padding: '12px 24px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: 'pointer',
             }}>
@@ -46,16 +75,18 @@ export function BoardViewPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col">
-      {/* Top Bar */}
-      <header
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--concrete-50)' }}>
+      {/* Canonical dark studio header */}
+      <AppHeader active="boards" />
+
+      {/* Board title band — concrete, with the board's actions */}
+      <div
         style={{
           position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          top: 60,
+          zIndex: 90,
+          background: 'var(--concrete-0)',
+          borderBottom: '1px solid var(--hairline)',
         }}
       >
         <div
@@ -66,124 +97,40 @@ export function BoardViewPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 16,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={() => {
-                // Use browser history to go back to the previous page
-                if (window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  setLocation('/search');
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '14px',
-                  color: 'rgba(0,0,0,0.6)',
-                }}
-              >
-                <ArrowLeft size={18} />
-                Back
-              </button>
-            <div>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {board.title}
-              </h1>
-              {board.subtitle && (
-                <p
-                  style={{
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '14px',
-                    color: 'rgba(0,0,0,0.5)',
-                    margin: 0,
-                    marginTop: '2px',
-                  }}
-                >
-                  {board.subtitle}
-                </p>
-              )}
-            </div>
+          <div>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em', color: 'var(--ink-900)' }}>
+              {board.title}
+            </h1>
+            {board.subtitle && (
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink-500)', margin: '2px 0 0' }}>
+                {board.subtitle}
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={() => setLocation(`/boards/${boardId}/edit`)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: 'transparent',
-                border: '1px solid rgba(0,0,0,0.15)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-secondary)',
-                fontSize: '14px',
-              }}
-            >
-              <Edit3 size={16} />
-              Edit
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button onClick={() => setLocation(`/boards/${boardId}/edit`)} style={boardGhostBtn}>
+              <Edit3 size={16} /> Edit
             </button>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/b/${board.share_token}`);
                 alert('Share link copied to clipboard!');
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: 'transparent',
-                border: '1px solid rgba(0,0,0,0.15)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-secondary)',
-                fontSize: '14px',
-              }}
+              style={boardGhostBtn}
             >
-              <Share2 size={16} />
-              Share
+              <Share2 size={16} /> Share
             </button>
-            <button
-              onClick={() => alert('PDF export coming soon!')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: 'var(--accent)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-secondary)',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              <Download size={16} />
-              Export PDF
+            {/* Export PDF — the one Signal action on this board */}
+            <button onClick={() => alert('PDF export coming soon!')} style={boardSignalBtn}>
+              <Download size={16} /> Export PDF
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '48px 32px' }}>
@@ -192,10 +139,10 @@ export function BoardViewPage() {
           {board.description && (
             <p
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '16px',
                 lineHeight: 1.6,
-                color: 'rgba(0,0,0,0.7)',
+                color: 'var(--ink-700)',
                 maxWidth: '720px',
                 marginBottom: '48px',
               }}
@@ -210,16 +157,16 @@ export function BoardViewPage() {
               style={{
                 textAlign: 'center',
                 padding: '80px 40px',
-                backgroundColor: 'rgba(0,0,0,0.02)',
-                borderRadius: '16px',
-                border: '2px dashed rgba(0,0,0,0.1)',
+                background: 'var(--concrete-100)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px dashed var(--hairline-strong)',
               }}
             >
               <p
                 style={{
-                  fontFamily: 'var(--font-secondary)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '16px',
-                  color: 'rgba(0,0,0,0.5)',
+                  color: 'var(--ink-500)',
                   marginBottom: '16px',
                 }}
               >
@@ -228,13 +175,13 @@ export function BoardViewPage() {
               <button
                 onClick={() => setLocation(`/boards/${boardId}/edit`)}
                 style={{
-                  fontFamily: 'var(--font-secondary)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   padding: '12px 24px',
-                  backgroundColor: 'var(--accent)',
+                  backgroundColor: 'var(--signal)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-md)',
                   cursor: 'pointer',
                 }}
               >
@@ -259,16 +206,16 @@ export function BoardViewPage() {
           maxWidth: '1200px',
           margin: '0 auto',
           padding: '32px',
-          borderTop: '1px solid rgba(0,0,0,0.08)',
+          borderTop: '1px solid var(--hairline)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--ink-400)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
@@ -279,9 +226,9 @@ export function BoardViewPage() {
             </span>
             <span
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--ink-400)',
               }}
             >
               {referenceBlocks.length} reference{referenceBlocks.length !== 1 ? 's' : ''}
@@ -289,9 +236,9 @@ export function BoardViewPage() {
           </div>
           <span
             style={{
-              fontFamily: 'var(--font-primary)',
+              fontFamily: 'var(--font-display)',
               fontSize: '12px',
-              color: 'rgba(0,0,0,0.3)',
+              color: 'var(--ink-300)',
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
             }}
@@ -330,11 +277,11 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
         gap: '24px',
-        backgroundColor: 'white',
-        borderRadius: '12px',
+        background: 'var(--concrete-0)',
+        borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: 'var(--raised)',
+        border: '1px solid var(--hairline)',
       }}
     >
       {/* Image */}
@@ -343,7 +290,7 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
           style={{
             position: 'relative',
             paddingBottom: '66.67%',
-            backgroundColor: 'rgba(0,0,0,0.05)',
+            background: 'var(--concrete-sunken)',
             cursor: 'pointer',
           }}
         >
@@ -367,7 +314,7 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
         <Link href={`/project/${data.project_id}`}>
           <h3
             style={{
-              fontFamily: 'var(--font-primary)',
+              fontFamily: 'var(--font-display)',
               fontSize: '18px',
               fontWeight: 600,
               margin: 0,
@@ -382,9 +329,9 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
         {data.architect_snapshot && (
           <p
             style={{
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '14px',
-              color: 'rgba(0,0,0,0.6)',
+              color: 'var(--ink-500)',
               margin: 0,
               marginBottom: '4px',
             }}
@@ -397,9 +344,9 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
           {data.location_snapshot && (
             <span
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--ink-400)',
               }}
             >
               {data.location_snapshot}
@@ -408,9 +355,9 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
           {data.year_snapshot && (
             <span
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--ink-400)',
               }}
             >
               {data.year_snapshot}
@@ -421,10 +368,10 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
         {data.caption && (
           <p
             style={{
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '14px',
               lineHeight: 1.6,
-              color: 'rgba(0,0,0,0.7)',
+              color: 'var(--ink-700)',
               fontStyle: 'italic',
               flex: 1,
             }}
@@ -439,12 +386,12 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
               <span
                 key={idx}
                 style={{
-                  fontFamily: 'var(--font-secondary)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '11px',
                   padding: '4px 10px',
-                  backgroundColor: 'rgba(0,0,0,0.05)',
-                  borderRadius: '4px',
-                  color: 'rgba(0,0,0,0.6)',
+                  background: 'var(--concrete-sunken)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--ink-500)',
                 }}
               >
                 {tag}
@@ -464,9 +411,9 @@ function ReferenceBlockView({ block }: { block: ReferenceBlock }) {
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
-              color: 'var(--accent)',
+              color: 'var(--signal)',
             }}
           >
             <ExternalLink size={14} />
@@ -483,35 +430,35 @@ function TextBlockView({ block }: { block: TextBlock }) {
 
   const styles: Record<string, React.CSSProperties> = {
     h1: {
-      fontFamily: 'var(--font-primary)',
+      fontFamily: 'var(--font-display)',
       fontSize: '32px',
       fontWeight: 600,
       margin: 0,
       paddingTop: '24px',
     },
     h2: {
-      fontFamily: 'var(--font-primary)',
+      fontFamily: 'var(--font-display)',
       fontSize: '20px',
       fontWeight: 600,
       margin: 0,
       paddingTop: '16px',
       paddingBottom: '8px',
-      borderBottom: '1px solid rgba(0,0,0,0.08)',
+      borderBottom: '1px solid var(--hairline)',
     },
     body: {
-      fontFamily: 'var(--font-secondary)',
+      fontFamily: 'var(--font-body)',
       fontSize: '16px',
       lineHeight: 1.7,
-      color: 'rgba(0,0,0,0.7)',
+      color: 'var(--ink-700)',
       maxWidth: '720px',
     },
     quote: {
-      fontFamily: 'var(--font-secondary)',
+      fontFamily: 'var(--font-body)',
       fontSize: '18px',
       lineHeight: 1.6,
       fontStyle: 'italic',
-      color: 'rgba(0,0,0,0.6)',
-      borderLeft: '3px solid var(--accent)',
+      color: 'var(--ink-500)',
+      borderLeft: '3px solid var(--signal)',
       paddingLeft: '20px',
       marginLeft: '0',
     },
@@ -532,7 +479,7 @@ function DividerBlockView({ block }: { block: DividerBlock }) {
       <div
         style={{
           height: '1px',
-          backgroundColor: 'rgba(0,0,0,0.1)',
+          background: 'var(--hairline-strong)',
           margin: '16px 0',
         }}
       />

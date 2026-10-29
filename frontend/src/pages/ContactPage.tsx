@@ -1,10 +1,88 @@
+/**
+ * ContactPage — monograph content page on the "Concrete & Signal" system.
+ * Marketing shell (LandingTopBar + LandingFooter), --concrete-50 ground,
+ * Fraunces section opener, mono-caps eyebrow, hairline dividers, debossed
+ * form wells with neutral ink-border focus, and a lone --signal submit.
+ *
+ * Route: /contact
+ */
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
-import { ArrowLeft, Mail, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { LandingTopBar } from '../components/landing/LandingTopBar';
+import { LandingFooter } from '../components/landing/LandingFooter';
+
+// ─── Shared style constants ─────────────────────────────────────────────────
+
+const PAGE: React.CSSProperties = {
+  minHeight: '100vh',
+  backgroundColor: 'var(--concrete-50)',
+  fontFamily: 'var(--font-body)',
+};
+
+const CONTAINER: React.CSSProperties = {
+  maxWidth: 640,
+  margin: '0 auto',
+  padding: 'clamp(48px, 8vw, 96px) clamp(20px, 5vw, 40px) clamp(64px, 10vw, 120px)',
+};
+
+const EYEBROW: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 16,
+  color: 'var(--ink-700)',
+};
+
+const H1: React.CSSProperties = {
+  fontFamily: 'var(--font-editorial)',
+  fontWeight: 400,
+  fontSize: 'clamp(32px, 5vw, 52px)',
+  lineHeight: 1.15,
+  color: 'var(--ink-900)',
+  marginBottom: 16,
+  marginTop: 0,
+};
+
+const INTRO: React.CSSProperties = {
+  fontSize: 17,
+  lineHeight: 1.7,
+  color: 'var(--ink-500)',
+  marginBottom: 40,
+  maxWidth: '66ch',
+  marginTop: 0,
+};
+
+const HAIRLINE: React.CSSProperties = {
+  border: 'none',
+  borderTop: '1px solid var(--hairline)',
+  margin: '40px 0',
+};
+
+const LABEL: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase' as const,
+  marginBottom: 8,
+  color: 'var(--ink-700)',
+};
+
+// Debossed well: inset trough, neutral border. Focus darkens the border only.
+const FIELD: React.CSSProperties = {
+  width: '100%',
+  padding: '12px 14px',
+  fontFamily: 'var(--font-body)',
+  fontSize: 15,
+  color: 'var(--ink-900)',
+  background: 'var(--concrete-sunken)',
+  border: '1px solid var(--hairline-strong)',
+  borderRadius: 'var(--radius-md)',
+  boxShadow: 'var(--deboss)',
+  outline: 'none',
+  transition: 'border-color var(--dur-1) var(--ease-press)',
+};
 
 export function ContactPage() {
-  const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,151 +93,67 @@ export function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email.trim() || !formData.message.trim()) {
       toast.error('Please fill in required fields');
       return;
     }
 
     setIsSubmitting(true);
-    
-    // Simulate form submission - replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast.success('Message sent! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
+
+    // Honest submission: open the user's mail client with the message
+    // pre-filled (same pattern as LandingPage). No backend yet — so we never
+    // claim a message was "sent" when it wasn't (brand integrity rule).
+    const subject = encodeURIComponent(
+      formData.subject.trim() || `Contact from ${formData.name.trim() || 'Archipedia'}`,
+    );
+    const body = encodeURIComponent(
+      `${formData.message.trim()}\n\n— ${formData.name.trim()}${
+        formData.email.trim() ? ` (${formData.email.trim()})` : ''
+      }`,
+    );
+    window.location.href = `mailto:hello@archipedia.ai?subject=${subject}&body=${body}`;
+    toast('Opening your email app…');
     setIsSubmitting(false);
   };
 
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-primary)',
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-            padding: '16px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <button
-            onClick={() => setLocation('/')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '14px',
-              color: 'rgba(0,0,0,0.7)',
-              padding: '8px 0',
-            }}
-          >
-            <ArrowLeft size={18} />
-            Back to Search
-          </button>
-          
-          <button
-            onClick={() => setLocation('/')}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-primary)',
-              fontSize: '20px',
-              fontWeight: 600,
-              color: '#000',
-            }}
-          >
-            Archipedia
-          </button>
-        </div>
-      </header>
+  // neutral ink-border focus — no blue ring (handled inline so the well
+  // border darkens rather than drawing a Signal rectangle)
+  const onFieldFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = 'var(--ink-700)';
+  };
+  const onFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = 'var(--hairline-strong)';
+  };
 
-      {/* Main Content */}
-      <main
-        style={{
-          maxWidth: '600px',
-          margin: '0 auto',
-          padding: '60px 24px 100px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              backgroundColor: 'rgba(182, 68, 36, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-            }}
-          >
-            <Mail size={28} style={{ color: 'var(--accent)' }} />
-          </div>
-          
-          <h1
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '32px',
-              fontWeight: 600,
-              marginBottom: '12px',
-              color: '#000',
-            }}
-          >
-            Get in Touch
-          </h1>
-          
-          <p
-            style={{
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '16px',
-              color: 'rgba(0,0,0,0.6)',
-              maxWidth: '400px',
-              margin: '0 auto',
-            }}
-          >
-            Have questions, feedback, or want to learn more about Archipedia? We'd love to hear from you.
-          </p>
-        </div>
+  return (
+    <div className="contact-page" style={PAGE}>
+      {/* Placeholders sit at --ink-400 (the sanctioned placeholder tone), above
+          the default UA grey which falls below the contrast floor. */}
+      <style>{`
+        .contact-page input::placeholder,
+        .contact-page textarea::placeholder { color: var(--ink-400); opacity: 1; }
+      `}</style>
+      <LandingTopBar />
+
+      <main style={CONTAINER}>
+        <span className="mono-caps" style={EYEBROW}>
+          Studio · Contact
+        </span>
+        <h1 style={H1}>Get in touch</h1>
+        <p style={INTRO}>
+          Questions about the index, feedback on a search, or a request for a
+          pilot — we read every message. Tell us what you're working on and we'll
+          reply directly.
+        </p>
+
+        <hr style={HAIRLINE} />
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gap: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gap: 20 }}>
+            <div className="contact-row" style={{ display: 'grid', gap: 16 }}>
               <div>
-                <label
-                  htmlFor="name"
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '8px',
-                    color: 'rgba(0,0,0,0.7)',
-                  }}
-                >
+                <label htmlFor="name" style={LABEL}>
                   Name
                 </label>
                 <input
@@ -168,38 +162,14 @@ export function ContactPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Your name"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '14px',
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    outline: 'none',
-                    transition: 'border-color 150ms ease',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
-                  }}
+                  style={FIELD}
+                  onFocus={onFieldFocus}
+                  onBlur={onFieldBlur}
                 />
               </div>
-              
+
               <div>
-                <label
-                  htmlFor="email"
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '8px',
-                    color: 'rgba(0,0,0,0.7)',
-                  }}
-                >
+                <label htmlFor="email" style={LABEL}>
                   Email *
                 </label>
                 <input
@@ -209,39 +179,15 @@ export function ContactPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="you@example.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '14px',
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    outline: 'none',
-                    transition: 'border-color 150ms ease',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
-                  }}
+                  style={FIELD}
+                  onFocus={onFieldFocus}
+                  onBlur={onFieldBlur}
                 />
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="subject"
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  marginBottom: '8px',
-                  color: 'rgba(0,0,0,0.7)',
-                }}
-              >
+              <label htmlFor="subject" style={LABEL}>
                 Subject
               </label>
               <input
@@ -250,129 +196,95 @@ export function ContactPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="How can we help?"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '14px',
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  outline: 'none',
-                  transition: 'border-color 150ms ease',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
-                }}
+                style={FIELD}
+                onFocus={onFieldFocus}
+                onBlur={onFieldBlur}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="message"
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  marginBottom: '8px',
-                  color: 'rgba(0,0,0,0.7)',
-                }}
-              >
+              <label htmlFor="message" style={LABEL}>
                 Message *
               </label>
               <textarea
                 id="message"
                 required
-                rows={5}
+                rows={6}
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder="Tell us what's on your mind..."
+                placeholder="Tell us what you're working on…"
                 style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '14px',
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  outline: 'none',
+                  ...FIELD,
                   resize: 'vertical',
-                  minHeight: '120px',
-                  transition: 'border-color 150ms ease',
+                  minHeight: 132,
+                  lineHeight: 1.6,
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
-                }}
+                onFocus={onFieldFocus}
+                onBlur={onFieldBlur}
               />
             </div>
 
+            {/* The lone Signal control on the page */}
             <button
               type="submit"
               disabled={isSubmitting}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: 8,
                 width: '100%',
+                minHeight: 48,
                 padding: '14px 24px',
-                fontFamily: 'var(--font-secondary)',
-                fontSize: '15px',
-                fontWeight: 500,
-                backgroundColor: 'var(--accent)',
-                color: 'white',
+                fontFamily: 'var(--font-body)',
+                fontSize: 15,
+                fontWeight: 600,
+                letterSpacing: '0.01em',
+                backgroundColor: isSubmitting ? 'var(--concrete-200)' : 'var(--signal)',
+                color: isSubmitting ? 'var(--ink-500)' : '#fff',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: 'var(--radius-md)',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                opacity: isSubmitting ? 0.7 : 1,
-                transition: 'all 150ms ease',
+                transition: 'background-color var(--dur-1) var(--ease-press)',
               }}
             >
-              <Send size={18} />
-              {isSubmitting ? 'Sending...' : 'Send Message'}
+              {isSubmitting ? 'Sending…' : 'Send message'}
             </button>
           </div>
         </form>
 
-        {/* Alternative contact */}
-        <div
-          style={{
-            marginTop: '48px',
-            padding: '24px',
-            backgroundColor: 'rgba(0,0,0,0.02)',
-            borderRadius: '12px',
-            textAlign: 'center',
-          }}
-        >
-          <p
+        <hr style={HAIRLINE} />
+
+        {/* Alternative contact — hairline-quiet, no card glow */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span className="mono-caps" style={{ color: 'var(--ink-700)' }}>
+            Prefer email
+          </span>
+          <a
+            href="mailto:hello@archipedia.ai"
             style={{
-              fontFamily: 'var(--font-secondary)',
-              fontSize: '14px',
-              color: 'rgba(0,0,0,0.6)',
+              fontFamily: 'var(--font-body)',
+              fontSize: 16,
+              fontWeight: 500,
+              color: 'var(--ink-900)',
+              textDecoration: 'none',
+              width: 'fit-content',
             }}
           >
-            Prefer email?{' '}
-            <a
-              href="mailto:hello@archipedia.ai"
-              style={{
-                color: 'var(--accent)',
-                textDecoration: 'none',
-                fontWeight: 500,
-              }}
-            >
-              hello@archipedia.ai
-            </a>
-          </p>
+            hello@archipedia.ai
+          </a>
         </div>
       </main>
+
+      <LandingFooter />
+
+      <style>{`
+        @media (min-width: 560px) {
+          .contact-row { grid-template-columns: 1fr 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
 
+export default ContactPage;

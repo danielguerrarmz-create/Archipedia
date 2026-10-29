@@ -91,7 +91,7 @@ export const ResultsGridCompact: React.FC<ResultsGridCompactProps> = ({
                 style={{
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#FFC800',
+                  backgroundColor: 'var(--signal)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -120,7 +120,7 @@ export const ResultsGridCompact: React.FC<ResultsGridCompactProps> = ({
                 <div
                   style={{
                     flex: 1,
-                    backgroundColor: '#FFC800',
+                    backgroundColor: 'var(--signal)',
                     opacity: Math.max(0.3, project.visualScore || 0),
                     transition: 'opacity 300ms ease',
                   }}

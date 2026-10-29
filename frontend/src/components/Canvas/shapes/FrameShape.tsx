@@ -69,33 +69,30 @@ export class FrameShapeUtil extends ShapeUtil<FrameShape> {
           style={{
             width: '100%',
             height: '100%',
-            border: '2px solid #B64424',
-            borderRadius: 4,
-            backgroundColor: '#ffffff',
+            border: '1px solid var(--hairline-strong)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--concrete-0)',
             position: 'relative',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           }}
         >
-          {/* Frame title bar */}
+          {/* Frame title bar — mono-caps, no fill */}
           <div
             style={{
               position: 'absolute',
-              top: -28,
+              top: -26,
               left: 0,
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'baseline',
               gap: 8,
-              padding: '4px 12px',
-              backgroundColor: '#B64424',
-              color: 'white',
-              borderRadius: '4px 4px 0 0',
-              fontSize: 12,
-              fontFamily: 'system-ui, sans-serif',
-              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-500)',
             }}
           >
             <span>{shape.props.title}</span>
-            <span style={{ opacity: 0.7, fontSize: 10 }}>
+            <span style={{ color: 'var(--ink-400)', fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>
               {w}×{h}
             </span>
           </div>
