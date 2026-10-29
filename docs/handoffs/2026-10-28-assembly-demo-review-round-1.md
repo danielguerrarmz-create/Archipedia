@@ -99,3 +99,9 @@ selected node); empty canvas persists; a new Blend only takes over Results when 
 near-square Tidy grid for many buildings; wires drawn above cards; Blend rows in letter order; Reset
 resets the title; picker no sideways scroll. Verified in the browser: all pass, 0 console errors.
 Known limit: at 13 nodes the fit zoom is ~0.45; the right panel carries full-size controls.
+
+## Session close, 2026-10-28
+
+- **What:** demo committed on `demo/static-mvp` (`b731455`..`03e0772`) and pushed; PR #1 open into the fork's `main` (https://github.com/danielguerrarmz-create/Archipedia/pull/1). It also carries the 9 unmerged `rebrand/concrete-and-signal` commits. The portfolio page now shows this demo (portfolio PR #4, merged and live).
+- **Verify:** 35 navigator tests pass; demo `tsc` clean; gitleaks clean on committed files (one false positive, a project id in `App.tsx`).
+- **Left:** Daniel to merge PR #1. Fix the home teaser's third card overhanging its box. Daniel / Clay: was the FAISS row-mapping bug present when the CAADRIA benchmark ran? Commit author is the old utexas.edu address (global git config).
