@@ -41,11 +41,11 @@ export class ShapeRectShapeUtil extends ShapeUtil<ShapeRectShape> {
     return {
       w: DEFAULT_SIZE,
       h: DEFAULT_SIZE,
-      fill: '#f5f5f5',
+      fill: 'var(--concrete-100)',
       opacity: 1,
-      borderRadius: 8,
-      borderColor: 'transparent',
-      borderWidth: 0,
+      borderRadius: 4, // radius-md
+      borderColor: 'var(--hairline)',
+      borderWidth: 1,
     };
   }
 

@@ -21,13 +21,26 @@ export interface NodeTypeDefinition {
   type: NodeType;
   label: string;
   description: string;
+  /**
+   * "Concrete & Signal": this is no longer a fill. It is a CATEGORY ACCENT
+   * reference (a --cat-* token) consumed ONLY by the debossed category glyph
+   * and the footer micro-tick. Generate is the lone signal-bearing node.
+   */
   color: string;
+  /** Plain-language one-liner shown as a header sublabel. */
+  sublabel?: string;
   icon?: string;
   inputs: NodePort[];
   outputs: NodePort[];
   parameters: NodeParameter[];
   category: 'search' | 'generate' | 'analyze' | 'organize' | 'control';
 }
+
+/** The four brand families → their accent token. */
+export const CAT_INPUT = 'var(--cat-input)';
+export const CAT_OPERATOR = 'var(--cat-operator)';
+export const CAT_GENERATE = 'var(--cat-generate)';
+export const CAT_OUTPUT = 'var(--cat-output)';
 
 /**
  * Node Registry - defines all available node types
@@ -37,7 +50,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'precedent',
     label: 'Precedent Search',
     description: 'Search for architectural precedents matching criteria',
-    color: '#64B5FF', // Blue
+    color: CAT_INPUT,
     category: 'search',
     inputs: [
       { id: 'query', label: 'Query', type: 'text' },
@@ -79,7 +92,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'stackedPrecedent',
     label: 'Stacked Precedent',
     description: 'Multiple precedents stacked for comparison',
-    color: '#64B5FF',
+    color: CAT_INPUT,
     category: 'search',
     inputs: [
       { id: 'precedents', label: 'Precedents', type: 'data' },
@@ -102,7 +115,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'text',
     label: 'Text',
     description: 'Text input or prompt node',
-    color: '#F5F1E8',
+    color: CAT_INPUT,
     category: 'generate',
     inputs: [
       { id: 'input', label: 'Input', type: 'text' },
@@ -126,7 +139,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'image',
     label: 'Image (Visual Search)',
     description: 'Upload an image and run visual similarity search against the FAISS index',
-    color: '#64B5FF',
+    color: CAT_INPUT,
     category: 'search',
     inputs: [],
     outputs: [
@@ -150,7 +163,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: '3d',
     label: '3D Model',
     description: 'Generate or load 3D models',
-    color: '#90A4AE',
+    color: CAT_GENERATE,
     category: 'generate',
     inputs: [
       { id: 'input', label: 'Input', type: 'text' },
@@ -182,7 +195,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'image-gen',
     label: 'Image Generation',
     description: 'Generate images using AI models',
-    color: '#FF6B6B', // Red/Pink
+    color: CAT_GENERATE,
     category: 'generate',
     inputs: [
       { id: 'input', label: 'Input', type: 'text' },
@@ -238,7 +251,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'llm',
     label: 'LLM Analysis',
     description: 'Process text with language models',
-    color: '#32C864', // Green
+    color: CAT_GENERATE,
     category: 'analyze',
     inputs: [
       { id: 'input', label: 'Input', type: 'text' },
@@ -272,7 +285,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'overseer',
     label: 'Overseer',
     description: 'Orchestrate batch operations and parallel workflows',
-    color: '#FFC800', // Yellow
+    color: CAT_OPERATOR,
     category: 'control',
     inputs: [
       { id: 'config', label: 'Config', type: 'data' },
@@ -324,7 +337,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'collection',
     label: 'Collection',
     description: 'Organize and aggregate multiple items',
-    color: '#9D7BE8', // Purple
+    color: CAT_OUTPUT,
     category: 'organize',
     inputs: [
       { id: 'items', label: 'Items', type: 'any' },
@@ -356,7 +369,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'attributeFilter',
     label: 'Attribute Filter',
     description: 'Filter results by attributes with weighted scoring',
-    color: '#90EE90', // Light Green
+    color: CAT_OPERATOR,
     category: 'analyze',
     inputs: [
       { id: 'input', label: 'Input', type: 'data' },
@@ -381,7 +394,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'scalar',
     label: 'Scalar Constraints',
     description: 'Apply scalar constraints to filter results',
-    color: '#4A90E2', // Blue
+    color: CAT_OPERATOR,
     category: 'analyze',
     inputs: [
       { id: 'input', label: 'Input', type: 'data' },
@@ -404,9 +417,10 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
 
   operatorAND: {
     type: 'operatorAND',
-    label: 'AND Operator',
+    label: 'Match both',
+    sublabel: 'Keep references that satisfy every input',
     description: 'Combine multiple inputs with AND logic',
-    color: '#FF9F43', // Orange
+    color: CAT_OPERATOR,
     category: 'control',
     inputs: [
       { id: 'input1', label: 'Input 1', type: 'data' },
@@ -431,9 +445,10 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
 
   operatorOR: {
     type: 'operatorOR',
-    label: 'OR Operator',
+    label: 'Match either',
+    sublabel: 'Keep references that satisfy any input',
     description: 'Combine multiple inputs with OR logic',
-    color: '#9D7BE8', // Purple
+    color: CAT_OPERATOR,
     category: 'control',
     inputs: [
       { id: 'input1', label: 'Input 1', type: 'data' },
@@ -458,9 +473,10 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
 
   operatorNOT: {
     type: 'operatorNOT',
-    label: 'NOT Operator',
+    label: 'Exclude',
+    sublabel: 'Remove references similar to the excluded set',
     description: 'Exclude results using NOT logic',
-    color: '#FF6B6B', // Red
+    color: CAT_OPERATOR,
     category: 'control',
     inputs: [
       { id: 'include', label: 'Include', type: 'data' },
@@ -496,7 +512,7 @@ export const NODE_REGISTRY: Record<NodeType, NodeTypeDefinition> = {
     type: 'results',
     label: 'Results Node',
     description: 'Display and manage project search results',
-    color: '#7B68EE', // Medium Slate Blue
+    color: CAT_OUTPUT,
     category: 'organize',
     inputs: [
       { id: 'input', label: 'Input', type: 'data' },
@@ -529,7 +545,7 @@ export function getNodeTypeDefinition(type: NodeType): NodeTypeDefinition {
     type,
     label: type.charAt(0).toUpperCase() + type.slice(1),
     description: `Node type: ${type}`,
-    color: '#CCCCCC',
+    color: CAT_OPERATOR,
     category: 'control',
     inputs: [],
     outputs: [],

@@ -12,8 +12,8 @@ import {
   LayoutPreset,
 } from '../stores/boardStore';
 import { ImageReplacer as ImageReplacerModal, ExportMenu } from '../components/Boards';
+import { AppHeader } from '../components/AppHeader';
 import {
-  ArrowLeft,
   Eye,
   Share2,
   Download,
@@ -99,17 +99,17 @@ export function BoardEditPage() {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="text-center">
-          <h2 style={{ fontFamily: 'var(--font-primary)', fontSize: '24px', marginBottom: '16px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '16px' }}>
             Board Not Found
           </h2>
           <Link href="/search">
             <button
               style={{
-                fontFamily: 'var(--font-primary)',
-                backgroundColor: 'var(--accent)',
+                fontFamily: 'var(--font-display)',
+                backgroundColor: 'var(--signal)',
                 color: 'white',
                 padding: '12px 24px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -125,47 +125,25 @@ export function BoardEditPage() {
   const sortedBlocks = [...board.blocks].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-neutral)] flex flex-col">
-      {/* Top Toolbar */}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--concrete-50)' }}>
+      <AppHeader active="boards" />
+
+      {/* Board edit toolbar — concrete band below the app header */}
       <header
         style={{
-          backgroundColor: 'white',
-          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          background: 'var(--concrete-0)',
+          borderBottom: '1px solid var(--hairline)',
           padding: '12px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           position: 'sticky',
-          top: 0,
-          zIndex: 100,
+          top: 60,
+          zIndex: 90,
         }}
       >
         {/* Left Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            onClick={() => {
-              // Use browser history to go back to the previous page
-              if (window.history.length > 1) {
-                window.history.back();
-              } else {
-                setLocation('/search');
-              }
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              backgroundColor: 'transparent',
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowLeft size={18} />
-          </button>
-
           {/* Editable Title */}
           {editingTitle ? (
             <input
@@ -176,11 +154,11 @@ export function BoardEditPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
               autoFocus
               style={{
-                fontFamily: 'var(--font-primary)',
+                fontFamily: 'var(--font-display)',
                 fontSize: '18px',
                 fontWeight: 600,
                 border: 'none',
-                borderBottom: '2px solid var(--accent)',
+                borderBottom: '2px solid var(--signal)',
                 outline: 'none',
                 padding: '4px 0',
                 minWidth: '200px',
@@ -190,17 +168,17 @@ export function BoardEditPage() {
             <h1
               onClick={() => setEditingTitle(true)}
               style={{
-                fontFamily: 'var(--font-primary)',
+                fontFamily: 'var(--font-display)',
                 fontSize: '18px',
                 fontWeight: 600,
                 margin: 0,
                 cursor: 'pointer',
                 padding: '4px 8px',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 transition: 'background 150ms',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--concrete-sunken)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               {board.title}
             </h1>
@@ -213,9 +191,9 @@ export function BoardEditPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--ink-400)',
               }}
             >
               <Check size={14} />
@@ -226,19 +204,19 @@ export function BoardEditPage() {
 
         {/* Center Section - Layout Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', color: 'rgba(0,0,0,0.5)' }}>
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink-500)' }}>
             Layout:
           </span>
           <select
             value={board.layout_preset}
             onChange={(e) => updateBoard(boardId, { layout_preset: e.target.value as LayoutPreset })}
             style={{
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
               padding: '6px 12px',
-              border: '1px solid rgba(0,0,0,0.15)',
-              borderRadius: '6px',
-              backgroundColor: 'white',
+              border: '1px solid var(--hairline)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--concrete-0)',
               cursor: 'pointer',
             }}
           >
@@ -257,11 +235,11 @@ export function BoardEditPage() {
               alignItems: 'center',
               gap: '6px',
               padding: '8px 14px',
-              backgroundColor: 'transparent',
-              border: '1px solid rgba(0,0,0,0.15)',
-              borderRadius: '8px',
+              background: 'transparent',
+              border: '1px solid var(--hairline)',
+              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
             }}
           >
@@ -278,11 +256,11 @@ export function BoardEditPage() {
               alignItems: 'center',
               gap: '6px',
               padding: '8px 14px',
-              backgroundColor: 'transparent',
-              border: '1px solid rgba(0,0,0,0.15)',
-              borderRadius: '8px',
+              background: 'transparent',
+              border: '1px solid var(--hairline)',
+              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
             }}
           >
@@ -296,12 +274,12 @@ export function BoardEditPage() {
               alignItems: 'center',
               gap: '6px',
               padding: '8px 14px',
-              backgroundColor: 'var(--accent)',
+              backgroundColor: 'var(--signal)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
               fontWeight: 500,
             }}
@@ -328,9 +306,9 @@ export function BoardEditPage() {
                 style={{
                   textAlign: 'center',
                   padding: '80px 40px',
-                  backgroundColor: 'white',
-                  borderRadius: '16px',
-                  border: '2px dashed rgba(0,0,0,0.15)',
+                  background: 'var(--concrete-0)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px dashed var(--hairline-strong)',
                 }}
               >
                 <div
@@ -338,18 +316,18 @@ export function BoardEditPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    background: 'var(--concrete-sunken)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 16px',
                   }}
                 >
-                  <ImageIcon size={28} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  <ImageIcon size={28} style={{ color: 'var(--ink-300)' }} />
                 </div>
                 <p
                   style={{
-                    fontFamily: 'var(--font-primary)',
+                    fontFamily: 'var(--font-display)',
                     fontSize: '18px',
                     fontWeight: 500,
                     marginBottom: '8px',
@@ -359,9 +337,9 @@ export function BoardEditPage() {
                 </p>
                 <p
                   style={{
-                    fontFamily: 'var(--font-secondary)',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
-                    color: 'rgba(0,0,0,0.5)',
+                    color: 'var(--ink-500)',
                     marginBottom: '24px',
                   }}
                 >
@@ -370,13 +348,13 @@ export function BoardEditPage() {
                 <Link href="/search">
                   <button
                     style={{
-                      fontFamily: 'var(--font-secondary)',
+                      fontFamily: 'var(--font-body)',
                       fontSize: '14px',
                       padding: '12px 24px',
-                      backgroundColor: 'var(--accent)',
+                      backgroundColor: 'var(--signal)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-md)',
                       cursor: 'pointer',
                     }}
                   >
@@ -423,13 +401,13 @@ export function BoardEditPage() {
                       alignItems: 'center',
                       gap: '6px',
                       padding: '10px 20px',
-                      backgroundColor: 'white',
-                      border: '1px dashed rgba(0,0,0,0.2)',
-                      borderRadius: '8px',
+                      background: 'var(--concrete-0)',
+                      border: '1px dashed var(--hairline-strong)',
+                      borderRadius: 'var(--radius-md)',
                       cursor: 'pointer',
-                      fontFamily: 'var(--font-secondary)',
+                      fontFamily: 'var(--font-body)',
                       fontSize: '13px',
-                      color: 'rgba(0,0,0,0.5)',
+                      color: 'var(--ink-500)',
                     }}
                   >
                     <Plus size={16} />
@@ -453,21 +431,21 @@ export function BoardEditPage() {
         <aside
           style={{
             width: '280px',
-            backgroundColor: 'white',
-            borderLeft: '1px solid rgba(0,0,0,0.08)',
+            background: 'var(--concrete-0)',
+            borderLeft: '1px solid var(--hairline)',
             padding: '24px',
             overflowY: 'auto',
           }}
         >
           <h3
             style={{
-              fontFamily: 'var(--font-primary)',
+              fontFamily: 'var(--font-display)',
               fontSize: '14px',
               fontWeight: 600,
               marginBottom: '20px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              color: 'rgba(0,0,0,0.5)',
+              color: 'var(--ink-500)',
             }}
           >
             Board Settings
@@ -477,9 +455,9 @@ export function BoardEditPage() {
           <div style={{ marginBottom: '20px' }}>
             <label
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.5)',
+                color: 'var(--ink-500)',
                 display: 'block',
                 marginBottom: '6px',
               }}
@@ -493,11 +471,11 @@ export function BoardEditPage() {
               placeholder="Optional subtitle..."
               style={{
                 width: '100%',
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 padding: '10px 12px',
-                border: '1px solid rgba(0,0,0,0.15)',
-                borderRadius: '6px',
+                border: '1px solid var(--hairline)',
+                borderRadius: 'var(--radius-md)',
                 outline: 'none',
               }}
             />
@@ -507,9 +485,9 @@ export function BoardEditPage() {
           <div style={{ marginBottom: '20px' }}>
             <label
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.5)',
+                color: 'var(--ink-500)',
                 display: 'block',
                 marginBottom: '6px',
               }}
@@ -523,11 +501,11 @@ export function BoardEditPage() {
               rows={4}
               style={{
                 width: '100%',
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 padding: '10px 12px',
-                border: '1px solid rgba(0,0,0,0.15)',
-                borderRadius: '6px',
+                border: '1px solid var(--hairline)',
+                borderRadius: 'var(--radius-md)',
                 outline: 'none',
                 resize: 'vertical',
               }}
@@ -538,16 +516,16 @@ export function BoardEditPage() {
           <div
             style={{
               padding: '16px',
-              backgroundColor: 'rgba(0,0,0,0.02)',
-              borderRadius: '8px',
+              background: 'var(--concrete-sunken)',
+              borderRadius: 'var(--radius-md)',
               marginTop: '24px',
             }}
           >
             <h4
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.5)',
+                color: 'var(--ink-500)',
                 marginBottom: '12px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -557,26 +535,26 @@ export function BoardEditPage() {
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', color: 'rgba(0,0,0,0.6)' }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink-500)' }}>
                   Total blocks
                 </span>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', fontWeight: 500 }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 500 }}>
                   {board.blocks.length}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', color: 'rgba(0,0,0,0.6)' }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink-500)' }}>
                   References
                 </span>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', fontWeight: 500 }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 500 }}>
                   {board.blocks.filter((b) => b.type === 'reference').length}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', color: 'rgba(0,0,0,0.6)' }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink-500)' }}>
                   Text blocks
                 </span>
-                <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '13px', fontWeight: 500 }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 500 }}>
                   {board.blocks.filter((b) => b.type === 'text').length}
                 </span>
               </div>
@@ -587,9 +565,9 @@ export function BoardEditPage() {
           <div style={{ marginTop: '24px' }}>
             <label
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.5)',
+                color: 'var(--ink-500)',
                 display: 'block',
                 marginBottom: '6px',
               }}
@@ -602,11 +580,11 @@ export function BoardEditPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 12px',
-                backgroundColor: 'rgba(0,0,0,0.02)',
-                borderRadius: '6px',
-                fontFamily: 'var(--font-secondary)',
+                background: 'var(--concrete-sunken)',
+                borderRadius: 'var(--radius-md)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
-                color: 'rgba(0,0,0,0.6)',
+                color: 'var(--ink-500)',
               }}
             >
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -618,9 +596,9 @@ export function BoardEditPage() {
                 }}
                 style={{
                   padding: '4px 8px',
-                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  background: 'var(--concrete-sunken)',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer',
                   fontSize: '11px',
                 }}
@@ -672,11 +650,11 @@ function EditableBlock({
       dragControls={dragControls}
       style={{
         position: 'relative',
-        backgroundColor: 'white',
-        borderRadius: '12px',
+        background: 'var(--concrete-0)',
+        borderRadius: 'var(--radius-lg)',
         overflow: 'visible',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: 'var(--emboss)',
+        border: '1px solid var(--hairline)',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -715,9 +693,9 @@ function EditableBlock({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.05)',
+            background: 'var(--concrete-sunken)',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
             zIndex: 10,
           }}
@@ -764,11 +742,11 @@ function EditableBlock({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'white',
-              border: '1px solid rgba(0,0,0,0.15)',
+              background: 'var(--concrete-0)',
+              border: '1px solid var(--hairline)',
               borderRadius: '50%',
               cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              boxShadow: 'var(--raised)',
             }}
           >
             <Plus size={14} />
@@ -828,10 +806,10 @@ function ReferenceBlockEditor({
             position: 'relative',
             width: '160px',
             height: '120px',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             flexShrink: 0,
-            backgroundColor: 'rgba(0,0,0,0.05)',
+            background: 'var(--concrete-sunken)',
           }}
           onMouseEnter={() => setIsImageHovered(true)}
           onMouseLeave={() => setIsImageHovered(false)}
@@ -854,12 +832,12 @@ function ReferenceBlockEditor({
                 left: '50%',
                 transform: 'translateX(-50%)',
                 padding: '6px 12px',
-                backgroundColor: 'rgba(0,0,0,0.75)',
+                background: 'var(--ink-900)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '11px',
                 whiteSpace: 'nowrap',
               }}
@@ -873,7 +851,7 @@ function ReferenceBlockEditor({
         <div style={{ flex: 1, minWidth: 0 }}>
           <h4
             style={{
-              fontFamily: 'var(--font-primary)',
+              fontFamily: 'var(--font-display)',
               fontSize: '15px',
               fontWeight: 600,
               margin: 0,
@@ -888,9 +866,9 @@ function ReferenceBlockEditor({
           {data.architect_snapshot && (
             <p
               style={{
-                fontFamily: 'var(--font-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
-                color: 'rgba(0,0,0,0.6)',
+                color: 'var(--ink-500)',
                 margin: 0,
                 marginBottom: '2px',
               }}
@@ -900,9 +878,9 @@ function ReferenceBlockEditor({
           )}
           <p
             style={{
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '12px',
-              color: 'rgba(0,0,0,0.4)',
+              color: 'var(--ink-400)',
               margin: 0,
               marginBottom: '12px',
             }}
@@ -920,14 +898,14 @@ function ReferenceBlockEditor({
             placeholder="Add a caption..."
             style={{
               width: '100%',
-              fontFamily: 'var(--font-secondary)',
+              fontFamily: 'var(--font-body)',
               fontSize: '13px',
               fontStyle: 'italic',
               padding: '8px 12px',
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '6px',
+              border: '1px solid var(--hairline)',
+              borderRadius: 'var(--radius-md)',
               outline: 'none',
-              backgroundColor: 'rgba(0,0,0,0.02)',
+              background: 'var(--concrete-sunken)',
             }}
           />
         </div>
@@ -970,25 +948,25 @@ function TextBlockEditor({
 
   const styleMap: Record<string, React.CSSProperties> = {
     h1: {
-      fontFamily: 'var(--font-primary)',
+      fontFamily: 'var(--font-display)',
       fontSize: '28px',
       fontWeight: 600,
     },
     h2: {
-      fontFamily: 'var(--font-primary)',
+      fontFamily: 'var(--font-display)',
       fontSize: '18px',
       fontWeight: 600,
     },
     body: {
-      fontFamily: 'var(--font-secondary)',
+      fontFamily: 'var(--font-body)',
       fontSize: '15px',
       lineHeight: 1.6,
     },
     quote: {
-      fontFamily: 'var(--font-secondary)',
+      fontFamily: 'var(--font-body)',
       fontSize: '16px',
       fontStyle: 'italic',
-      borderLeft: '3px solid var(--accent)',
+      borderLeft: '3px solid var(--ink-700)',
       paddingLeft: '16px',
     },
   };
@@ -1004,7 +982,7 @@ function TextBlockEditor({
           border: 'none',
           outline: 'none',
           resize: 'none',
-          backgroundColor: 'transparent',
+          background: 'transparent',
           ...styleMap[data.style],
         }}
         rows={data.style === 'body' || data.style === 'quote' ? 4 : 1}
@@ -1035,7 +1013,7 @@ function DividerBlockEditor({ block }: { block: DividerBlock }) {
         justifyContent: 'center',
       }}
     >
-      <span style={{ fontFamily: 'var(--font-secondary)', fontSize: '11px', color: 'rgba(0,0,0,0.3)' }}>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--ink-300)' }}>
         {data.variant === 'space-sm' ? 'Small spacer' : 'Large spacer'}
       </span>
     </div>
@@ -1070,14 +1048,14 @@ function FrameBlockEditor({
     <div
       style={{
         padding: '24px',
-        backgroundColor: 'rgba(182, 68, 36, 0.05)',
-        border: '2px dashed var(--accent)',
-        borderRadius: '12px',
-        borderLeft: '4px solid var(--accent)',
+        background: 'var(--concrete-100)',
+        border: '1px solid var(--hairline-strong)',
+        borderRadius: 'var(--radius-lg)',
+        borderLeft: '3px solid var(--ink-700)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <Square size={20} style={{ color: 'var(--accent)' }} />
+        <Square size={20} style={{ color: 'var(--ink-700)' }} />
         <input
           type="text"
           value={titleValue}
@@ -1087,22 +1065,22 @@ function FrameBlockEditor({
           placeholder="Slide title..."
           style={{
             flex: 1,
-            fontFamily: 'var(--font-primary)',
+            fontFamily: 'var(--font-display)',
             fontSize: '18px',
             fontWeight: 600,
             border: 'none',
-            borderBottom: '2px solid var(--accent)',
+            borderBottom: '2px solid var(--signal)',
             outline: 'none',
             padding: '4px 0',
-            backgroundColor: 'transparent',
+            background: 'transparent',
           }}
         />
       </div>
       <p
         style={{
-          fontFamily: 'var(--font-secondary)',
+          fontFamily: 'var(--font-body)',
           fontSize: '12px',
-          color: 'rgba(0,0,0,0.5)',
+          color: 'var(--ink-500)',
           margin: 0,
           fontStyle: 'italic',
         }}
@@ -1143,10 +1121,10 @@ function AddBlockMenu({
           left: '50%',
           transform: 'translateX(-50%)',
           marginTop: '8px',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-          border: '1px solid rgba(0,0,0,0.08)',
+          background: 'var(--concrete-0)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--raised)',
+          border: '1px solid var(--hairline)',
           padding: '8px',
           zIndex: 40,
           minWidth: '160px',
@@ -1160,16 +1138,16 @@ function AddBlockMenu({
             gap: '10px',
             width: '100%',
             padding: '10px 12px',
-            backgroundColor: 'transparent',
+            background: 'transparent',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
-            fontFamily: 'var(--font-secondary)',
+            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             textAlign: 'left',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--concrete-sunken)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Type size={16} />
           Section Header
@@ -1182,16 +1160,16 @@ function AddBlockMenu({
             gap: '10px',
             width: '100%',
             padding: '10px 12px',
-            backgroundColor: 'transparent',
+            background: 'transparent',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
-            fontFamily: 'var(--font-secondary)',
+            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             textAlign: 'left',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--concrete-sunken)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Edit2 size={16} />
           Paragraph
@@ -1204,16 +1182,16 @@ function AddBlockMenu({
             gap: '10px',
             width: '100%',
             padding: '10px 12px',
-            backgroundColor: 'transparent',
+            background: 'transparent',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
-            fontFamily: 'var(--font-secondary)',
+            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             textAlign: 'left',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--concrete-sunken)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Minus size={16} />
           Divider
@@ -1226,16 +1204,16 @@ function AddBlockMenu({
             gap: '10px',
             width: '100%',
             padding: '10px 12px',
-            backgroundColor: 'transparent',
+            background: 'transparent',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
-            fontFamily: 'var(--font-secondary)',
+            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             textAlign: 'left',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--concrete-sunken)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Square size={16} />
           Frame (New Slide)

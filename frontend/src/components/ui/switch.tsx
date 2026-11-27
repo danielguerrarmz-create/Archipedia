@@ -5,24 +5,59 @@ import * as SwitchPrimitive from "@radix-ui/react-switch@1.1.3";
 
 import { cn } from "./utils";
 
+/*
+ * Concrete & Signal switch.
+ * Track: debossed well. When ON: signal-tint-2 background + union nub.
+ * Thumb settles with ease-press easing.
+ */
+
 function Switch({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
-      className={cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-switch-background focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
+      className={cn("an-switch-root", className)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        width: 36,
+        height: 20,
+        borderRadius: "var(--radius-pill)",
+        background: "var(--concrete-200)",
+        boxShadow: "var(--deboss)",
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        flexShrink: 0,
+        padding: "0 2px",
+        transition:
+          "background var(--dur-2) var(--ease-press), box-shadow var(--dur-1) var(--ease-press)",
+        ...style,
+      }}
       {...props}
     >
+      {/* CSS to flip track color when checked */}
+      <style>{`
+        .an-switch-root[data-state="checked"] { background: var(--signal-tint-2) !important; box-shadow: var(--deboss), inset 0 0 0 1px var(--signal) !important; }
+        .an-switch-root:focus-visible { box-shadow: var(--deboss), 0 0 0 3px var(--focus-ring) !important; }
+      `}</style>
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className={cn(
-          "bg-card dark:data-[state=unchecked]:bg-card-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0",
-        )}
+        style={{
+          display: "block",
+          width: 16,
+          height: 16,
+          borderRadius: "var(--radius-pill)",
+          background: "var(--concrete-0)",
+          boxShadow: "var(--emboss)",
+          transition:
+            "transform var(--dur-2) var(--ease-press)",
+          transform: "translateX(0)",
+          // Radix handles the translate via data-state via the default translate attrs
+        }}
       />
     </SwitchPrimitive.Root>
   );

@@ -17,6 +17,9 @@ import { BoardPrintPage } from "./pages/BoardPrintPage";
 import { StudySearchPage } from "./pages/StudySearchPage";
 import { StudyResultsPage } from "./pages/StudyResultsPage";
 import { ContactPage } from "./pages/ContactPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
+import { HowItWorksPage } from "./pages/HowItWorksPage";
+import { BoardsIndexPage } from "./pages/BoardsIndexPage";
 import { SignInPage } from "./pages/SignInPage";
 import { Toaster } from "./components/ui/sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -34,6 +37,8 @@ export default function App() {
         {/* Original enterprise page still accessible at /enterprise-details */}
         <Route path="/enterprise-details" component={EnterprisePage} />
         <Route path="/contact" component={ContactPage} />
+        <Route path="/privacy" component={PrivacyPolicyPage} />
+        <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/signin" component={SignInPage} />
         <Route path="/signup" component={SearchLandingPage} />
         <Route path="/search" component={SearchLandingPage} />
@@ -48,6 +53,7 @@ export default function App() {
         <Route path="/study" component={StudySearchPage} />
         <Route path="/study/results" component={StudyResultsPage} />
         {/* Board Routes */}
+        <Route path="/boards" component={BoardsIndexPage} />
         <Route path="/boards/:id/edit" component={BoardEditPage} />
         <Route path="/boards/:id/print" component={BoardPrintPage} />
         <Route path="/boards/:id" component={BoardViewPage} />

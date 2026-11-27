@@ -41,7 +41,9 @@ export const useSearchStore = create<SearchState>()(
       searchResults: [],
       searchQuery: '',
       canvasFilters: { typology: [], climate: [] },
-      canvasFusionWeights: { visual: 33, spatial: 33, attribute: 34 },
+      // Default to pure visual similarity (matches the engine default + the
+      // How-It-Works recommendation). Raising Spatial/Regional is opt-in.
+      canvasFusionWeights: { visual: 100, spatial: 0, attribute: 0 },
       canvasHasSearched: false,
       setSearchResults: (results) => set({ searchResults: results }),
       setSearchQuery: (query) => set({ searchQuery: query }),

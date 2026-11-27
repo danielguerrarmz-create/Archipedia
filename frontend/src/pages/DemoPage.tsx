@@ -1,6 +1,16 @@
+/**
+ * DemoPage — the /demo walkthrough page.
+ * Concrete & Signal identity: concrete-50 ground, shared LandingTopBar +
+ * LandingFooter chrome, Fraunces section opener, mono eyebrows, one Signal CTA
+ * (the primary "Try the live demo"). No glassmorphism, no pills, neutral focus.
+ *
+ * Route: /demo
+ */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
+import { LandingTopBar } from "../components/landing/LandingTopBar";
+import { LandingFooter } from "../components/landing/LandingFooter";
 import { usePageMeta } from "../lib/seo";
 import { trackLandingEvent } from "../lib/analytics";
 
@@ -13,6 +23,152 @@ const VIDEO_CONFIG = {
   loomId: "",
 };
 const CALENDLY_URL = "https://calendly.com/clayhseifert/30min";
+
+// ─── Shared style constants ─────────────────────────────────────────────────
+
+const PAGE: React.CSSProperties = {
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  backgroundColor: "var(--concrete-50)",
+  fontFamily: "var(--font-body)",
+};
+
+const CONTAINER: React.CSSProperties = {
+  maxWidth: 960,
+  margin: "0 auto",
+  width: "100%",
+  padding: "clamp(48px, 8vw, 96px) clamp(20px, 5vw, 40px) clamp(64px, 10vw, 120px)",
+};
+
+const EYEBROW: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase" as const,
+  color: "var(--ink-700)",
+  marginBottom: 16,
+  display: "block",
+};
+
+// Hero line = Archivo display + ONE Fraunces swell (NOT full serif) per §0.6.
+const H1: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontWeight: 680,
+  fontSize: "clamp(32px, 5vw, 52px)",
+  lineHeight: 1.08,
+  letterSpacing: "-0.025em",
+  color: "var(--ink-900)",
+  margin: "0 0 16px",
+};
+
+const LEAD: React.CSSProperties = {
+  fontSize: 17,
+  lineHeight: 1.6,
+  color: "var(--ink-500)",
+  maxWidth: "52ch",
+  margin: "0 auto",
+};
+
+// Video well — a debossed concrete trough, not a glass card.
+const VIDEO_WELL: React.CSSProperties = {
+  position: "relative",
+  aspectRatio: "16 / 9",
+  overflow: "hidden",
+  background: "var(--concrete-sunken)",
+  borderRadius: "var(--radius-lg)",
+  boxShadow: "var(--deboss)",
+  marginBottom: 40,
+};
+
+// The lone Signal control — primary "Try the live demo".
+const SIGNAL_BTN: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  minHeight: 48,
+  padding: "0 26px",
+  fontFamily: "var(--font-body)",
+  fontSize: 15,
+  fontWeight: 600,
+  color: "#fff",
+  background: "var(--signal)",
+  border: "none",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "0 0 0 1px rgba(31,63,255,0.35), 0 4px 14px -6px rgba(31,63,255,0.5)",
+  cursor: "pointer",
+  transition: "background var(--dur-2) var(--ease-press)",
+};
+
+// Quiet secondary — emboss tactile, neutral ink, no blue.
+const GHOST_BTN: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  minHeight: 48,
+  padding: "0 26px",
+  fontFamily: "var(--font-body)",
+  fontSize: 15,
+  fontWeight: 500,
+  color: "var(--ink-900)",
+  background: "var(--concrete-100)",
+  border: "1px solid var(--hairline-strong)",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--emboss)",
+  cursor: "pointer",
+  transition: "background var(--dur-1) var(--ease-press), border-color var(--dur-1) var(--ease-press)",
+};
+
+const FEATURE_CARD: React.CSSProperties = {
+  border: "1px solid var(--hairline)",
+  borderRadius: "var(--radius-md)",
+  background: "var(--concrete-100)",
+  boxShadow: "var(--raised)",
+  padding: "28px 24px",
+};
+
+const FEATURE_INDEX: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.1em",
+  fontVariantNumeric: "tabular-nums",
+  color: "var(--ink-700)",
+  marginBottom: 12,
+  display: "block",
+};
+
+const FEATURE_TITLE: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontWeight: 600,
+  fontSize: 16,
+  letterSpacing: "-0.01em",
+  color: "var(--ink-900)",
+  margin: "0 0 8px",
+};
+
+const FEATURE_DESC: React.CSSProperties = {
+  fontFamily: "var(--font-body)",
+  fontSize: 14,
+  lineHeight: 1.6,
+  color: "var(--ink-700)",
+  margin: 0,
+};
+
+const FEATURES = [
+  {
+    title: "Image search",
+    desc: "Upload any image to find visual neighbours in your archive.",
+  },
+  {
+    title: "Text search",
+    desc: "Describe what you're looking for in natural language.",
+  },
+  {
+    title: "Filters & boards",
+    desc: "Narrow by metadata, save results to shareable collections.",
+  },
+];
 
 export function DemoPage() {
   const [, setLocation] = useLocation();
@@ -38,110 +194,28 @@ export function DemoPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "var(--bg-primary)" }}
-    >
-      {/* Header */}
-      <header
-        className="fixed top-0 left-0 right-0"
-        style={{
-          zIndex: 9998,
-          background: "rgba(250, 250, 250, 0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid var(--border-light)",
-        }}
-      >
-        <div
-          className="container flex items-center justify-between"
-          style={{
-            maxWidth: "1200px",
-            padding: "18px 32px",
-          }}
-        >
-          <button
-            onClick={() => setLocation("/")}
-            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-            style={{
-              fontFamily: "var(--font-secondary)",
-              fontSize: "14px",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <ArrowLeft size={18} />
-            Back
-          </button>
+    <div style={PAGE}>
+      <LandingTopBar />
 
-          <button
-            onClick={() => setLocation("/")}
-            className="hover:opacity-80 transition-opacity"
-            style={{
-              fontFamily: "var(--font-primary)",
-              fontSize: "20px",
-              fontWeight: 500,
-              color: "var(--text-primary)",
-            }}
-          >
-            ARCHIPEDIA
-          </button>
-
-          <button
-            onClick={handleBookPilot}
-            className="hover:opacity-90 transition-all"
-            style={{
-              fontFamily: "var(--font-primary)",
-              fontSize: "12px",
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-              borderRadius: "8px",
-              background: "var(--accent)",
-              padding: "12px 20px",
-              color: "var(--text-primary)",
-            }}
-          >
-            Book a pilot
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main
-        className="flex-1"
-        style={{ paddingTop: "140px", paddingBottom: "120px" }}
-      >
-        <div className="container" style={{ maxWidth: "960px", padding: "0 32px" }}>
-          {/* Hero Text */}
-          <div className="text-center" style={{ marginBottom: "56px" }}>
-            <h1
-              className="heading-l"
-              style={{ fontSize: "42px", marginBottom: "20px", lineHeight: 1.2 }}
-            >
-              See Archipedia in action
+      <main style={{ flex: 1 }}>
+        <div style={CONTAINER}>
+          {/* Hero text */}
+          <div style={{ textAlign: "center", marginBottom: 48, maxWidth: 640, marginInline: "auto" }}>
+            <span style={EYEBROW}>90-second walkthrough</span>
+            <h1 style={H1}>
+              See Archipedia in{" "}
+              <span className="editorial-em" style={{ fontFamily: "var(--font-editorial)" }}>
+                action
+              </span>
             </h1>
-            <p
-              className="body-l"
-              style={{ 
-                color: "var(--text-secondary)", 
-                maxWidth: "52ch", 
-                margin: "0 auto",
-                fontSize: "18px",
-                lineHeight: 1.6,
-              }}
-            >
-              Watch a 90-second walkthrough of image and text search, filters, and boards.
+            <p style={LEAD}>
+              A short walkthrough of image and text search, fusion weights, and
+              boards — using real, cited precedents, not a render.
             </p>
           </div>
 
-          {/* Video Container */}
-          <div
-            className="glass rounded-2xl overflow-hidden"
-            style={{
-              aspectRatio: "16/9",
-              border: "1px solid var(--border-light)",
-              marginBottom: "48px",
-            }}
-          >
+          {/* Video well */}
+          <div style={VIDEO_WELL}>
             {loomLoaded && (VIDEO_CONFIG.gdriveId || VIDEO_CONFIG.loomId) ? (
               VIDEO_CONFIG.type === "gdrive" && VIDEO_CONFIG.gdriveId ? (
                 <iframe
@@ -149,8 +223,8 @@ export function DemoPage() {
                   frameBorder="0"
                   allowFullScreen
                   allow="autoplay"
-                  style={{ width: "100%", height: "100%" }}
-                  title="Archipedia Demo"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title="Archipedia demo walkthrough"
                 />
               ) : (
                 <iframe
@@ -158,169 +232,152 @@ export function DemoPage() {
                   frameBorder="0"
                   allowFullScreen
                   allow="autoplay"
-                  style={{ width: "100%", height: "100%" }}
-                  title="Archipedia Demo"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title="Archipedia demo walkthrough"
                 />
               )
             ) : (
-              <div
-                className="w-full h-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                style={{ background: "rgba(0,0,0,0.03)" }}
+              <button
+                className="demo-play"
                 onClick={() => {
                   setLoomLoaded(true);
                   trackLandingEvent("demo_video_play", {});
                 }}
+                aria-label="Play the 90-second demo walkthrough"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 20,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
-                <div className="text-center">
-                  <div
-                    className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
-                    style={{ background: "var(--accent)", marginBottom: "24px" }}
-                  >
-                    <ArrowRight size={40} />
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-primary)",
-                      fontSize: "18px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    Click to play
-                  </div>
-                  <div 
-                    className="body-m" 
-                    style={{ color: "var(--text-tertiary)" }}
-                  >
-                    90-second walkthrough
-                  </div>
-                </div>
-              </div>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 64,
+                    height: 64,
+                    background: "var(--concrete-100)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "var(--emboss)",
+                    color: "var(--ink-900)",
+                  }}
+                >
+                  <Play size={26} strokeWidth={1.75} />
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--ink-700)",
+                  }}
+                >
+                  Play walkthrough · 1:30
+                </span>
+              </button>
             )}
           </div>
 
-          {/* CTAs */}
-          <div 
-            className="flex flex-wrap items-center justify-center"
-            style={{ marginBottom: "64px", gap: "24px" }}
+          {/* CTAs — one Signal (primary), one quiet */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 16,
+              marginBottom: 72,
+            }}
           >
-            <button
-              onClick={handleTryLiveDemo}
-              className="hover:opacity-90 transition-all"
-              style={{
-                fontFamily: "var(--font-primary)",
-                fontSize: "15px",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                borderRadius: "12px",
-                background: "var(--accent)",
-                padding: "18px 32px",
-                color: "var(--text-primary)",
-              }}
-            >
+            <button className="signal-btn" onClick={handleTryLiveDemo} style={SIGNAL_BTN}>
               Try the live demo
+              <ArrowRight size={16} strokeWidth={2} />
             </button>
-            <button
-              onClick={handleBookPilot}
-              className="hover:opacity-90 transition-all"
-              style={{
-                fontFamily: "var(--font-primary)",
-                fontSize: "15px",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                borderRadius: "12px",
-                border: "1px solid var(--border-light)",
-                background: "transparent",
-                padding: "18px 32px",
-                color: "var(--text-primary)",
-              }}
-            >
+            <button className="ghost-btn" onClick={handleBookPilot} style={GHOST_BTN}>
               Book an enterprise pilot
             </button>
           </div>
 
-          {/* Features Preview */}
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                title: "Image search",
-                desc: "Upload any image to find visual neighbors in your archive.",
-              },
-              {
-                title: "Text search",
-                desc: "Describe what you're looking for in natural language.",
-              },
-              {
-                title: "Filters & Boards",
-                desc: "Narrow by metadata, save results to shareable collections.",
-              },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="glass rounded-xl text-center"
-                style={{ 
-                  border: "1px solid var(--border-light)",
-                  padding: "32px 24px",
-                }}
-              >
-                <h3
-                  style={{
-                    fontFamily: "var(--font-primary)",
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    marginBottom: "12px",
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {feature.title}
-                </h3>
-                <p 
-                  className="body-m"
-                  style={{ lineHeight: 1.6 }}
-                >
-                  {feature.desc}
-                </p>
+          {/* Hairline divider with axis-tick label */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              marginBottom: 28,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--ink-700)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              What you'll see
+            </span>
+            <span style={{ flex: 1, height: 1, background: "var(--hairline)" }} aria-hidden="true" />
+          </div>
+
+          {/* Feature preview */}
+          <div className="demo-feature-grid">
+            {FEATURES.map((feature, i) => (
+              <div key={feature.title} style={FEATURE_CARD}>
+                <span style={FEATURE_INDEX}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 style={FEATURE_TITLE}>{feature.title}</h3>
+                <p style={FEATURE_DESC}>{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: "1px solid var(--border-light)",
-          padding: "32px 0",
-        }}
-      >
-        <div
-          className="container flex items-center justify-between"
-          style={{ maxWidth: "1200px", padding: "0 32px" }}
-        >
-          <button
-            onClick={() => setLocation("/")}
-            className="hover:opacity-70 transition-opacity"
-            style={{
-              fontFamily: "var(--font-primary)",
-              fontSize: "18px",
-              color: "var(--text-primary)",
-            }}
-          >
-            ARCHIPEDIA
-          </button>
-          <p
-            style={{
-              fontFamily: "var(--font-secondary)",
-              fontSize: "13px",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            © {new Date().getFullYear()} Pear.Design
-          </p>
-        </div>
-      </footer>
+      <LandingFooter />
+
+      <style>{`
+        .demo-feature-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 768px) {
+          .demo-feature-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .signal-btn:hover { background: var(--signal-hover); }
+        .signal-btn:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px var(--concrete-50), 0 0 0 4px var(--focus-ring);
+        }
+        .ghost-btn:hover { background: var(--concrete-200); border-color: var(--ink-700); }
+        .ghost-btn:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+        .demo-play:hover span:first-of-type { background: var(--concrete-200); }
+        .demo-play:focus-visible {
+          outline: none;
+          box-shadow: inset 0 0 0 2px var(--focus-ring);
+        }
+      `}</style>
     </div>
   );
 }
+
+export default DemoPage;

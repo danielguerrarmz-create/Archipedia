@@ -145,12 +145,12 @@ function ArchitectureDiagram() {
       <svg width="980" height="260" viewBox="0 0 980 260" role="img" aria-label="Enterprise architecture diagram">
         <defs>
           <style>{`
-            .box { fill: rgba(255,255,255,0.55); stroke: rgba(0,0,0,0.14); stroke-width: 1.25; }
-            .label { font-family: Inter, ui-sans-serif, system-ui; font-size: 12px; fill: rgba(0,0,0,0.85); }
-            .muted { fill: rgba(0,0,0,0.55); font-size: 11px; }
-            .title { font-family: "Space Grotesk", ui-sans-serif, system-ui; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-            .line { stroke: rgba(0,0,0,0.22); stroke-width: 1.25; fill: none; }
-            .boundary { fill: rgba(255, 200, 0, 0.06); stroke: rgba(0,0,0,0.14); stroke-dasharray: 5 4; }
+            .box { fill: var(--concrete-100); stroke: var(--hairline); stroke-width: 1.25; }
+            .label { font-family: var(--font-body); font-size: 12px; fill: var(--ink-900); }
+            .muted { fill: var(--ink-500); font-size: 11px; }
+            .title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; fill: var(--ink-700); }
+            .line { stroke: var(--hairline-strong); stroke-width: 1.25; fill: none; }
+            .boundary { fill: rgba(31,63,255,0.05); stroke: var(--hairline); stroke-dasharray: 5 4; }
           `}</style>
         </defs>
 

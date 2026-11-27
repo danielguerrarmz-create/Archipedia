@@ -2,9 +2,13 @@
 
 import * as React from "react";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group@1.2.3";
-import { CircleIcon } from "lucide-react@0.487.0";
 
 import { cn } from "./utils";
+
+/*
+ * Concrete & Signal radio — dot inside debossed well.
+ * Checked = signal dot.
+ */
 
 function RadioGroup({
   className,
@@ -21,22 +25,45 @@ function RadioGroup({
 
 function RadioGroupItem({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
-      className={cn(
-        "border-input text-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
+      className={cn("an-radio", className)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 16,
+        height: 16,
+        borderRadius: "var(--radius-pill)",
+        background: "var(--concrete-0)",
+        boxShadow: "var(--deboss), 0 0 0 1px var(--hairline)",
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        flexShrink: 0,
+        transition: "box-shadow var(--dur-1) var(--ease-press)",
+        ...style,
+      }}
       {...props}
     >
       <RadioGroupPrimitive.Indicator
         data-slot="radio-group-indicator"
-        className="relative flex items-center justify-center"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <CircleIcon className="fill-primary absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2" />
+        {/* Signal dot */}
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "var(--radius-pill)",
+            background: "var(--signal)",
+            flexShrink: 0,
+          }}
+        />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

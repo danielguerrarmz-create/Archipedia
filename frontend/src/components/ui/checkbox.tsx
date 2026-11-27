@@ -2,28 +2,65 @@
 
 import * as React from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox@1.1.4";
-import { CheckIcon } from "lucide-react@0.487.0";
+import { Node } from "../motif/Node";
 
 import { cn } from "./utils";
 
+/*
+ * Concrete & Signal checkbox — 16px Node-square.
+ * Unchecked = concrete-0 debossed well with hairline border.
+ * Checked = signal fill + white check (Node language).
+ */
+
 function Checkbox({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
-      className={cn(
-        "peer border bg-input-background dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
+      className={cn("an-checkbox", className)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 16,
+        height: 16,
+        borderRadius: "var(--radius-sm)",
+        background: "var(--concrete-0)",
+        boxShadow: "var(--deboss), 0 0 0 1px var(--hairline)",
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        flexShrink: 0,
+        transition: "box-shadow var(--dur-1) var(--ease-press), background var(--dur-1) var(--ease-press)",
+        ...style,
+      }}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="flex items-center justify-center text-current transition-none"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <CheckIcon className="size-3.5" />
+        {/* Signal-filled node square with white checkmark glyph */}
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 16,
+            height: 16,
+            borderRadius: "var(--radius-sm)",
+            background: "var(--signal)",
+            boxShadow: "var(--emboss)",
+          }}
+        >
+          {/* White check SVG */}
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden>
+            <path d="M1 3.5L3.8 6.5L9 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

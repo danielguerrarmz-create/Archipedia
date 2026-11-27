@@ -272,7 +272,7 @@ export const WorkflowGeneratorDialog: React.FC<WorkflowGeneratorDialogProps> = (
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: '#FFC800',
+                backgroundColor: 'var(--signal)',
                 color: '#1a1a1a',
                 border: 'none',
                 borderRadius: '8px',

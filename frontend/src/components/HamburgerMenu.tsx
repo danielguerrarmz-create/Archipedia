@@ -1,9 +1,37 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Menu, X, Building2, Mail } from 'lucide-react';
+import { Building2, Mail } from 'lucide-react';
+
+/*
+ * HamburgerMenu — 3 connector lines icon → X when open.
+ * Dropdown: concrete-0 + raised, NO glass circles.
+ */
 
 interface HamburgerMenuProps {
   className?: string;
+}
+
+function ConnectorIcon({ size = 20 }: { size?: number }) {
+  const gap = size * 0.22;
+  const w = size * 0.55;
+  const stroke = size * 0.07;
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      {/* 3 connector lines = brand motif */}
+      <line x1="3" y1="6" x2="17" y2="6" stroke="var(--ink-700)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="3" y1="10" x2="17" y2="10" stroke="var(--ink-700)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="3" y1="14" x2="17" y2="14" stroke="var(--ink-700)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function XIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      <line x1="4" y1="4" x2="16" y2="16" stroke="var(--ink-700)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="16" y1="4" x2="4" y2="16" stroke="var(--ink-700)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 export function HamburgerMenu({ className }: HamburgerMenuProps) {
@@ -11,51 +39,27 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Close menu on escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
+      if (event.key === 'Escape') setIsOpen(false);
     }
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
+    if (isOpen) document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
   const menuItems = [
-    {
-      label: 'Enterprise',
-      icon: Building2,
-      href: '/enterprise',
-    },
-    {
-      label: 'Contact',
-      icon: Mail,
-      href: '/contact',
-    },
+    { label: 'Enterprise', icon: Building2, href: '/enterprise' },
+    { label: 'Contact', icon: Mail, href: '/contact' },
   ];
 
   const handleNavigation = (href: string) => {
@@ -65,7 +69,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
 
   return (
     <div ref={menuRef} className={className} style={{ position: 'relative' }}>
-      {/* Hamburger Button */}
+      {/* Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
@@ -74,47 +78,38 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '40px',
-          height: '40px',
-          backgroundColor: isOpen ? 'rgba(0,0,0,0.08)' : 'transparent',
-          border: '1px solid rgba(0,0,0,0.1)',
-          borderRadius: '8px',
+          width: 40,
+          height: 40,
+          background: isOpen ? 'var(--concrete-200)' : 'var(--concrete-100)',
+          boxShadow: 'var(--emboss)',
+          border: 'none',
+          borderRadius: 'var(--radius-md)',
           cursor: 'pointer',
-          transition: 'all 150ms ease',
+          transition: 'background var(--dur-1) var(--ease-press)',
         }}
         onMouseEnter={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-          }
+          (e.currentTarget as HTMLElement).style.background = 'var(--concrete-200)';
         }}
         onMouseLeave={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
+          (e.currentTarget as HTMLElement).style.background = isOpen ? 'var(--concrete-200)' : 'var(--concrete-100)';
         }}
       >
-        {isOpen ? (
-          <X size={20} strokeWidth={1.5} color="#000" />
-        ) : (
-          <Menu size={20} strokeWidth={1.5} color="#000" />
-        )}
+        {isOpen ? <XIcon size={18} /> : <ConnectorIcon size={18} />}
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown */}
       {isOpen && (
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            top: 'calc(100% + 6px)',
             right: 0,
-            width: '200px',
-            backgroundColor: 'white',
-            border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: '12px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            width: 200,
+            background: 'var(--concrete-0)',
+            boxShadow: 'var(--raised)',
+            borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             zIndex: 1000,
-            animation: 'slideDown 150ms ease-out',
           }}
         >
           {menuItems.map((item, index) => {
@@ -126,49 +121,34 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: 10,
                   width: '100%',
-                  padding: '14px 16px',
-                  backgroundColor: 'transparent',
+                  padding: '12px 16px',
+                  background: 'transparent',
                   border: 'none',
-                  borderBottom: index < menuItems.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                  borderBottom: index < menuItems.length - 1 ? '1px solid var(--hairline)' : 'none',
                   cursor: 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '14px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 14,
                   fontWeight: 500,
-                  color: '#000',
+                  color: 'var(--ink-900)',
                   textAlign: 'left',
-                  transition: 'background-color 150ms ease',
+                  transition: 'background var(--dur-1) var(--ease-press)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--concrete-100)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
                 }}
               >
-                <Icon size={18} strokeWidth={1.5} style={{ opacity: 0.7 }} />
+                <Icon size={16} strokeWidth={1.5} style={{ opacity: 0.7, color: 'var(--ink-700)', flexShrink: 0 }} />
                 {item.label}
               </button>
             );
           })}
         </div>
       )}
-
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }
-

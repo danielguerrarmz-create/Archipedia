@@ -26,7 +26,17 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const padding = 8; // Padding offset
-  const frameWidth = 2; // Frame thickness
+  const frameWidth = 1.5; // Frame thickness — signal hairline
+
+  const corner = (pos: React.CSSProperties): React.CSSProperties => ({
+    position: 'absolute',
+    width: 7,
+    height: 7,
+    background: 'var(--concrete-sunken)',
+    boxShadow: 'var(--deboss)',
+    borderRadius: 'var(--radius-sm)',
+    ...pos,
+  });
 
   return (
     <div
@@ -40,31 +50,37 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
         zIndex: 1000,
       }}
     >
-      {/* Frame */}
+      {/* Frame — signal hairline */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          border: `${frameWidth}px solid rgba(0, 0, 0, 0.2)`,
-          borderRadius: '4px',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          border: `${frameWidth}px solid var(--signal)`,
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--signal-tint)',
+          opacity: 0.5,
           pointerEvents: 'none',
         }}
       />
-      
-      {/* Dropdown Menu at Top */}
+      {/* Debossed corner node handles */}
+      <div style={corner({ left: -3, top: -3 })} />
+      <div style={corner({ right: -3, top: -3 })} />
+      <div style={corner({ left: -3, bottom: -3 })} />
+      <div style={corner({ right: -3, bottom: -3 })} />
+
+      {/* Dropdown Menu at Top — raised */}
       <div
         style={{
           position: 'absolute',
-          top: `-${32 + frameWidth}px`,
+          top: `-${34 + frameWidth}px`,
           left: '0',
-          backgroundColor: 'white',
-          border: '1px solid rgba(0,0,0,0.1)',
-          borderRadius: '6px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          background: 'var(--concrete-100)',
+          boxShadow: 'var(--raised)',
+          borderRadius: 'var(--radius-md)',
           minWidth: '180px',
           pointerEvents: 'auto',
-          fontFamily: 'var(--font-primary)',
+          fontFamily: 'var(--font-mono)',
+          overflow: 'hidden',
         }}
       >
         <button
@@ -80,13 +96,13 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
             background: 'none',
             cursor: 'pointer',
             fontSize: '12px',
-            color: '#000000',
+            color: 'var(--ink-700)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+            e.currentTarget.style.backgroundColor = 'var(--concrete-sunken)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -97,7 +113,7 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
         </button>
         
         {isDropdownOpen && (
-          <div style={{ borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <div style={{ borderTop: '1px solid var(--hairline)' }}>
             {canUngroup && onUngroup ? (
               <button
                 onClick={(e) => {
@@ -113,10 +129,10 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
                   background: 'none',
                   cursor: 'pointer',
                   fontSize: '12px',
-                  color: '#000000',
+                  color: 'var(--ink-700)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                  e.currentTarget.style.backgroundColor = 'var(--concrete-sunken)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -139,10 +155,10 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
                   background: 'none',
                   cursor: 'pointer',
                   fontSize: '12px',
-                  color: '#000000',
+                  color: 'var(--ink-700)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                  e.currentTarget.style.backgroundColor = 'var(--concrete-sunken)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -165,10 +181,10 @@ export const CustomSelectionBox: React.FC<CustomSelectionBoxProps> = ({
                 background: 'none',
                 cursor: 'pointer',
                 fontSize: '12px',
-                color: '#000000',
+                color: 'var(--ink-700)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                e.currentTarget.style.backgroundColor = 'var(--concrete-sunken)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';

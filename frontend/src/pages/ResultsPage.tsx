@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import { mockProjects } from "../lib/mockData";
+import { ChevronUp, ChevronDown, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { useSearchStore, SearchResult } from "../stores/searchStore";
 import { searchByText, toAbsoluteUrl } from "../lib/navigatorApi";
 import { useCanvasStore } from "../stores/canvasStore";
 import { NodeCanvas } from "../components/Canvas/NodeCanvas";
-import { NodePaletteSidebar } from "../components/Sidebar/NodePaletteSidebar";
+import { AppHeader } from "../components/AppHeader";
 import { ResultsGridCompact } from "../components/SearchResults/ResultsGridCompact";
 import { PrecedentProject } from "../types/nodes";
 import { UserButton } from "../components/UserButton";
@@ -59,7 +59,31 @@ export function ResultsPage() {
 
   const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
   const [researchPanelCollapsed, setResearchPanelCollapsed] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   const { nodes, edges, addNodes, executeWorkflow, selectedNodes } = useCanvasStore();
+
+  // RUN relates to the canvas: only enabled when there's a graph to run, shows a
+  // running state, and reports honestly whether the index answered.
+  const runGraph = useCallback(async () => {
+    if (nodes.length === 0 || isRunning) return;
+    setIsRunning(true);
+    const t = toast.loading("Running graph…");
+    try {
+      await executeWorkflow();
+      const after = useCanvasStore.getState().nodes;
+      const errored = after.some((n: any) => n.data?.executionStatus === "error");
+      if (errored) {
+        toast.error("Couldn't reach the index", { id: t, description: "Some nodes failed — results weren't updated." });
+      } else {
+        toast.success("Graph run complete", { id: t });
+      }
+    } catch (err) {
+      console.error("Workflow execution failed:", err);
+      toast.error("Run failed", { id: t, description: "Couldn't complete the graph. Check your connection and try again." });
+    } finally {
+      setIsRunning(false);
+    }
+  }, [nodes.length, isRunning, executeWorkflow]);
   
   // Get selected node's execution results (if any)
   const selectedNode = useMemo(() => {
@@ -141,8 +165,12 @@ export function ResultsPage() {
     try {
       const resp = await searchByText(q, { topK: 50 });
       const mapped: SearchResult[] = (resp.results || []).map((r: any, idx: number) => {
-        const baseScore = 0.65 + Math.random() * 0.25;
         const imageUrl = toAbsoluteUrl(r.thumb_url) || undefined;
+        // Use the REAL similarity the backend returned — never a fabricated/random
+        // confidence. Text search is a single fused score (no per-dimension split),
+        // so only the overall match % is shown; visual/spatial/attribute are left
+        // undefined rather than invented.
+        const score = typeof r.score === 'number' ? Math.max(0, Math.min(1, r.score)) : undefined;
         return {
           id: String(r.project_id || `text_${idx}`),
           name: String(r.title || r.project_id || 'Result'),
@@ -150,39 +178,22 @@ export function ResultsPage() {
           url: imageUrl,
           buildingType: r.typology || undefined,
           climate: r.climate_bin ? [String(r.climate_bin)] : [],
-          matchPercentage: Math.max(10, 100 - idx),
-          similarityScore: Math.max(0.1, 1 - idx / 100),
-          visualScore: Math.max(0.3, Math.min(1.0, baseScore)),
-          spatialScore: Math.max(0.3, Math.min(1.0, baseScore)),
-          attributeScore: Math.max(0.3, Math.min(1.0, baseScore)),
+          matchPercentage: score != null ? Math.round(score * 100) : undefined,
+          similarityScore: score,
           typology: r.typology ? String(r.typology) : undefined,
         } as any;
       });
       setSearchResults(mapped);
       setStoreQuery(q);
     } catch (error) {
-      console.error('Text search failed, falling back to mock results:', error);
-      const resultsWithMatch: SearchResult[] = mockProjects.slice(0, 50).map((project, index) => {
-        const baseScore = 0.7 + (Math.random() * 0.25);
-        const visualScore = baseScore + (Math.random() * 0.1 - 0.05);
-        const spatialScore = baseScore + (Math.random() * 0.1 - 0.05);
-        const attributeScore = baseScore + (Math.random() * 0.1 - 0.05);
-        
-        return {
-          ...project,
-          matchPercentage: 95 - (index * 1.5),
-          similarityScore: (95 - index * 1.5) / 100,
-          visualScore: Math.max(0.3, Math.min(1.0, visualScore)),
-          spatialScore: Math.max(0.3, Math.min(1.0, spatialScore)),
-          attributeScore: Math.max(0.3, Math.min(1.0, attributeScore)),
-          url: project.imageUrl,
-          typology: project.buildingType,
-          materials: project.style,
-          climate: Array.isArray(project.climate) ? project.climate : (project.climate ? [project.climate] : []),
-        };
-      });
-      setSearchResults(resultsWithMatch);
+      // HONEST FAILURE — a precedent tool must never invent buildings. When the
+      // index is unreachable, clear results and say so; do NOT fabricate matches.
+      console.error('Text search failed:', error);
+      setSearchResults([]);
       setStoreQuery(q);
+      toast.error("Couldn't reach the index", {
+        description: "Results weren't updated. Check your connection and try again.",
+      });
     } finally {
       setIsSearching(false);
     }
@@ -282,15 +293,6 @@ export function ResultsPage() {
       return typologyMatch && climateMatch;
     });
   }, [searchResults, filters]);
-
-  const handleFilterChange = useCallback((category: 'typology' | 'climate', value: string, checked: boolean) => {
-    const current = filters[category];
-    if (checked) {
-      setFilters({ ...filters, [category]: [...current, value] });
-    } else {
-      setFilters({ ...filters, [category]: current.filter((v) => v !== value) });
-    }
-  }, [filters, setFilters]);
 
   const handleDragStart = useCallback((e: React.DragEvent, project: SearchResult) => {
     e.dataTransfer.setData('application/archipedia-precedent', JSON.stringify(project));
@@ -408,10 +410,14 @@ export function ResultsPage() {
         width: '100%',
         height: '100vh',
         display: 'flex',
-        backgroundColor: 'var(--bg-primary)',
+        flexDirection: 'column',
+        backgroundColor: 'var(--concrete-50)',
         overflow: 'hidden',
       }}
     >
+      <AppHeader active="canvas" />
+
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden', position: 'relative' }}>
       {/* ===== LEFT (75%) = CANVAS ===== */}
       <div
         style={{
@@ -422,98 +428,8 @@ export function ResultsPage() {
           width: '75%',
         }}
       >
-        {/* Canvas Top-Left Controls */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '16px',
-            left: '16px',
-            zIndex: 30,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-          }}
-        >
-          {/* Smiley Logo */}
-          <button
-            onClick={() => setLocation('/')}
-            style={{
-              fontSize: '18px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'opacity 200ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.7';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-          >
-            🙂
-          </button>
-
-          {/* Actions Dropdown */}
-          <select
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '12px',
-              padding: '4px 8px',
-              border: 'none',
-              borderRadius: '4px',
-              backgroundColor: 'rgba(0,0,0,0.05)',
-              cursor: 'pointer',
-              marginRight: '8px',
-              appearance: 'none',
-              backgroundImage: 'none',
-            }}
-          >
-            <option>Actions</option>
-            <option>Share Canvas</option>
-            <option>Download JSON</option>
-            <option>Export Image</option>
-          </select>
-
-          {/* RUN Button */}
-          <button
-            onClick={async () => {
-              try {
-                await executeWorkflow();
-                console.log('Workflow execution completed');
-              } catch (error) {
-                console.error('Workflow execution failed:', error);
-              }
-            }}
-            style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '12px',
-              padding: '4px 12px',
-              border: 'none',
-              borderRadius: '4px',
-              backgroundColor: '#32C864',
-              color: '#FFFFFF',
-              cursor: 'pointer',
-              fontWeight: 500,
-              transition: 'background-color 200ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#28A855';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#32C864';
-            }}
-          >
-            RUN
-          </button>
-        </div>
-
-        {/* Canvas Top-Right Controls - Profile Button */}
+        {/* Canvas docked toolbar — dark, to sit on the black studio ground.
+            RUN is the one Signal action; it is inert until there's a graph. */}
         <div
           style={{
             position: 'absolute',
@@ -522,13 +438,49 @@ export function ResultsPage() {
             zIndex: 30,
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            gap: '10px',
+            background: 'var(--studio-ground-2, #16150f)',
+            border: '1px solid var(--studio-line)',
+            boxShadow: '0 8px 24px -12px rgba(0,0,0,0.7)',
+            padding: '6px 8px',
+            borderRadius: 'var(--radius-md)',
           }}
         >
+          {/* RUN — runs the whole graph; disabled when the canvas is empty */}
+          <button
+            onClick={runGraph}
+            disabled={nodes.length === 0 || isRunning}
+            title={nodes.length === 0 ? 'Add nodes to run the graph' : 'Run the whole graph'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              padding: '7px 16px',
+              border: 'none',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: nodes.length === 0 ? 'rgba(255,255,255,0.06)' : 'var(--signal)',
+              color: nodes.length === 0 ? 'var(--studio-stone-dim)' : '#FFFFFF',
+              cursor: nodes.length === 0 || isRunning ? 'not-allowed' : 'pointer',
+              fontWeight: 500,
+              opacity: isRunning ? 0.8 : 1,
+              transition: 'background-color var(--dur-1) var(--ease-press)',
+            }}
+            onMouseEnter={(e) => { if (nodes.length > 0 && !isRunning) e.currentTarget.style.backgroundColor = 'var(--signal-hover)'; }}
+            onMouseLeave={(e) => { if (nodes.length > 0) e.currentTarget.style.backgroundColor = 'var(--signal)'; }}
+          >
+            <span style={{
+              width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+              background: nodes.length === 0 ? 'var(--studio-stone-dim)' : '#fff',
+              animation: isRunning ? 'an-square-pulse 1s linear infinite' : 'none',
+            }} />
+            {isRunning ? 'RUNNING…' : 'RUN'}
+          </button>
+
+          <div style={{ width: 1, height: 22, background: 'var(--studio-line)' }} />
+
           <UserButton />
         </div>
 
@@ -537,449 +489,278 @@ export function ResultsPage() {
           style={{
             flex: 1,
             position: 'relative',
-            background: 'linear-gradient(to bottom right, #F5F1E8, #FAFAF8)',
+            background: 'var(--concrete-50)',
           overflow: 'hidden',
         }}
       >
           <NodeCanvas />
 
-          {/* Empty State */}
-          {nodes.length === 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                pointerEvents: 'none',
-              }}
-            >
-              {/* Left Column - Node Descriptions aligned with sidebar buttons */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '220px', // Align with sidebar (180px width + 20px left + 20px gap)
-                  top: '120px', // Match sidebar top
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px', // Match sidebar gap
-                  textAlign: 'left',
-                }}
-              >
-                {/* Box: Node descriptions - each aligned with its button (40px height, 4px gap) */}
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '0 12px 12px 12px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    minHeight: '348px', // Match approximate height: 8 nodes * 40px + 7 gaps * 4px = 348px
-                    width: '280px', // Match width with workflows box
-                  }}
-                >
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>TEXT</strong> — Search by description or prompt
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>IMAGE</strong> — Search by visual similarity
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>ATTRIBUTES</strong> — Filter by typology, climate, etc.
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>CONSTRAINTS</strong> — Apply scalar filters (area, height, etc.)
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>RESULTS</strong> — Display search results
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>AND</strong> — Combine multiple inputs
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>OR</strong> — Union of multiple inputs
-                    </div>
-                  </div>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-primary)',
-                        fontSize: '12px',
-                        fontWeight: 300,
-                        color: 'rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <strong>NOT</strong> — Exclude similar results
-                    </div>
-                  </div>
-                </div>
-
-                {/* Box: Workflows section - aligned with Workflows button (after 8 nodes + separator) */}
-                <div style={{ marginTop: '12px', paddingTop: '12px' }}>
-                  <div
-                    style={{
-                      border: '1px solid rgba(0,0,0,0.15)',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      backgroundColor: 'rgba(255,255,255,0.6)',
-                      minHeight: '60px',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      width: '280px', // Match width with node descriptions box
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-primary)',
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: 'rgba(0,0,0,0.5)',
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                        }}
-                      >
-                        Workflows
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-primary)',
-                          fontSize: '12px',
-                          fontWeight: 300,
-                          color: 'rgba(0,0,0,0.4)',
-                          lineHeight: '1.5',
-                        }}
-                      >
-                        Save and load workflow templates.
-                        <br />
-                        Click the <strong>WORKFLOWS</strong> button to manage your saved workflows.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Hero and Navigation */}
-              {/* Hero box - aligned horizontally with Workflows box */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '750px', // Position further to the right, separate from left column
-                  top: '492px', // Align with Workflows section
-                  textAlign: 'left',
-                }}
-              >
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '16px',
-                      fontWeight: 300,
-                      color: 'rgba(0,0,0,0.4)',
-                      marginBottom: '6px',
-                    }}
-                  >
-                    Click node icons to begin
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      color: 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    Add precedents and create stacks
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation box - aligned horizontally with Node Types box */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '750px', // Position further to the right, separate from left column
-                  top: '120px', // Align with Node Types section
-                  textAlign: 'left',
-                }}
-              >
-                <div
-                  style={{
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: 'rgba(0,0,0,0.5)',
-                      marginBottom: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    Navigation
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '12px',
-                      fontWeight: 300,
-                      color: 'rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    <div><strong>Left Click</strong> — Select node or drag to pan canvas</div>
-                    <div><strong>Right Click</strong> — Open context menu</div>
-                    <div><strong>Shift + Left Click</strong> — Multi-select nodes</div>
-                    <div><strong>Drag Handle</strong> — Connect nodes</div>
-                    <div><strong>Scroll</strong> — Zoom in/out</div>
-                    <div><strong>Delete/Backspace</strong> — Remove selected nodes</div>
-                    <div><strong>Esc</strong> — Cancel connection or deselect</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Node Palette Sidebar */}
-        <NodePaletteSidebar 
-          onAddNode={addNodeToCanvas}
-          onOpenTemplates={() => {
-            if ((window as any).__openTemplates) {
-              (window as any).__openTemplates();
-            }
-          }}
-          onLoadTemplate={(template) => {
-            // Handle template loading
-            if ((window as any).__loadTemplate) {
-              (window as any).__loadTemplate(template);
-            }
-          }}
-          currentNodes={nodes}
-          currentEdges={edges}
-        />
+        {/* The unified left rail (Palette) + empty-canvas templates now live
+            inside <NodeCanvas/> — no separate legacy palette here. */}
       </div>
 
-      {/* ===== RIGHT (25%) = RESIZABLE SECTIONS ===== */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          borderLeft: '1px solid rgba(0,0,0,0.1)',
-          width: '25%',
-          minWidth: 0,
-        }}
-      >
-        {/* Section 1: Research Header (collapsible toggle) */}
-        <div
+      {/* ===== RIGHT PANEL = RESEARCH (collapsible) ===== */}
+
+      {/* Floating "Research" re-opener tab — visible only when panel is collapsed */}
+      {researchPanelCollapsed && (
+        <button
+          onClick={() => setResearchPanelCollapsed(false)}
+          title="Open Research panel"
           style={{
-            borderBottom: '1px solid rgba(0,0,0,0.1)',
-            padding: '12px 16px',
-            flexShrink: 0,
+            position: 'absolute',
+            right: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 40,
+            background: 'var(--studio-ground-2)',
+            border: '1px solid var(--studio-line-strong)',
+            borderRight: 'none',
+            borderRadius: '6px 0 0 6px',
+            color: 'var(--studio-stone)',
+            fontFamily: 'var(--font-primary)',
+            fontSize: '10px',
+            fontWeight: 400,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            padding: '14px 8px',
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: '6px',
           }}
-          onClick={() => setResearchPanelCollapsed(!researchPanelCollapsed)}
         >
-          <h3
+          Research
+          <ChevronRight size={12} />
+        </button>
+      )}
+
+      {/* Panel itself */}
+      {!researchPanelCollapsed && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            borderLeft: '1px solid var(--studio-line-strong)',
+            width: '25%',
+            minWidth: 0,
+            background: 'var(--studio-ground-solid)',
+            position: 'relative',
+          }}
+        >
+          {/* Panel header */}
+          <div
             style={{
-              fontFamily: 'var(--font-primary)',
-              fontSize: '10px',
-              fontWeight: 400,
-              color: '#000000',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              margin: 0,
+              borderBottom: '1px solid var(--studio-line)',
+              padding: '12px 16px',
+              flexShrink: 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
+            onClick={() => setResearchPanelCollapsed(true)}
           >
-            Research
-          </h3>
-          {researchPanelCollapsed ? (
-            <ChevronDown size={16} color="rgba(0,0,0,0.5)" />
-          ) : (
-            <ChevronUp size={16} color="rgba(0,0,0,0.5)" />
-          )}
-        </div>
-
-        {/* Collapsible Section: Search + Fusion Weights + Filters */}
-        {!researchPanelCollapsed && (
-          <>
-            {/* Search Input Section */}
-            <div
-              style={{
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
-                padding: '12px 16px',
-                flexShrink: 0,
-              }}
-            >
-              {/* Search Input */}
-              <input
-                type="text"
-                placeholder="Search precedents (e.g., courtyard buildings...)"
-                value={currentSearchQuery}
-                onChange={(e) => {
-                  setCurrentSearchQuery(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && currentSearchQuery.trim() && !isSearching) {
-                    performTextSearch(currentSearchQuery);
-                  }
-                }}
-                style={{
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '12px',
-                  padding: '10px 12px',
-                  width: '100%',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '6px',
-                  boxSizing: 'border-box',
-                  backgroundColor: 'white',
-                }}
-              />
-              
-              {/* Help Text - Show when no search has been performed */}
-              {!hasSearched && (
-                <div
-                  style={{
-                    marginTop: '12px',
-                    padding: '12px',
-                    backgroundColor: 'rgba(0,0,0,0.02)',
-                    borderRadius: '6px',
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '10px',
-                    lineHeight: '1.5',
-                    color: 'rgba(0,0,0,0.7)',
-                  }}
-                >
-                  <div style={{ fontWeight: 500, marginBottom: '6px', color: '#000000' }}>
-                    How to use this page:
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Type your search query above and press Enter to find architectural precedents
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Adjust the Fusion Weights below to prioritize Visual, Spatial, or Regional similarity
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    • Use Filters to narrow down by typology or climate
-                  </div>
-                  <div>
-                    • Drag projects from the results onto the canvas to create precedent nodes
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section 2: Fusion Weights + Filters */}
-            <div
-              style={{
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
-                padding: '12px 16px',
-                flexShrink: 0,
-                height: hasSearched ? '25%' : 'auto',
-                overflowY: 'auto',
-                maxHeight: hasSearched ? '25%' : 'none',
-              }}
-            >
-          {/* Fusion Weights */}
-          <div style={{ marginBottom: '16px' }}>
             <h3
               style={{
                 fontFamily: 'var(--font-primary)',
                 fontSize: '10px',
                 fontWeight: 400,
-                color: '#000000',
+                color: 'var(--studio-stone)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '8px',
+                letterSpacing: '0.08em',
+                margin: 0,
               }}
             >
-              Fusion Weights
+              Research
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <ChevronRight size={14} color="var(--studio-stone-dim)" />
+          </div>
+
+          {/* Search Input */}
+          <div
+            style={{
+              borderBottom: '1px solid var(--studio-line)',
+              padding: '12px 16px',
+              flexShrink: 0,
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Search precedents…"
+              value={currentSearchQuery}
+              onChange={(e) => setCurrentSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && currentSearchQuery.trim() && !isSearching) {
+                  performTextSearch(currentSearchQuery);
+                }
+              }}
+              style={{
+                fontFamily: 'var(--font-primary)',
+                fontSize: '12px',
+                padding: '9px 12px',
+                width: '100%',
+                border: '1px solid var(--studio-line)',
+                borderRadius: 'var(--radius-md)',
+                boxSizing: 'border-box',
+                background: 'transparent',
+                color: 'var(--studio-ink)',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Fusion Weights */}
+          <div
+            style={{
+              borderBottom: '1px solid var(--studio-line)',
+              padding: '14px 16px',
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: 'var(--font-primary)',
+                  fontSize: '10px',
+                  fontWeight: 400,
+                  color: 'var(--studio-stone)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  margin: 0,
+                }}
+              >
+                Fusion Weights
+              </h3>
+              <a
+                href="/how-it-works"
+                style={{
+                  fontFamily: 'var(--font-primary)',
+                  fontSize: '9px',
+                  color: 'var(--signal)',
+                  textDecoration: 'none',
+                  letterSpacing: '0.04em',
+                  opacity: 0.85,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.85')}
+              >
+                How weighting works →
+              </a>
+            </div>
+
+            <style>{`
+              .studio-range {
+                width: 100%;
+                height: 3px;
+                border-radius: 2px;
+                appearance: none;
+                outline: none;
+                cursor: pointer;
+              }
+              .studio-range::-webkit-slider-thumb {
+                appearance: none;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--studio-ink);
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+              }
+              .studio-range::-moz-range-thumb {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--studio-ink);
+                cursor: pointer;
+                border: none;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+              }
+              .studio-tooltip {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+              }
+              .studio-tooltip .studio-tooltip-bubble {
+                display: none;
+                position: absolute;
+                left: 18px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: var(--studio-ground-2);
+                border: 1px solid var(--studio-line-strong);
+                color: var(--studio-stone);
+                font-family: var(--font-primary);
+                font-size: 10px;
+                line-height: 1.5;
+                padding: 8px 10px;
+                border-radius: 4px;
+                width: 200px;
+                z-index: 100;
+                pointer-events: none;
+                white-space: normal;
+              }
+              .studio-tooltip:hover .studio-tooltip-bubble,
+              .studio-tooltip:focus-within .studio-tooltip-bubble {
+                display: block;
+              }
+              .studio-tooltip-trigger {
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                border: 1px solid var(--studio-line-strong);
+                color: var(--studio-stone-dim);
+                font-family: var(--font-primary);
+                font-size: 9px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: default;
+                flex-shrink: 0;
+                background: transparent;
+                padding: 0;
+                line-height: 1;
+              }
+              .studio-panel-input::placeholder {
+                color: var(--studio-stone-dim);
+              }
+            `}</style>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {[
-                { label: 'Visual', value: fusionWeights.visual, color: '#FFC800' },
-                { label: 'Spatial', value: fusionWeights.spatial, color: '#64B5FF' },
-                { label: 'Regional', value: fusionWeights.attribute, color: '#32C864' },
+                {
+                  label: 'Visual',
+                  key: 'visual' as const,
+                  value: fusionWeights.visual,
+                  tooltip: 'Pure visual similarity from the image embedding: facade, silhouette, geometry, material read.',
+                  color: 'var(--signal)',
+                  trackDim: 'rgba(31,63,255,0.18)',
+                },
+                {
+                  label: 'Spatial',
+                  key: 'spatial' as const,
+                  value: fusionWeights.spatial,
+                  tooltip: 'Massing & organization: courtyard, linear, tower, or cluster — the building\'s volumetric type.',
+                  color: '#64B5FF',
+                  trackDim: 'rgba(100,181,255,0.18)',
+                },
+                {
+                  label: 'Regional',
+                  key: 'attribute' as const,
+                  value: fusionWeights.attribute,
+                  tooltip: 'Climate & context: the locale and climate the project responds to.',
+                  color: '#32C864',
+                  trackDim: 'rgba(50,200,100,0.18)',
+                },
               ].map((slider) => (
                 <div key={slider.label}>
                   <div
@@ -987,28 +768,38 @@ export function ResultsPage() {
                       fontFamily: 'var(--font-primary)',
                       fontSize: '9px',
                       fontWeight: 300,
-                      color: 'rgba(0,0,0,0.6)',
+                      color: 'var(--studio-stone)',
                       display: 'flex',
                       justifyContent: 'space-between',
-                      marginBottom: '4px',
+                      alignItems: 'center',
+                      marginBottom: '6px',
                     }}
-        >
-                    <span>{slider.label}</span>
-                    <span>{slider.value}%</span>
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{slider.label}</span>
+                      <span className="studio-tooltip">
+                        <button
+                          className="studio-tooltip-trigger"
+                          tabIndex={0}
+                          aria-label={`What is ${slider.label} weight?`}
+                        >
+                          ?
+                        </button>
+                        <span className="studio-tooltip-bubble">{slider.tooltip}</span>
+                      </span>
+                    </div>
+                    <span style={{ color: 'var(--studio-stone-dim)' }}>{slider.value}%</span>
                   </div>
                   <input
                     type="range"
+                    className="studio-range"
                     min="0"
                     max="100"
                     value={slider.value}
                     onChange={(e) => {
                       const newValue = parseInt(e.target.value);
                       const newWeights = { ...fusionWeights };
-                      if (slider.label === 'Visual') newWeights.visual = newValue;
-                      if (slider.label === 'Spatial') newWeights.spatial = newValue;
-                      if (slider.label === 'Regional') newWeights.attribute = newValue;
-                      
-                      // Normalize
+                      newWeights[slider.key] = newValue;
                       const total = newWeights.visual + newWeights.spatial + newWeights.attribute;
                       if (total > 0) {
                         setCanvasFusionWeights({
@@ -1020,14 +811,7 @@ export function ResultsPage() {
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     style={{
-                      width: '100%',
-                      height: '4px',
-                      borderRadius: '2px',
-                      appearance: 'none',
-                      background: `linear-gradient(to right, ${slider.color} 0%, ${slider.color} ${slider.value}%, rgba(0,0,0,0.08) ${slider.value}%, rgba(0,0,0,0.08) 100%)`,
-                      outline: 'none',
-                      cursor: 'pointer',
-                      pointerEvents: 'auto',
+                      background: `linear-gradient(to right, ${slider.color} 0%, ${slider.color} ${slider.value}%, ${slider.trackDim} ${slider.value}%, ${slider.trackDim} 100%)`,
                     }}
                   />
                 </div>
@@ -1035,147 +819,99 @@ export function ResultsPage() {
             </div>
           </div>
 
-          {/* Filters */}
-          <div>
-            <h3
-              style={{
-                fontFamily: 'var(--font-primary)',
-                fontSize: '10px',
-                fontWeight: 400,
-                color: '#000000',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '8px',
-              }}
-            >
-              Filters ({filters.typology.length + filters.climate.length})
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {['Cultural', 'Educational', 'Commercial', 'Residential', 'Civic', 'Industrial', 'Hospitality', 'Healthcare', 'Sports', 'Transportation', 'Public Space', 'Sacred'].map((filter) => {
-                const isSelected = filters.typology.includes(filter) || filters.climate.includes(filter);
-                return (
-                  <button
-                    key={filter}
-                    onClick={() => {
-                      // Determine if it's typology or climate based on filter name
-                      const isClimate = ['Mediterranean', 'Tropical', 'Arctic', 'Urban', 'Rural', 'Coastal', 'Desert'].includes(filter);
-                      handleFilterChange(isClimate ? 'climate' : 'typology', filter, !isSelected);
-                    }}
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '9px',
-                      padding: '4px 8px',
-                      backgroundColor: isSelected ? '#FFC800' : 'rgba(0,0,0,0.05)',
-                      border: isSelected
-                        ? '1px solid #FFC800'
-                        : '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: '#000000',
-                      transition: 'all 150ms ease',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {filter}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-            </div>
-          </>
-        )}
-
-        {/* Section 3: Results Grid - Show when user has searched, when a node with results is selected, or when any search has been performed */}
-        {(hasSearched || selectedNodeResults || searchResults.length > 0) && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '50%', flexShrink: 0 }}>
-            <div
-              style={{
-                padding: '12px 16px',
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
-                fontSize: '10px',
-                fontWeight: 400,
-                fontFamily: 'var(--font-primary)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {selectedNodeResults ? (
-                  <span>Node Results ({selectedNodeResults.length})</span>
+          {/* Results Grid */}
+          {(hasSearched || selectedNodeResults || searchResults.length > 0) && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderBottom: '1px solid var(--studio-line)',
+                  fontSize: '10px',
+                  fontWeight: 400,
+                  fontFamily: 'var(--font-primary)',
+                  color: 'var(--studio-stone)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {selectedNodeResults ? (
+                    <span>Node Results ({selectedNodeResults.length})</span>
+                  ) : (
+                    <>
+                      <span>Ranked Results {!isSearching && `(${filteredResults.length})`}</span>
+                      {isSearching && (
+                        <div
+                          style={{
+                            width: '10px',
+                            height: '10px',
+                            border: '1.5px solid var(--studio-line-strong)',
+                            borderTop: '1.5px solid var(--studio-stone)',
+                            borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite',
+                          }}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+                {selectedNodeResults && selectedNode ? (
+                  <span style={{ fontSize: '9px', color: 'var(--studio-stone-dim)', fontStyle: 'italic' }}>
+                    {(selectedNode.data as any).type === 'precedent' ? 'Precedent Node' : `${(selectedNode.data as any).type} node`}
+                  </span>
+                ) : currentSearchQuery && !isSearching ? (
+                  <span style={{ fontSize: '9px', color: 'var(--studio-stone-dim)', fontStyle: 'italic' }}>
+                    "{currentSearchQuery}"
+                  </span>
+                ) : null}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: isSearching && !selectedNodeResults ? 'center' : 'flex-start',
+                  justifyContent: isSearching && !selectedNodeResults ? 'center' : 'flex-start',
+                }}
+              >
+                {isSearching && !selectedNodeResults ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <div
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        border: '2px solid var(--studio-line)',
+                        borderTop: '2px solid var(--studio-stone)',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                        margin: '0 auto 10px',
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-primary)',
+                        fontSize: '10px',
+                        color: 'var(--studio-stone-dim)',
+                      }}
+                    >
+                      Searching precedents...
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    <span>Ranked Results {!isSearching && `(${filteredResults.length})`}</span>
-                    {isSearching && (
-                      <div
-                        style={{
-                          width: '12px',
-                          height: '12px',
-                          border: '2px solid rgba(0,0,0,0.1)',
-                          borderTop: '2px solid #64B5FF',
-                          borderRadius: '50%',
-                          animation: 'spin 0.8s linear infinite',
-                        }}
-                      />
-                    )}
-                  </>
+                  <ResultsGridCompact
+                    projects={selectedNodeResults || filteredResults}
+                    weights={fusionWeights}
+                    onDragStart={handleDragStart}
+                  />
                 )}
               </div>
-              {selectedNodeResults && selectedNode ? (
-                <span style={{ fontSize: '9px', color: 'rgba(0,0,0,0.5)', fontStyle: 'italic' }}>
-                  {(selectedNode.data as any).type === 'precedent' ? 'Precedent Node' : `${(selectedNode.data as any).type} node`}
-                </span>
-              ) : currentSearchQuery && !isSearching ? (
-                <span style={{ fontSize: '9px', color: 'rgba(0,0,0,0.5)', fontStyle: 'italic' }}>
-                  "{currentSearchQuery}"
-                </span>
-              ) : null}
             </div>
-            <div
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: isSearching && !selectedNodeResults ? 'center' : 'flex-start',
-                justifyContent: isSearching && !selectedNodeResults ? 'center' : 'flex-start',
-              }}
-            >
-              {isSearching && !selectedNodeResults ? (
-                <div style={{ textAlign: 'center' }}>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      border: '3px solid rgba(0,0,0,0.1)',
-                      borderTop: '3px solid #64B5FF',
-                      borderRadius: '50%',
-                      animation: 'spin 0.8s linear infinite',
-                      margin: '0 auto 12px',
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-primary)',
-                      fontSize: '10px',
-                      color: 'rgba(0,0,0,0.6)',
-                    }}
-                  >
-                    Searching precedents...
-                  </div>
-                </div>
-              ) : (
-                <ResultsGridCompact
-                  projects={selectedNodeResults || filteredResults}
-                  weights={fusionWeights}
-                  onDragStart={handleDragStart}
-                />
-              )}
-            </div>
-          </div>
-        )}
-
+          )}
+        </div>
+      )}
       </div>
     </div>
   );

@@ -1,20 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap");
-
-/* React Flow Styles */
-.react-flow__node {
-  font-family: var(--font-secondary);
-}
-
-.react-flow__edge-path {
-  stroke-width: 2px;
-}
-
-.react-flow__handle {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-}
+/* Fonts are self-hosted via Fontsource (see src/lib/fonts.ts).
+   React-Flow + brand styling live in src/styles/tokens.css (imported last). */
 
 /* Animation for spinning loader */
 @keyframes spin {

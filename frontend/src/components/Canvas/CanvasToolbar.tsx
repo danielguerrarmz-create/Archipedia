@@ -11,6 +11,48 @@ interface CanvasToolbarProps {
   onAddNode?: () => void;
 }
 
+/** Raised, pressable secondary action. */
+const ghostBtn: React.CSSProperties = {
+  height: 32,
+  padding: '0 14px',
+  background: 'var(--concrete-100)',
+  boxShadow: 'var(--emboss)',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-body)',
+  fontSize: 13,
+  color: 'var(--ink-700)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  transition: 'box-shadow var(--dur-1) var(--ease-press)',
+};
+
+/** The single signal action (Run / primary). */
+const signalBtn: React.CSSProperties = {
+  height: 32,
+  padding: '0 18px',
+  background: 'var(--signal)',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  color: '#fff',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  boxShadow: 'var(--emboss)',
+  transition: 'background var(--dur-1) var(--ease-press)',
+};
+
+const press = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.boxShadow = 'var(--deboss)'; };
+const lift = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.boxShadow = 'var(--emboss)'; };
+
 export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   viewMode,
   onToggleMode,
@@ -24,273 +66,58 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     <>
       <div
         style={{
-          height: '48px',
+          height: 48,
           padding: '0 40px',
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #E5E5E5',
+          background: 'var(--concrete-100)',
+          borderBottom: '1px solid var(--hairline)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px',
+          gap: 16,
         }}
       >
-        <ViewModeToggle
-          mode={viewMode}
-          onToggle={onToggleMode}
-          selectedCount={selectedCount}
-        />
+        <ViewModeToggle mode={viewMode} onToggle={onToggleMode} selectedCount={selectedCount} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {viewMode === 'results' ? (
             <>
-              <button
-                style={{
-                  height: '36px',
-                  padding: '0 16px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #E5E5E5',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  color: '#1a1a1a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Filter size={16} />
-                Filters
-              </button>
-              <button
-                style={{
-                  height: '36px',
-                  padding: '0 16px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #E5E5E5',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  color: '#1a1a1a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <SortAsc size={16} />
-                Sort
-              </button>
+              <button style={ghostBtn} onMouseEnter={press} onMouseLeave={lift}><Filter size={16} /> Filters</button>
+              <button style={ghostBtn} onMouseEnter={press} onMouseLeave={lift}><SortAsc size={16} /> Sort</button>
               {selectedCount > 0 && (
-                <button
-                  onClick={onToggleMode}
-                  style={{
-                    height: '36px',
-                    padding: '0 20px',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  Build Workflow ({selectedCount})
+                <button onClick={onToggleMode} style={signalBtn}>
+                  Build workflow ({selectedCount})
                 </button>
               )}
             </>
           ) : (
             <>
+              {/* The one signal action: Run */}
               <button
                 onClick={() => executeWorkflow()}
                 disabled={isExecuting}
-                style={{
-                  height: '36px',
-                  padding: '0 20px',
-                  backgroundColor: isExecuting ? '#999' : '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: isExecuting ? 'not-allowed' : 'pointer',
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 150ms ease',
-                  opacity: isExecuting ? 0.7 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isExecuting) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(33, 150, 243, 0.3)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                style={{ ...signalBtn, background: isExecuting ? 'var(--ink-300)' : 'var(--signal)', cursor: isExecuting ? 'not-allowed' : 'pointer' }}
               >
                 <Play size={16} />
-                {isExecuting ? 'Running...' : 'Run Workflow'}
+                {isExecuting ? 'Running…' : 'Run workflow'}
               </button>
-              <button
-                onClick={() => clearExecutionResults()}
-                disabled={isExecuting}
-                style={{
-                  height: '36px',
-                  padding: '0 16px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #E5E5E5',
-                  borderRadius: '8px',
-                  cursor: isExecuting ? 'not-allowed' : 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  color: '#1a1a1a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 150ms ease',
-                  opacity: isExecuting ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isExecuting) {
-                    e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <RotateCcw size={16} />
-                Clear Results
+              <button onClick={() => clearExecutionResults()} disabled={isExecuting} style={{ ...ghostBtn, opacity: isExecuting ? 0.5 : 1 }} onMouseEnter={press} onMouseLeave={lift}>
+                <RotateCcw size={16} /> Clear results
               </button>
-              <button
-                onClick={() => setShowWorkflowDialog(true)}
-                style={{
-                  height: '36px',
-                  padding: '0 20px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-primary)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <Sparkles size={16} />
-                Generate Workflow
+              <button onClick={() => setShowWorkflowDialog(true)} style={ghostBtn} onMouseEnter={press} onMouseLeave={lift}>
+                <Sparkles size={16} /> Generate workflow
               </button>
               {onAddNode && (
-                <button
-                  onClick={onAddNode}
-                  style={{
-                    height: '36px',
-                    padding: '0 16px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #E5E5E5',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-secondary)',
-                    fontSize: '13px',
-                    color: '#1a1a1a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <Plus size={16} />
-                  Add Node
+                <button onClick={onAddNode} style={ghostBtn} onMouseEnter={press} onMouseLeave={lift}>
+                  <Plus size={16} /> Add node
                 </button>
               )}
-              <button
-                style={{
-                  height: '36px',
-                  padding: '0 16px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #E5E5E5',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-secondary)',
-                  fontSize: '13px',
-                  color: '#1a1a1a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Save size={16} />
-                Save
-              </button>
+              <button style={ghostBtn} onMouseEnter={press} onMouseLeave={lift}><Save size={16} /> Save</button>
             </>
           )}
         </div>
       </div>
       {showWorkflowDialog && (
-        <WorkflowGeneratorDialog
-          open={showWorkflowDialog}
-          onClose={() => setShowWorkflowDialog(false)}
-        />
+        <WorkflowGeneratorDialog open={showWorkflowDialog} onClose={() => setShowWorkflowDialog(false)} />
       )}
     </>
   );

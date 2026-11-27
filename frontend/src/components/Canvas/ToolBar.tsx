@@ -49,8 +49,8 @@ export function ToolBar({ editor, activeTool, onToolChange }: ToolBarProps) {
     <div
       style={{
         width: 48,
-        backgroundColor: 'white',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--concrete-100)',
+        borderRight: '1px solid var(--hairline)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -59,37 +59,34 @@ export function ToolBar({ editor, activeTool, onToolChange }: ToolBarProps) {
         flexShrink: 0,
       }}
     >
-      {tools.map((tool) => (
-        <button
-          key={tool.id}
-          onClick={() => handleToolClick(tool.id)}
-          title={`${tool.label} (${tool.shortcut})`}
-          style={{
-            width: 36,
-            height: 36,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: activeTool === tool.id ? 'rgba(182, 68, 36, 0.1)' : 'transparent',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            color: activeTool === tool.id ? 'var(--accent)' : 'rgba(0,0,0,0.6)',
-            transition: 'all 150ms',
-          }}
-        >
-          {tool.icon}
-        </button>
-      ))}
+      {tools.map((tool) => {
+        const active = activeTool === tool.id;
+        return (
+          <button
+            key={tool.id}
+            onClick={() => handleToolClick(tool.id)}
+            title={`${tool.label} (${tool.shortcut})`}
+            style={{
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: active ? 'var(--concrete-sunken)' : 'transparent',
+              boxShadow: active ? 'var(--deboss)' : 'none',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              color: active ? 'var(--signal)' : 'var(--ink-500)',
+              transition: 'box-shadow var(--dur-1) var(--ease-press), color var(--dur-1) var(--ease-press)',
+            }}
+          >
+            {tool.icon}
+          </button>
+        );
+      })}
 
-      <div
-        style={{
-          width: 24,
-          height: 1,
-          backgroundColor: 'rgba(0,0,0,0.1)',
-          margin: '8px 0',
-        }}
-      />
+      <div style={{ width: 24, height: 1, background: 'var(--hairline)', margin: '8px 0' }} />
 
       {/* Snap toggle could go here */}
     </div>

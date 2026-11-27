@@ -207,7 +207,7 @@ export function PresentMode({ boardId, editor, onClose }: PresentModeProps) {
               width: '100%',
               maxWidth: currentFrame.w,
               aspectRatio: `${currentFrame.w}/${currentFrame.h}`,
-              backgroundColor: 'white',
+              background: 'var(--concrete-100)',
               borderRadius: 8,
               boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
               position: 'relative',

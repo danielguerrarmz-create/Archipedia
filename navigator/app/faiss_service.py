@@ -51,6 +51,8 @@ class FaissStore:
         self._lock = threading.RLock()
         self._index = None
         self._idmap: Dict[str, Dict[str, str]] = {}
+        # FAISS row r -> id_map entry. See reload() for why this is not idmap[str(r)].
+        self._row_meta: List[Dict[str, str]] = []
         self._thumb_by_project: Dict[str, str] = {}
         self._projects = None
         self._spatial_features: Dict[str, List[float]] = {}
@@ -161,6 +163,19 @@ class FaissStore:
             # Load id_map
             with open(self.idmap_path, "r", encoding="utf-8") as f:
                 self._idmap = json.load(f)
+            # scripts/build_faiss.py adds vectors in sorted(*.npy) filename order,
+            # keeping only stems that appear as an id_map image_id. So row r is the
+            # r-th image_id in that order. id_map KEYS are not row numbers (they have
+            # gaps), so idmap[str(r)] labels hits with the wrong project.
+            self._row_meta = sorted(
+                (m for m in self._idmap.values() if isinstance(m, dict) and "image_id" in m),
+                key=lambda m: f"{m['image_id']}.npy",
+            )
+            if len(self._row_meta) != self._index.ntotal:
+                raise RuntimeError(
+                    f"id_map has {len(self._row_meta)} image_ids but index has "
+                    f"{self._index.ntotal} vectors; rebuild with scripts/build_faiss.py"
+                )
             # Build a quick project_id -> thumb lookup for text search and hydration fallbacks
             # Also index by shortened project_id (without _exteriors_/_interiors_/_diagrams_ suffix)
             # so text search results can find thumbnails
@@ -198,10 +213,11 @@ class FaissStore:
 
     def _hydrate(self, idxs: List[int]) -> List[Dict[str, Any]]:
         rows = []
-        idmap = self._idmap
+        row_meta = self._row_meta
         prj = self._projects
         for i in idxs:
-            meta = idmap.get(str(i), {})
+            # FAISS returns -1 for unfilled slots; those hydrate empty and get skipped.
+            meta = row_meta[i] if 0 <= i < len(row_meta) else {}
             pid = meta.get("project_id")
             # Transform local thumb path to R2 URL
             raw_thumb = meta.get("thumb")
